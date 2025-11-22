@@ -175,12 +175,15 @@ select:hover {
     -webkit-overflow-scrolling: touch; /* suaviza el scroll en iOS */
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     margin-bottom: 30px;
-    padding: 6px; /* espacio alrededor del .standings-inner */
+    /* Quitamos el padding del contenedor principal para evitar gaps a la derecha
+       (moved padding inside .standings-inner) */
+    padding: 0;
 }
 
 /* Permitir que los contenedores de tablas se encojan correctamente dentro de grid */
 .standings {
     min-width: 0; /* esencial para que el grid pueda contraer las columnas y el overflow funcione */
+    width: 100%;
 }
 
 /* Contenedor para las tablas de grupos (2 o más tablas) */
@@ -188,7 +191,7 @@ select:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 20px;
-    align-items: start;
+    align-items: stretch; /* asegurar que las tarjetas tengan la misma altura y estiren correctamente */
 }
 
 /* En pantallas pequeñas, apilar las tablas para evitar overflow horizontal combinado */
@@ -199,24 +202,32 @@ select:hover {
 }
 
 .standings-inner {
-    display: inline-block; /* shrink-wrap al contenido (tabla) para que el header tenga el mismo ancho) */
-    min-width: 520px; /* coincide con la min-width de la tabla por defecto */
+    /* Cambiado: usar block y ocupar 100% del ancho de la columna en lugar de inline-block
+       para evitar espacios en blanco a la derecha cuando hay múltiples tablas lado a lado. */
+    display: block;
+    width: 100%;
+    min-width: 0; /* permitir que el grid reduzca la columna sin forzar overflow */
+    box-sizing: border-box;
     vertical-align: top;
     position: relative; /* ahora el pseudo se dibuja sobre este wrapper */
+    overflow: hidden; /* evita que elementos internos creen artefactos visuales fuera del recuadro */
+    padding: 6px; /* movimos el padding aquí para que el fondo blanco del .standings no deje franjas */
 }
 
 /* Pseudo background que pinta la franja azul solo cuando existe .standings-inner
-   (evita que tablas sin header muestren una franja azul extra). */
+   Ajustamos los laterales para que coincidan con el padding del contenedor y ahora
+   ocupen todo el ancho interno (left:0/right:0) para eliminar espacios blancos. */
 .standings-inner::before {
     content: "";
     position: absolute;
+    /* cubrir todo el ancho del .standings-inner (ya contiene el padding) */
     left: 0;
     right: 0;
     top: 0;
     height: 44px; /* suficiente para cubrir el header */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
     z-index: 1;
     pointer-events: none;
 }
@@ -260,10 +271,10 @@ select:hover {
 
 /* Para que no se vea la franja blanca al desplazarse, el fondo del contenedor .standings
    seguirá siendo blanco; sin embargo el header está dentro de .standings-inner que se desplaza
-   junto con la tabla (por eso usamos inline-block). Además, añadimos un pequeño padding
-   al contenedor .standings para crear separación y una pseudo-sombra. */
+   junto con la tabla. */
 .standings {
-    padding: 6px; /* espacio alrededor del .standings-inner */
+    /* padding movido a .standings-inner para evitar gaps visuales a la derecha */
+    padding: 0;
 }
 
 .standings-inner h4.standings-title {
