@@ -17,6 +17,25 @@ const nuevosJugadores = [
 // Agrego la lista combinada de jugadores disponibles y una variable global para la selección
 const jugadoresDisponibles = [...jugadoresBase, ...nuevosJugadores];
 window.jugadoresSeleccionadosGlobal = null;
+// Bandera para detectar la primera carga de la página: evitar seleccionar jugadores automáticamente al abrir
+window._paginaCargada = false;
+
+// --- Helper: Fisher-Yates shuffle y selección aleatoria ---
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function elegirAleatorioNombres(cantidad) {
+    // Retorna un array de 'cantidad' nombres únicos escogidos aleatoriamente
+    const nombres = jugadoresDisponibles.map(j => j.nombre);
+    const mezclados = shuffleArray(nombres);
+    return mezclados.slice(0, cantidad);
+}
 
 function simularPartido(jugador1, jugador2) {
     const rankDiff = jugador1.ranking - jugador2.ranking;
@@ -669,6 +688,9 @@ function mostrarFormato() {
     // Además, actualizar el selector de jugadores (si aplica)
     const numSelect = document.getElementById('numPlayers');
     if (numSelect) renderPlayerSelection(parseInt(numSelect.value));
+
+    // Actualizar estado del botón simular según la selección/toggle
+    updateSimularButtonState();
 }
 
 // Render y lógica para selección de jugadores (UI debajo del select)
@@ -680,6 +702,7 @@ function renderPlayerSelection(numJugadores) {
     if (numJugadores === 10) {
         container.innerHTML = '<p>Se usarán todos los jugadores disponibles (10).</p>';
         window.jugadoresSeleccionadosGlobal = null;
+        updateSimularButtonState();
         return;
     }
 
@@ -689,6 +712,10 @@ function renderPlayerSelection(numJugadores) {
         html += `<label style="display:inline-block; width:200px; margin:4px;"><input type="checkbox" class="player-checkbox" data-nombre="${j.nombre}" /> ${j.nombre}</label>`;
     });
     html += '</div>';
+
+    // Cartel de advertencia si no se llega a la cantidad requerida
+    html += '<p id="selectionWarning" style="color:#c0392b; font-weight:600; display:none; margin-top:8px;"></p>';
+
     container.innerHTML = html;
 
     const checkboxes = Array.from(container.querySelectorAll('.player-checkbox'));
@@ -705,15 +732,86 @@ function renderPlayerSelection(numJugadores) {
         } else {
             window.jugadoresSeleccionadosGlobal = null;
         }
+        // actualizar estado del botón simular tras cambio manual
+        updateSimularButtonState();
     }));
+
+    // Antes: uso de toggle para activar/desactivar la selección automática.
+    // Ahora: la selección automática es la conducta por defecto.
+    // No aplicar selección automática en la primera carga de la página
+    if (window._paginaCargada && !window.jugadoresSeleccionadosGlobal) {
+        const seleccionAuto = elegirAleatorioNombres(needed);
+        window.jugadoresSeleccionadosGlobal = seleccionAuto.slice();
+        // marcar checkboxes correspondientes
+        checkboxes.forEach(cb => {
+            const nombre = cb.getAttribute('data-nombre');
+            cb.checked = seleccionAuto.includes(nombre);
+        });
+        console.info('Selección automática aplicada:', seleccionAuto);
+    } else {
+        // sin indicador visual
+    }
+
+    // Actualizar estado del botón simular al terminar de renderizar
+    updateSimularButtonState();
 }
 
 function obtenerJugadoresSeleccionadosPorNombre(numJugadores) {
     if (numJugadores === 10) {
         return jugadoresDisponibles.slice(0, 10);
     }
-    if (!window.jugadoresSeleccionadosGlobal) return [];
+
+    // Ahora: siempre permitimos selección automática por defecto si no hay selección manual
+    if (!window.jugadoresSeleccionadosGlobal || window.jugadoresSeleccionadosGlobal.length !== numJugadores) {
+        const auto = elegirAleatorioNombres(numJugadores);
+        window.jugadoresSeleccionadosGlobal = auto.slice();
+        console.info('Selección automática (obtener):', auto);
+    }
     return window.jugadoresSeleccionadosGlobal.map(nombre => jugadoresDisponibles.find(j => j.nombre === nombre)).filter(Boolean);
+}
+
+// --- Nuevo: controlar estado del botón 'Simular' ---
+function updateSimularButtonState() {
+    const simBtnEl = document.getElementById('simularBtn');
+    const numSelectEl = document.getElementById('numPlayers');
+    if (!simBtnEl || !numSelectEl) return;
+
+    const num = parseInt(numSelectEl.value);
+
+    // Caso especial: 10 jugadores -> siempre permitido (no hay selección manual que hacer)
+    const warningEl = document.getElementById('selectionWarning');
+    if (num === 10) {
+        simBtnEl.disabled = false;
+        if (warningEl) warningEl.style.display = 'none';
+        return;
+    }
+
+    // Contar checkboxes marcados en el DOM (si existe el contenedor)
+    const container = document.getElementById('playerSelection');
+    let selectedCount = 0;
+    if (container) {
+        selectedCount = container.querySelectorAll('.player-checkbox:checked').length;
+    } else if (window.jugadoresSeleccionadosGlobal) {
+        // Fallback: usar la selección global
+        selectedCount = window.jugadoresSeleccionadosGlobal.length;
+    }
+
+    // Habilitar sólo si la cantidad marcada coincide con la requerida
+    simBtnEl.disabled = selectedCount !== num;
+
+    // Mostrar cartel si hay menos seleccionados que los requeridos
+    if (warningEl) {
+        if (selectedCount < num) {
+            const faltan = num - selectedCount;
+            warningEl.textContent = `Faltan ${faltan} jugador${faltan === 1 ? '' : 'es'} para completar ${num}.`;
+            warningEl.style.display = 'block';
+        } else if (selectedCount > num) {
+            warningEl.textContent = `Seleccioná sólo ${num} jugadores.`;
+            warningEl.style.display = 'block';
+        } else {
+            warningEl.style.display = 'none';
+        }
+    }
 }
 
 // Enlazar botón simular al DOM
@@ -759,11 +857,38 @@ if (simBtn) {
     });
 }
 
-// Asegurarse de renderizar la selección inicial y mostrar el formato al cargar
-const numSelect = document.getElementById('numPlayers');
-if (numSelect) {
-    // Cuando cambie, mostrar el formato y actualizar la selección desde dentro de la función
-    numSelect.addEventListener('change', mostrarFormato);
-    // render inicial: muestra explicación del formato + selection UI
-    mostrarFormato();
+// Añadir listener para el botón de selección aleatoria en UI (útil cuando el toggle está desactivado)
+const randomSelectBtn = document.getElementById('randomSelectBtn');
+if (randomSelectBtn) {
+    randomSelectBtn.addEventListener('click', () => {
+        const numSelectEl = document.getElementById('numPlayers');
+        if (!numSelectEl) return;
+        const num = parseInt(numSelectEl.value);
+        if (num === 10) return; // no aplica
+
+        // Generar selección aleatoria de nombres
+        const seleccionAuto = elegirAleatorioNombres(num);
+        window.jugadoresSeleccionadosGlobal = seleccionAuto.slice();
+
+        // Marcar checkboxes si existen
+        const container = document.getElementById('playerSelection');
+        if (container) {
+            const checkboxes = Array.from(container.querySelectorAll('.player-checkbox'));
+            checkboxes.forEach(cb => {
+                const nombre = cb.getAttribute('data-nombre');
+                cb.checked = seleccionAuto.includes(nombre);
+            });
+        }
+
+        // Actualizar estado y cerrar listener
+        updateSimularButtonState();
+        console.info('Selección manual vía botón aleatorio:', seleccionAuto);
+    });
 }
+
+// Asegurarse de renderizar la selección inicial y mostrar el formato al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    const numJugadores = parseInt(document.getElementById('numPlayers').value);
+    mostrarFormato();
+    renderPlayerSelection(numJugadores);
+});
