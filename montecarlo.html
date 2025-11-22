@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Monte Carlo - Torneo Air Hockey</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/montecarlo.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Simulador Monte Carlo - Torneo Air Hockey</h1>
+        <p class="subtitle">Análisis probabilístico basado en 10,000 simulaciones</p>
+
+        <div class="controls">
+            <select id="numPlayers">
+                <option value="7">7 Jugadores</option>
+                <option value="8">8 Jugadores</option>
+                <option value="9">9 Jugadores</option>
+                <option value="10">10 Jugadores</option>
+            </select>
+            <select id="numSimulaciones">
+                <option value="1000">1,000 Simulaciones</option>
+                <option value="5000">5,000 Simulaciones</option>
+                <option value="10000" selected>10,000 Simulaciones</option>
+                <option value="50000">50,000 Simulaciones</option>
+                <option value="100000">100,000 Simulaciones</option>
+            </select>
+            <button onclick="simularMonteCarlo()" id="btnSimular">🚀 Iniciar Simulación</button>
+        </div>
+
+        <div id="progreso" style="display: none;">
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+                <div class="progress-text" id="progressText">0%</div>
+            </div>
+        </div>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script src="js/simulador.js"></script>
+    <script src="js/montecarlo.js"></script>
+</body>
+</html>

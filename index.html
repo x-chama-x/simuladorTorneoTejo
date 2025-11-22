@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Torneo Air Hockey</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🏑 Simulador de Torneo Air Hockey</h1>
+        
+        <div class="controls">
+            <select id="numPlayers">
+                <option value="7">7 Jugadores</option>
+                <option value="8">8 Jugadores</option>
+                <option value="9">9 Jugadores</option>
+                <option value="10">10 Jugadores</option>
+            </select>
+            <button id="simularBtn">🎲 Simular Torneo</button>
+        </div>
+
+        <!-- Contenedor dinámico donde se mostrará la selección de jugadores -->
+        <div id="playerSelection"></div>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script src="js/simulador.js"></script>
+</body>
+</html>
