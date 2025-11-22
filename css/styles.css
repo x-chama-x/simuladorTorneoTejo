@@ -202,15 +202,19 @@ select:hover {
 }
 
 .standings-inner {
-    /* Cambiado: usar block y ocupar 100% del ancho de la columna en lugar de inline-block
-       para evitar espacios en blanco a la derecha cuando hay múltiples tablas lado a lado. */
+    /* Ajuste: hacemos que el wrapper tenga el ancho del contenido (tabla) usando
+       `width: max-content`. Esto asegura que el pseudo ::before abarque exactamente
+       el ancho de la tabla desplazable y el recuadro azul acompañe el scroll. */
     display: block;
-    width: 100%;
-    min-width: 0; /* permitir que el grid reduzca la columna sin forzar overflow */
+    width: max-content;
+    min-width: 0; /* permite que el grid reduzca la columna si es necesario */
     box-sizing: border-box;
     vertical-align: top;
     position: relative; /* ahora el pseudo se dibuja sobre este wrapper */
-    overflow: hidden; /* evita que elementos internos creen artefactos visuales fuera del recuadro */
+    /* IMPORTANTE: no ocultar el overflow aquí porque puede recortar la tabla cuando su
+       ancho mínimo es mayor al del contenedor; dejamos que el contenedor .standings
+       controle el scroll horizontal. */
+    overflow: visible;
     padding: 6px; /* movimos el padding aquí para que el fondo blanco del .standings no deje franjas */
 }
 
@@ -247,10 +251,14 @@ select:hover {
 }
 
 .standings table {
-    width: 100%;
+    /* Dejar que la tabla tenga su propio ancho (auto) y que el wrapper .standings
+       maneje el scroll horizontal. Mantener un min-width para evitar compresión. */
+    width: auto;
     border-collapse: collapse;
     /* Si la tabla tiene muchas columnas, mantén un ancho mínimo y deja que el contenedor haga scroll */
-    min-width: 520px;
+    /* Aumentamos el mínimo para asegurar que las columnas (GF, GC, Pts) tengan espacio
+       en vistas de escritorio y no se corten. */
+    min-width: 640px;
 }
 
 /* Título del bloque de standings: lo estilamos para que se vea como un header sólido
@@ -308,8 +316,10 @@ select:hover {
 /* Tablas envueltas por .standings-inner (tienen el header azul representado por ::before)
    — las <th> deben ser transparentes y el texto blanco para legibilidad. */
 .standings .standings-inner table th {
-    background: transparent;
-    color: white;
+    /* No transparentes: queremos que el recuadro azul se muestre sólido y acompañe
+       el desplazamiento horizontal; el texto será blanco para contraste. */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
     padding: 15px;
     text-align: left;
     font-weight: bold;
@@ -476,10 +486,10 @@ select:hover {
    más simple: ocultamos el ::before y damos background azul a las <th> directamente,
    así evitamos transparencias y mantenemos la apariencia al scrollear. */
 .group-tables .standings-inner::before {
-    display: none;
+    display: block; /* reactivar la franja azul redondeada */
 }
 .group-tables .standings .standings-inner table th,
 .group-tables .standings > table th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: white !important;
 }
