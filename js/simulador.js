@@ -215,7 +215,7 @@ function simularTorneo() {
 
         // Tabla Grupo A
         // Envolvemos el encabezado y la tabla en .standings-inner para que el header azul cubra todo el ancho desplazable
-        html += '<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo A</h4><table>';
+        html += `<div class="standings"><div class="standings-inner"><h4 class="standings-title" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:10px 12px; margin:0 0 8px 0; border-top-left-radius:10px; border-top-right-radius:10px;">Grupo A</h4><table>`;
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
         resultadoA.rankingGrupo.forEach(r => {
             const clasificaClass = r.pos <= 2 ? 'style="background: #e8f5e9;"' : '';
@@ -233,7 +233,7 @@ function simularTorneo() {
         html += '</table></div></div>';
 
         // Tabla Grupo B
-        html += '<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo B</h4><table>';
+        html += `<div class="standings"><div class="standings-inner"><h4 class="standings-title" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:10px 12px; margin:0 0 8px 0; border-top-left-radius:10px; border-top-right-radius:10px;">Grupo B</h4><table>`;
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
         resultadoB.rankingGrupo.forEach(r => {
             const clasificaClass = r.pos <= 2 ? 'style="background: #e8f5e9;"' : '';
@@ -331,7 +331,8 @@ function simularTorneo() {
         [resultadoA, resultadoB, resultadoC].forEach((resultado, idx) => {
             const nombreGrupo = ['A', 'B', 'C'][idx];
             // Tabla Grupo X
-            html += `<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo ${nombreGrupo}</h4><table>`;
+            // Añado un estilo inline como fallback para asegurar que el encabezado siempre tenga fondo azul
+            html += `<div class="standings"><div class="standings-inner"><h4 class="standings-title" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:10px 12px; margin:0 0 8px 0; border-top-left-radius:10px; border-top-right-radius:10px;">Grupo ${nombreGrupo}</h4><table>`;
             html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
             resultado.rankingGrupo.forEach(r => {
                 const clasificaClass = r.pos === 1 ? 'style="background: #e8f5e9;"' : '';
@@ -450,7 +451,7 @@ function simularTorneo() {
         html += '<div class="group-tables">';
 
         // Tabla Grupo A
-        html += '<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo A</h4><table>';
+        html += `<div class="standings"><div class="standings-inner"><h4 class="standings-title" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:10px 12px; margin:0 0 8px 0; border-top-left-radius:10px; border-top-right-radius:10px;">Grupo A</h4><table>`;
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
         resultadoA.rankingGrupo.forEach(r => {
             const clasificaClass = r.pos <= 2 ? 'style="background: #e8f5e9;"' : '';
@@ -468,7 +469,7 @@ function simularTorneo() {
         html += '</table></div></div>';
 
         // Tabla Grupo B
-        html += '<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo B</h4><table>';
+        html += `<div class="standings"><div class="standings-inner"><h4 class="standings-title" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:10px 12px; margin:0 0 8px 0; border-top-left-radius:10px; border-top-right-radius:10px;">Grupo B</h4><table>`;
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
         resultadoB.rankingGrupo.forEach(r => {
             const clasificaClass = r.pos <= 2 ? 'style="background: #e8f5e9;"' : '';
