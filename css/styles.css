@@ -221,19 +221,12 @@ select:hover {
     pointer-events: none;
 }
 
-/* Para evitar conflictos y asegurar que el título del grupo sea siempre visible,
-   desactivamos el pseudo-elemento y pintamos el fondo directamente en el título. */
-.standings-inner::before { display: none !important; }
-.standings-inner .standings-title {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: #fff !important;
-    padding: 10px 12px !important;
-    margin: 0 0 8px 0 !important;
-    border-top-left-radius: 10px !important;
-    border-top-right-radius: 10px !important;
-    display: block !important;
+/* Asegurar que el contenido (header y tabla) quede por encima del pseudo-elemento */
+.standings-inner,
+.standings-inner .standings-title,
+.standings-inner table {
     position: relative;
-    z-index: 3;
+    z-index: 2;
 }
 
 @media (max-width: 480px) {
@@ -255,40 +248,22 @@ select:hover {
     text-align: center;
     padding: 10px 12px;
     color: white;
-    margin: 0 0 8px 0;
-    /* Fondo azul por defecto para el título del bloque (siempre visible) */
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    margin: 0;
+    /* Hacemos el fondo transparente: el pseudo ::before en .standings-inner
+       provee el fondo azul para evitar duplicados. */
+    background: transparent;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    /* Hacemos que el título se comporte como bloque de ancho completo dentro de .standings-inner */
     display: block;
-    position: relative;
-    z-index: 3;
 }
 
-/* Para las tablas dentro de .group-tables (ej. formatos 8,9,10) usamos un enfoque
-   más simple: ocultamos el ::before y damos background azul a las <th> directamente,
-   así evitamos transparencias y mantenemos la apariencia al scrollear. */
-.group-tables .standings-inner::before {
-    display: none;
-}
-.group-tables .standings .standings-inner table th,
-.group-tables .standings > table th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white !important;
-}
-
-/* Asegurar que el título del bloque (p.ej. "Grupo A" / "Grupo B") también tenga
-   fondo azul y texto visible cuando estamos en .group-tables (ocultamos ::before). */
-.group-tables .standings-inner .standings-title {
-    display: block;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white !important;
-    padding: 10px 12px;
-    margin: 0 0 8px 0;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    position: relative;
-    z-index: 3;
+/* Para que no se vea la franja blanca al desplazarse, el fondo del contenedor .standings
+   seguirá siendo blanco; sin embargo el header está dentro de .standings-inner que se desplaza
+   junto con la tabla (por eso usamos inline-block). Además, añadimos un pequeño padding
+   al contenedor .standings para crear separación y una pseudo-sombra. */
+.standings {
+    padding: 6px; /* espacio alrededor del .standings-inner */
 }
 
 .standings-inner h4.standings-title {
@@ -486,18 +461,14 @@ select:hover {
     background: transparent !important;
 }
 
-/* FORZAR VISIBILIDAD FINAL: asegurar que el título de cada standings siempre tenga fondo azul y texto blanco */
-.standings-title,
-.standings .standings-title,
-.group-tables .standings .standings-title,
-.group-tables .standings-inner .standings-title {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: #fff !important;
-    display: block !important;
-    padding: 10px 12px !important;
-    margin: 0 0 8px 0 !important;
-    border-top-left-radius: 10px !important;
-    border-top-right-radius: 10px !important;
-    position: relative !important;
-    z-index: 5 !important;
+/* Para las tablas dentro de .group-tables (ej. formatos 8,9,10) usamos un enfoque
+   más simple: ocultamos el ::before y damos background azul a las <th> directamente,
+   así evitamos transparencias y mantenemos la apariencia al scrollear. */
+.group-tables .standings-inner::before {
+    display: none;
+}
+.group-tables .standings .standings-inner table th,
+.group-tables .standings > table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
 }
