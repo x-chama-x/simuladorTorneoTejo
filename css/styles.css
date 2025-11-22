@@ -170,14 +170,105 @@ select:hover {
 .standings {
     background: white;
     border-radius: 12px;
-    overflow: hidden;
+    /* Permitir scroll horizontal en móviles para que las tablas no se salgan de la pantalla */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* suaviza el scroll en iOS */
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     margin-bottom: 30px;
+    padding: 6px; /* espacio alrededor del .standings-inner */
+}
+
+/* Permitir que los contenedores de tablas se encojan correctamente dentro de grid */
+.standings {
+    min-width: 0; /* esencial para que el grid pueda contraer las columnas y el overflow funcione */
+}
+
+/* Contenedor para las tablas de grupos (2 o más tablas) */
+.group-tables {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+/* En pantallas pequeñas, apilar las tablas para evitar overflow horizontal combinado */
+@media (max-width: 900px) {
+    .group-tables {
+        grid-template-columns: 1fr;
+    }
+}
+
+.standings-inner {
+    display: inline-block; /* shrink-wrap al contenido (tabla) para que el header tenga el mismo ancho) */
+    min-width: 520px; /* coincide con la min-width de la tabla por defecto */
+    vertical-align: top;
+}
+
+/* Pseudo background que pinta la franja azul detrás del header y evita bordes blancos al scrollear */
+.standings {
+    position: relative;
+}
+.standings::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 6px;
+    height: 44px; /* suficiente para cubrir el header */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Asegurar que el contenido (header y tabla) quede por encima del pseudo-elemento */
+.standings-inner,
+.standings-inner .standings-title,
+.standings-inner table {
+    position: relative;
+    z-index: 2;
+}
+
+@media (max-width: 480px) {
+    .standings-inner {
+        min-width: 420px;
+    }
 }
 
 .standings table {
     width: 100%;
     border-collapse: collapse;
+    /* Si la tabla tiene muchas columnas, mantén un ancho mínimo y deja que el contenedor haga scroll */
+    min-width: 520px;
+}
+
+/* Título del bloque de standings: lo estilamos para que se vea como un header sólido
+   y que no deje franjas blancas cuando el contenido se desplaza. */
+.standings-title {
+    text-align: center;
+    padding: 10px 12px;
+    color: white;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    /* Hacemos que el título se comporte como bloque de ancho completo dentro de .standings-inner */
+    display: block;
+}
+
+/* Para que no se vea la franja blanca al desplazarse, el fondo del contenedor .standings
+   seguirá siendo blanco; sin embargo el header está dentro de .standings-inner que se desplaza
+   junto con la tabla (por eso usamos inline-block). Además, añadimos un pequeño padding
+   al contenedor .standings para crear separación y una pseudo-sombra. */
+.standings {
+    padding: 6px; /* espacio alrededor del .standings-inner */
+}
+
+.standings-inner h4.standings-title {
+    /* extender ligeramente el ancho para cubrir el borde redondeado del cuadro */
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
 .standings th {
@@ -286,5 +377,27 @@ select:hover {
 
     .podium-place {
         width: 80%;
+    }
+}
+
+/* Ajustes adicionales para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .standings th, .standings td {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Relajar el min-width en móviles muy angostos para que el scroll sea menor */
+    .standings table {
+        min-width: 420px;
+    }
+
+    /* Ajustes menores de tarjetas y textos para móviles */
+    .match-card {
+        padding: 16px;
+    }
+
+    h1 {
+        font-size: 1.8em;
     }
 }
