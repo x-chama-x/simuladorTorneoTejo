@@ -202,62 +202,44 @@ select:hover {
 }
 
 .standings-inner {
-    /* Ajuste: hacemos que el wrapper tenga el ancho del contenido (tabla) usando
-       `width: max-content`. Esto asegura que el pseudo ::before abarque exactamente
-       el ancho de la tabla desplazable y el recuadro azul acompañe el scroll. */
+    /* Comportamiento por defecto: ocupar 100% del ancho del contenedor para tablas
+       standalone (ej. la tabla de CLASIFICADOS). */
     display: block;
-    width: max-content;
-    min-width: 0; /* permite que el grid reduzca la columna si es necesario */
+    width: 100%;
+    min-width: 0;
     box-sizing: border-box;
     vertical-align: top;
-    position: relative; /* ahora el pseudo se dibuja sobre este wrapper */
-    /* IMPORTANTE: no ocultar el overflow aquí porque puede recortar la tabla cuando su
-       ancho mínimo es mayor al del contenedor; dejamos que el contenedor .standings
-       controle el scroll horizontal. */
-    overflow: visible;
-    padding: 6px; /* movimos el padding aquí para que el fondo blanco del .standings no deje franjas */
-}
-
-/* Pseudo background que pinta la franja azul solo cuando existe .standings-inner
-   Ajustamos los laterales para que coincidan con el padding del contenedor y ahora
-   ocupen todo el ancho interno (left:0/right:0) para eliminar espacios blancos. */
-.standings-inner::before {
-    content: "";
-    position: absolute;
-    /* cubrir todo el ancho del .standings-inner (ya contiene el padding) */
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 44px; /* suficiente para cubrir el header */
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    z-index: 1;
-    pointer-events: none;
-}
-
-/* Asegurar que el contenido (header y tabla) quede por encima del pseudo-elemento */
-.standings-inner,
-.standings-inner .standings-title,
-.standings-inner table {
     position: relative;
-    z-index: 2;
+    overflow: visible;
+    padding: 6px;
 }
 
-@media (max-width: 480px) {
-    .standings-inner {
-        min-width: 420px;
-    }
+/* Para tablas dentro de .group-tables (varias tarjetas lado a lado) queremos
+   que el wrapper se ajuste al ancho de la tabla desplazable; aplicamos ahí
+   width: max-content para que la franja azul acompañe correctamente al deslizar. */
+.group-tables .standings-inner {
+    display: block;
+    width: max-content;
+    min-width: 0;
+    box-sizing: border-box;
+    vertical-align: top;
+    position: relative;
+    overflow: visible;
+    padding: 6px;
 }
 
 .standings table {
-    /* Dejar que la tabla tenga su propio ancho (auto) y que el wrapper .standings
-       maneje el scroll horizontal. Mantener un min-width para evitar compresión. */
+    /* Por defecto las tablas standalone ocupan todo el ancho del contenedor */
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 520px; /* fallback razonable */
+}
+
+/* Para las tablas dentro de .group-tables (grupos A/B/C) dejamos que la tabla quede
+   con su ancho natural y el wrapper controle el scroll horizontal. */
+.group-tables .standings table {
     width: auto;
     border-collapse: collapse;
-    /* Si la tabla tiene muchas columnas, mantén un ancho mínimo y deja que el contenedor haga scroll */
-    /* Aumentamos el mínimo para asegurar que las columnas (GF, GC, Pts) tengan espacio
-       en vistas de escritorio y no se corten. */
     min-width: 640px;
 }
 
@@ -492,4 +474,15 @@ select:hover {
 .group-tables .standings > table th {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: white !important;
+}
+
+/* Asegurar comportamiento correcto para tablas standalone dentro de #resultado
+    (ej. '✅ CLASIFICADOS A PLAYOFFS') */
+#resultado > .standings {
+    width: 100%;
+    margin: 30px 0; /* centrar y dar espacio vertical */
+}
+#resultado > .standings > table {
+    width: 100%;
+    min-width: 0; /* permitir que ocupe todo el ancho sin dejar espacios en blanco */
 }
