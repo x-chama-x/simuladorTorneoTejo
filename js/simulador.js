@@ -210,10 +210,12 @@ function simularTorneo() {
 
         // Tablas de posiciones
         html += '<div class="phase-title">📊 TABLAS DE POSICIONES</div>';
-        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">';
+        // Uso una clase en lugar de estilos inline para poder controlar el responsive desde CSS
+        html += '<div class="group-tables">';
 
         // Tabla Grupo A
-        html += '<div class="standings"><h4 style="text-align: center; padding: 10px; background: #667eea; color: white; margin: 0;">Grupo A</h4><table>';
+        // Envolvemos el encabezado y la tabla en .standings-inner para que el header azul cubra todo el ancho desplazable
+        html += '<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo A</h4><table>';
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
         resultadoA.rankingGrupo.forEach(r => {
             const clasificaClass = r.pos <= 2 ? 'style="background: #e8f5e9;"' : '';
@@ -228,10 +230,10 @@ function simularTorneo() {
                 <td><strong>${r.pts}</strong></td>
             </tr>`;
         });
-        html += '</table></div>';
+        html += '</table></div></div>';
 
         // Tabla Grupo B
-        html += '<div class="standings"><h4 style="text-align: center; padding: 10px; background: #667eea; color: white; margin: 0;">Grupo B</h4><table>';
+        html += '<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo B</h4><table>';
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
         resultadoB.rankingGrupo.forEach(r => {
             const clasificaClass = r.pos <= 2 ? 'style="background: #e8f5e9;"' : '';
@@ -246,7 +248,7 @@ function simularTorneo() {
                 <td><strong>${r.pts}</strong></td>
             </tr>`;
         });
-        html += '</table></div>';
+        html += '</table></div></div>';
         html += '</div>';
 
         // Los 2 primeros de cada grupo clasifican
@@ -324,11 +326,12 @@ function simularTorneo() {
 
         // Tablas
         html += '<div class="phase-title">📊 TABLAS DE POSICIONES</div>';
-        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">';
+        html += '<div class="group-tables">';
 
         [resultadoA, resultadoB, resultadoC].forEach((resultado, idx) => {
             const nombreGrupo = ['A', 'B', 'C'][idx];
-            html += `<div class="standings"><h4 style="text-align: center; padding: 10px; background: #667eea; color: white; margin: 0;">Grupo ${nombreGrupo}</h4><table>`;
+            // Tabla Grupo X
+            html += `<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo ${nombreGrupo}</h4><table>`;
             html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
             resultado.rankingGrupo.forEach(r => {
                 const clasificaClass = r.pos === 1 ? 'style="background: #e8f5e9;"' : '';
@@ -343,7 +346,7 @@ function simularTorneo() {
                     <td><strong>${r.pts}</strong></td>
                 </tr>`;
             });
-            html += '</table></div>';
+            html += '</table></div></div>';
         });
         html += '</div>';
 
@@ -444,10 +447,10 @@ function simularTorneo() {
 
         // Tablas
         html += '<div class="phase-title">📊 TABLAS DE POSICIONES</div>';
-        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">';
+        html += '<div class="group-tables">';
 
         // Tabla Grupo A
-        html += '<div class="standings"><h4 style="text-align: center; padding: 10px; background: #667eea; color: white; margin: 0;">Grupo A</h4><table>';
+        html += '<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo A</h4><table>';
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
         resultadoA.rankingGrupo.forEach(r => {
             const clasificaClass = r.pos <= 2 ? 'style="background: #e8f5e9;"' : '';
@@ -462,10 +465,10 @@ function simularTorneo() {
                 <td><strong>${r.pts}</strong></td>
             </tr>`;
         });
-        html += '</table></div>';
+        html += '</table></div></div>';
 
         // Tabla Grupo B
-        html += '<div class="standings"><h4 style="text-align: center; padding: 10px; background: #667eea; color: white; margin: 0;">Grupo B</h4><table>';
+        html += '<div class="standings"><div class="standings-inner"><h4 class="standings-title">Grupo B</h4><table>';
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
         resultadoB.rankingGrupo.forEach(r => {
             const clasificaClass = r.pos <= 2 ? 'style="background: #e8f5e9;"' : '';
@@ -480,7 +483,7 @@ function simularTorneo() {
                 <td><strong>${r.pts}</strong></td>
             </tr>`;
         });
-        html += '</table></div>';
+        html += '</table></div></div>';
         html += '</div>';
 
         // Los 2 primeros de cada grupo clasifican
@@ -646,7 +649,7 @@ function mostrarFormato() {
     } else if (numJugadores === 10) {
         html += `
             <h3>Grupos (2 grupos de 5) — 10 Jugadores</h3>
-            <p>Estructura: 2 grupos (A y B) de 5 jugadores; todos contra todos dentro del grupo.</p>
+            <p>Estructura: 2 grupos (A y B) de 5 jugadores; todos contra todos dentro de cada grupo.</p>
             <ul>
                 <li>Partidos totales (fase de grupos): 20</li>
                 <li>Clasificación: Los 2 primeros de cada grupo avanzan a playoffs (4 clasificados)</li>
