@@ -685,9 +685,41 @@ function mostrarFormato() {
     const resultado = document.getElementById('resultado');
     if (resultado) resultado.innerHTML = html;
 
-    // Además, actualizar el selector de jugadores (si aplica)
-    const numSelect = document.getElementById('numPlayers');
-    if (numSelect) renderPlayerSelection(parseInt(numSelect.value));
+    // Control explícito del contenedor de selección: si son 10 jugadores, ocultarlo
+    const container = document.getElementById('playerSelection');
+    if (container) {
+        if (numJugadores === 10) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+            container.setAttribute('aria-hidden', 'true');
+            // limpiar cualquier aviso o selección previa
+            const selWarn = document.getElementById('selectionWarning');
+            if (selWarn) selWarn.remove();
+            window.jugadoresSeleccionadosGlobal = null;
+        } else {
+            container.style.display = '';
+            container.removeAttribute('aria-hidden');
+        }
+    }
+
+    // Control del botón de selección aleatoria: ocultar o deshabilitar cuando no aplica
+    const randomBtn = document.getElementById('randomSelectBtn');
+    if (randomBtn) {
+        if (numJugadores === 10) {
+            randomBtn.disabled = true;
+            randomBtn.style.opacity = '0.6';
+            randomBtn.title = 'No aplica para 10 jugadores';
+        } else {
+            randomBtn.disabled = false;
+            randomBtn.style.opacity = '';
+            randomBtn.title = 'Seleccionar jugadores aleatoriamente';
+        }
+    }
+
+    // Llamar a renderPlayerSelection sólo si no son 10 (ya lo ocultamos arriba)
+    if (numJugadores !== 10) {
+        renderPlayerSelection(numJugadores);
+    }
 
     // Actualizar estado del botón simular según la selección/toggle
     updateSimularButtonState();
@@ -700,11 +732,16 @@ function renderPlayerSelection(numJugadores) {
 
     // Si formato 10 jugadores usamos todos y no mostramos selección
     if (numJugadores === 10) {
-        container.innerHTML = '<p>Se usarán todos los jugadores disponibles (10).</p>';
+        // ocultar por completo el selector cuando se usan los 10 jugadores
+        container.innerHTML = '';
+        container.style.display = 'none';
         window.jugadoresSeleccionadosGlobal = null;
         updateSimularButtonState();
         return;
     }
+
+    // Asegurar que el contenedor esté visible para otros formatos
+    container.style.display = '';
 
     const needed = numJugadores;
     let html = `<p>Seleccioná exactamente ${needed} jugadores:</p><div class="player-list">`;
@@ -888,7 +925,11 @@ if (randomSelectBtn) {
 
 // Asegurarse de renderizar la selección inicial y mostrar el formato al cargar
 document.addEventListener('DOMContentLoaded', () => {
-    const numJugadores = parseInt(document.getElementById('numPlayers').value);
-    mostrarFormato();
-    renderPlayerSelection(numJugadores);
+    const numSelect = document.getElementById('numPlayers');
+    if (numSelect) {
+        // Cuando cambie el formato, re-renderizamos el formato y la selección
+        numSelect.addEventListener('change', mostrarFormato);
+        // render inicial
+        mostrarFormato();
+    }
 });
