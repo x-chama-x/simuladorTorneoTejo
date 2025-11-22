@@ -202,18 +202,17 @@ select:hover {
     display: inline-block; /* shrink-wrap al contenido (tabla) para que el header tenga el mismo ancho) */
     min-width: 520px; /* coincide con la min-width de la tabla por defecto */
     vertical-align: top;
+    position: relative; /* ahora el pseudo se dibuja sobre este wrapper */
 }
 
-/* Pseudo background que pinta la franja azul detrás del header y evita bordes blancos al scrollear */
-.standings {
-    position: relative;
-}
-.standings::before {
+/* Pseudo background que pinta la franja azul solo cuando existe .standings-inner
+   (evita que tablas sin header muestren una franja azul extra). */
+.standings-inner::before {
     content: "";
     position: absolute;
-    left: 6px;
-    right: 6px;
-    top: 6px;
+    left: 0;
+    right: 0;
+    top: 0;
     height: 44px; /* suficiente para cubrir el header */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-top-left-radius: 10px;
@@ -222,12 +221,19 @@ select:hover {
     pointer-events: none;
 }
 
-/* Asegurar que el contenido (header y tabla) quede por encima del pseudo-elemento */
-.standings-inner,
-.standings-inner .standings-title,
-.standings-inner table {
+/* Para evitar conflictos y asegurar que el título del grupo sea siempre visible,
+   desactivamos el pseudo-elemento y pintamos el fondo directamente en el título. */
+.standings-inner::before { display: none !important; }
+.standings-inner .standings-title {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #fff !important;
+    padding: 10px 12px !important;
+    margin: 0 0 8px 0 !important;
+    border-top-left-radius: 10px !important;
+    border-top-right-radius: 10px !important;
+    display: block !important;
     position: relative;
-    z-index: 2;
+    z-index: 3;
 }
 
 @media (max-width: 480px) {
@@ -249,20 +255,40 @@ select:hover {
     text-align: center;
     padding: 10px 12px;
     color: white;
-    margin: 0;
+    margin: 0 0 8px 0;
+    /* Fondo azul por defecto para el título del bloque (siempre visible) */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    /* Hacemos que el título se comporte como bloque de ancho completo dentro de .standings-inner */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
     display: block;
+    position: relative;
+    z-index: 3;
 }
 
-/* Para que no se vea la franja blanca al desplazarse, el fondo del contenedor .standings
-   seguirá siendo blanco; sin embargo el header está dentro de .standings-inner que se desplaza
-   junto con la tabla (por eso usamos inline-block). Además, añadimos un pequeño padding
-   al contenedor .standings para crear separación y una pseudo-sombra. */
-.standings {
-    padding: 6px; /* espacio alrededor del .standings-inner */
+/* Para las tablas dentro de .group-tables (ej. formatos 8,9,10) usamos un enfoque
+   más simple: ocultamos el ::before y damos background azul a las <th> directamente,
+   así evitamos transparencias y mantenemos la apariencia al scrollear. */
+.group-tables .standings-inner::before {
+    display: none;
+}
+.group-tables .standings .standings-inner table th,
+.group-tables .standings > table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+}
+
+/* Asegurar que el título del bloque (p.ej. "Grupo A" / "Grupo B") también tenga
+   fondo azul y texto visible cuando estamos en .group-tables (ocultamos ::before). */
+.group-tables .standings-inner .standings-title {
+    display: block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    padding: 10px 12px;
+    margin: 0 0 8px 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    position: relative;
+    z-index: 3;
 }
 
 .standings-inner h4.standings-title {
@@ -271,12 +297,40 @@ select:hover {
     padding-right: 16px;
 }
 
-.standings th {
+/* Si por algún motivo hay tablas sin .standings-inner, queremos que su <th>
+   tengan el fondo azul — por eso detectamos el caso donde no existe .standings-inner
+   (usando la regla general .standings th ya es transparente). Para mantener compatibilidad,
+   si detectás problemas en páginas antiguas, hace un hard refresh (Ctrl+F5). */
+
+/* .phase-title + .standings th {
+    background: transparent;
+    color: #333; /* mantengo texto oscuro cuando el header principal arriba ya es azul
+} */
+
+.standings > table th {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 15px;
     text-align: left;
     font-weight: bold;
+}
+.standings > table td {
+    color: #333;
+    padding: 12px 15px;
+}
+
+/* Tablas envueltas por .standings-inner (tienen el header azul representado por ::before)
+   — las <th> deben ser transparentes y el texto blanco para legibilidad. */
+.standings .standings-inner table th {
+    background: transparent;
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: bold;
+}
+.standings .standings-inner table td {
+    color: #333;
+    padding: 12px 15px;
 }
 
 .standings td {
@@ -286,6 +340,22 @@ select:hover {
 
 .standings tr:hover {
     background: #f5f7fa;
+}
+
+/* REGLAS FINALES DE CONTRASTE: asegurar que texto siempre sea legible */
+.standings table th {
+    /* si por cualquier razón quedó transparente, forzamos texto blanco sobre azul */
+    color: #fff !important;
+}
+.standings > table td,
+.standings .standings-inner table td,
+.standings table td {
+    color: #222 !important;
+}
+/* Asegurar que los elementos <strong> no cambien el color y hereden el color del td/th */
+.standings td strong,
+.standings th strong {
+    color: inherit !important;
 }
 
 .position {
@@ -400,4 +470,34 @@ select:hover {
     h1 {
         font-size: 1.8em;
     }
+}
+
+/* Si la .standings viene justo después de una .phase-title, ocultamos la franja
+   azul interna para evitar duplicados. */
+.phase-title + .standings .standings-inner::before {
+    display: none;
+}
+
+/* Cuando ocultamos la franja interna (.standings-inner::before) porque arriba ya hay una
+   .phase-title azul, debemos asegurarnos que las cabeceras <th> dentro de esa tabla
+   sean oscuras para ser legibles sobre el fondo blanco. */
+.phase-title + .standings .standings-inner table th {
+    color: #333 !important;
+    background: transparent !important;
+}
+
+/* FORZAR VISIBILIDAD FINAL: asegurar que el título de cada standings siempre tenga fondo azul y texto blanco */
+.standings-title,
+.standings .standings-title,
+.group-tables .standings .standings-title,
+.group-tables .standings-inner .standings-title {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #fff !important;
+    display: block !important;
+    padding: 10px 12px !important;
+    margin: 0 0 8px 0 !important;
+    border-top-left-radius: 10px !important;
+    border-top-right-radius: 10px !important;
+    position: relative !important;
+    z-index: 5 !important;
 }
