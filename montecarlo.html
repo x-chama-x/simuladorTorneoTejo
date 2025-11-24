@@ -10,33 +10,52 @@
 <body>
     <div class="container">
         <h1>🎲 Simulador Monte Carlo - Torneo Air Hockey</h1>
-        <p class="subtitle">Análisis probabilístico basado en 10,000 simulaciones</p>
+        <p class="subtitle">Análisis probabilístico (Monte Carlo) — 1,000 a 10,000 simulaciones</p>
+
+        <!-- Banner superior para advertencias sobre selección -->
+        <div id="topSelectionWarning" style="display:none; background:#ffefef; color:#c0392b; padding:10px; border-radius:6px; margin-bottom:12px; font-weight:700; text-align:center;">
+            <!-- Texto inyectado desde JS -->
+        </div>
 
         <div class="controls">
+            <label for="numPlayers" style="display:none;">Número de jugadores</label>
             <select id="numPlayers">
                 <option value="7">7 Jugadores</option>
                 <option value="8">8 Jugadores</option>
                 <option value="9">9 Jugadores</option>
                 <option value="10">10 Jugadores</option>
             </select>
+
+            <label for="numSimulaciones" style="display:none;">Cantidad de simulaciones</label>
             <select id="numSimulaciones">
                 <option value="1000">1,000 Simulaciones</option>
                 <option value="5000">5,000 Simulaciones</option>
                 <option value="10000" selected>10,000 Simulaciones</option>
-                <option value="50000">50,000 Simulaciones</option>
-                <option value="100000">100,000 Simulaciones</option>
             </select>
-            <button onclick="simularMonteCarlo()" id="btnSimular">🚀 Iniciar Simulación</button>
+
+            <!-- Botón para selección aleatoria de jugadores (aplica solo cuando no son 10) -->
+            <button id="randomSelectBtn" title="Seleccionar jugadores aleatoriamente">🎲 Selección Aleatoria</button>
+
+            <!-- Nota: el botón de simulación única fue removido de esta página (se mantiene en index.html) -->
+
+            <!-- Botón para lanzar la simulación Monte Carlo (múltiples iteraciones). `montecarlo.js` usa este id en su lógica -->
+            <button id="btnSimular" title="Iniciar simulaciones Monte Carlo">🚀 Iniciar Simulación Monte Carlo</button>
+
+            <!-- Enlace al Simulador normal (index.html) -->
+            <a href="index.html" id="simulatorLink" title="Abrir Simulador" target="_blank" style="display:inline-block; margin-left:8px; padding:8px 12px; background:#43a047; color:white; border-radius:6px; text-decoration:none; font-weight:700;">🏠 Ir al Simulador</a>
         </div>
 
-        <div id="progreso" style="display: none;">
+        <!-- Contenedor donde se renderiza el selector de jugadores (checkboxes) -->
+        <div id="playerSelection" style="margin-top:12px;"></div>
+
+        <div id="progreso" style="display: none; margin-top:12px;">
             <div class="progress-container">
                 <div class="progress-bar" id="progressBar"></div>
                 <div class="progress-text" id="progressText">0%</div>
             </div>
         </div>
 
-        <div id="resultado"></div>
+        <div id="resultado" style="margin-top:18px;"></div>
     </div>
 
     <script src="js/simulador.js"></script>
