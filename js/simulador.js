@@ -1,18 +1,18 @@
 const jugadoresBase = [
-    { nombre: 'Chama', ranking: 198, winRate: 0.69, promedioGoles: 6.5 },
-    { nombre: 'Facu', ranking: 126, winRate: 0.50, promedioGoles: 5.8 },
-    { nombre: 'Tomy', ranking: 118, winRate: 0.63, promedioGoles: 6.2 },
-    { nombre: 'Marco', ranking: 76, winRate: 0.60, promedioGoles: 6.2 },
-    { nombre: 'Lucas', ranking: 50, winRate: 1.00, promedioGoles: 6.0 },
-    { nombre: 'Rafa', ranking: 35, winRate: 0.50, promedioGoles: 5.9 },
-    { nombre: 'Pedro', ranking: 21, winRate: 0.50, promedioGoles: 5.5 },
-    { nombre: 'Hector', ranking: 20, winRate: 0.17, promedioGoles: 4.7 }
+    { nombre: 'Chama', ranking: 198, winRate: 0.7368, promedioGoles: 6.47 },
+    { nombre: 'Facu', ranking: 126, winRate: 0.6154, promedioGoles: 5.92 },
+    { nombre: 'Tomy', ranking: 118, winRate: 0.6923, promedioGoles: 6.54 },
+    { nombre: 'Marco', ranking: 76, winRate: 0.60, promedioGoles: 6.1 },
+    { nombre: 'Lucas', ranking: 50, winRate: 0.75, promedioGoles: 5.75 },
+    { nombre: 'Rafa', ranking: 35, winRate: 0.3636, promedioGoles: 5.42 },
+    { nombre: 'Pedro', ranking: 21, winRate: 0.3333, promedioGoles: 5.67 },
+    { nombre: 'Hector', ranking: 20, winRate: 0.1667, promedioGoles: 4.67 }
 ];
 
 const nuevosJugadores = [
-    { nombre: 'Mateo', ranking: 17, winRate: 0.50, promedioGoles: 5.5 },
-    { nombre: 'Santi', ranking: 5, winRate: 0.25, promedioGoles: 4.7 },
-    { nombre: 'Kovic', ranking: 5, winRate: 0.00, promedioGoles: 4.5 }
+    { nombre: 'Mateo', ranking: 17, winRate: 0.50, promedioGoles: 5.0 },
+    { nombre: 'Santi', ranking: 5, winRate: 0.2308, promedioGoles: 4.77 },
+    { nombre: 'Kovic', ranking: 5, winRate: 0.00, promedioGoles: 2.6 }
 ];
 
 // Agrego la lista combinada de jugadores disponibles y una variable global para la selección
