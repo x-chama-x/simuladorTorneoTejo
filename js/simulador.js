@@ -1,17 +1,18 @@
 const jugadoresBase = [
-    { nombre: 'Chama', ranking: 100, winRate: 0.69, promedioGoles: 6.5 },
-    { nombre: 'Rafa', ranking: 80, winRate: 0.50, promedioGoles: 5.9 },
-    { nombre: 'Tomy', ranking: 60, winRate: 0.63, promedioGoles: 6.2 },
-    { nombre: 'Marco', ranking: 50, winRate: 0.60, promedioGoles: 6.2 },
-    { nombre: 'Facu', ranking: 40, winRate: 0.50, promedioGoles: 5.8 },
-    { nombre: 'Santi', ranking: 30, winRate: 0.25, promedioGoles: 4.7 },
+    { nombre: 'Chama', ranking: 198, winRate: 0.69, promedioGoles: 6.5 },
+    { nombre: 'Facu', ranking: 126, winRate: 0.50, promedioGoles: 5.8 },
+    { nombre: 'Tomy', ranking: 118, winRate: 0.63, promedioGoles: 6.2 },
+    { nombre: 'Marco', ranking: 76, winRate: 0.60, promedioGoles: 6.2 },
+    { nombre: 'Lucas', ranking: 50, winRate: 1.00, promedioGoles: 6.0 },
+    { nombre: 'Rafa', ranking: 35, winRate: 0.50, promedioGoles: 5.9 },
+    { nombre: 'Pedro', ranking: 21, winRate: 0.50, promedioGoles: 5.5 },
     { nombre: 'Hector', ranking: 20, winRate: 0.17, promedioGoles: 4.7 }
 ];
 
 const nuevosJugadores = [
-    { nombre: 'Mateo', ranking: 15, winRate: 0.50, promedioGoles: 5.5 },
-    { nombre: 'Kovic', ranking: 15, winRate: 0.00, promedioGoles: 4.5 },
-    { nombre: 'Lucas', ranking: 15, winRate: 1.00, promedioGoles: 6.0 }
+    { nombre: 'Mateo', ranking: 17, winRate: 0.50, promedioGoles: 5.5 },
+    { nombre: 'Santi', ranking: 5, winRate: 0.25, promedioGoles: 4.7 },
+    { nombre: 'Kovic', ranking: 5, winRate: 0.00, promedioGoles: 4.5 }
 ];
 
 // Agrego la lista combinada de jugadores disponibles y una variable global para la selección
@@ -924,45 +925,57 @@ function mostrarFormato() {
         html += '<p>Selecciona el número de jugadores y presiona "Simular Torneo" para ejecutar la simulación.</p>';
     }
 
+    // Agregar sección del ranking FIFA actual
+    html += `
+        <div class="phase-title" style="margin-top: 20px;">🏆 RANKING FIFA ACTUAL</div>
+        <div class="standings" style="margin-bottom: 20px;">
+            <table>
+                <tr>
+                    <th>Pos</th>
+                    <th>Jugador</th>
+                    <th>Puntos</th>
+                </tr>
+    `;
+
+    // Ordenar jugadores por ranking (mayor a menor)
+    const jugadoresOrdenados = [...jugadoresDisponibles].sort((a, b) => b.ranking - a.ranking);
+    jugadoresOrdenados.forEach((j, index) => {
+        const medalla = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+        html += `
+            <tr>
+                <td class="position">${index + 1}° ${medalla}</td>
+                <td><strong>${j.nombre}</strong></td>
+                <td>${j.ranking} pts</td>
+            </tr>
+        `;
+    });
+
+    html += `
+            </table>
+        </div>
+    `;
+
     // Mostrar también la sección de selección de jugadores (si existe) debajo del formato
     const resultado = document.getElementById('resultado');
     if (resultado) resultado.innerHTML = html;
 
-    // Control explícito del contenedor de selección: si son 10 jugadores, ocultarlo
+    // Control explícito del contenedor de selección: mostrar para todos los formatos (incluyendo 10 jugadores)
     const container = document.getElementById('playerSelection');
     if (container) {
-        if (numJugadores === 10) {
-            container.innerHTML = '';
-            container.style.display = 'none';
-            container.setAttribute('aria-hidden', 'true');
-            // limpiar cualquier aviso o selección previa
-            const selWarn = document.getElementById('selectionWarning');
-            if (selWarn) selWarn.remove();
-            window.jugadoresSeleccionadosGlobal = null;
-        } else {
-            container.style.display = '';
-            container.removeAttribute('aria-hidden');
-        }
+        container.style.display = '';
+        container.removeAttribute('aria-hidden');
     }
 
-    // Control del botón de selección aleatoria: ocultar o deshabilitar cuando no aplica
+    // Control del botón de selección aleatoria: siempre habilitado ahora que hay 11 jugadores
     const randomBtn = document.getElementById('randomSelectBtn');
     if (randomBtn) {
-        if (numJugadores === 10) {
-            randomBtn.disabled = true;
-            randomBtn.style.opacity = '0.6';
-            randomBtn.title = 'No aplica para 10 jugadores';
-        } else {
-            randomBtn.disabled = false;
-            randomBtn.style.opacity = '';
-            randomBtn.title = 'Seleccionar jugadores aleatoriamente';
-        }
+        randomBtn.disabled = false;
+        randomBtn.style.opacity = '';
+        randomBtn.title = 'Seleccionar jugadores aleatoriamente';
     }
 
-    // Llamar a renderPlayerSelection sólo si no son 10 (ya lo ocultamos arriba)
-    if (numJugadores !== 10) {
-        renderPlayerSelection(numJugadores);
-    }
+    // Llamar a renderPlayerSelection para todos los formatos
+    renderPlayerSelection(numJugadores);
 
     // Actualizar estado del botón simular según la selección
     updateSimularButtonState();
@@ -973,17 +986,7 @@ function renderPlayerSelection(numJugadores) {
     const container = document.getElementById('playerSelection');
     if (!container) return;
 
-    // Si formato 10 jugadores usamos todos y no mostramos selección
-    if (numJugadores === 10) {
-        // ocultar por completo el selector cuando se usan los 10 jugadores
-        container.innerHTML = '';
-        container.style.display = 'none';
-        window.jugadoresSeleccionadosGlobal = null;
-        updateSimularButtonState();
-        return;
-    }
-
-    // Asegurar que el contenedor esté visible para otros formatos
+    // Asegurar que el contenedor esté visible para todos los formatos
     container.style.display = '';
 
     const needed = numJugadores;
@@ -1023,9 +1026,6 @@ function renderPlayerSelection(numJugadores) {
 }
 
 function obtenerJugadoresSeleccionadosPorNombre(numJugadores) {
-    if (numJugadores === 10) {
-        return jugadoresDisponibles.slice(0, 10);
-    }
 
     // Si no hay selección manual, no auto-seleccionar aquí: devolver vacío para forzar validación externa
     if (!window.jugadoresSeleccionadosGlobal || window.jugadoresSeleccionadosGlobal.length !== numJugadores) {
@@ -1044,13 +1044,6 @@ function updateSimularButtonState() {
 
     const num = parseInt(numSelectEl.value);
 
-    // Caso especial: 10 jugadores -> siempre permitido (no hay selección manual que hacer)
-    if (num === 10) {
-        if (simBtnEl) simBtnEl.disabled = false;
-        mcBtnEl.disabled = false;
-        if (topWarn) topWarn.style.display = 'none';
-        return;
-    }
 
     // Contar checkboxes marcados en el DOM (si existe el contenedor)
     const container = document.getElementById('playerSelection');
@@ -1084,30 +1077,28 @@ if (simBtn) {
     simBtn.addEventListener('click', () => {
         const num = parseInt(document.getElementById('numPlayers').value);
         const seleccion = obtenerJugadoresSeleccionadosPorNombre(num);
-        if (num !== 10 && seleccion.length !== num) {
+        if (seleccion.length !== num) {
             alert(`Por favor seleccioná exactamente ${num} jugadores antes de simular.`);
             return;
         }
         // Llamamos a simularTorneo pero inyectando la selección temporalmente
         // Guardamos jugadoresBase original
         const originalBase = [...jugadoresBase];
-        // Reemplazamos jugadoresBase por la selección (si aplica)
-        if (num !== 10) {
-            let seleccionCompleta = [...seleccion];
-            if (seleccionCompleta.length < num) {
-                const faltan = num - seleccionCompleta.length;
-                for (let i = 0; i < faltan; i++) {
-                    if (nuevosJugadores[i]) seleccionCompleta.push(nuevosJugadores[i]);
-                }
+        // Reemplazamos jugadoresBase por la selección
+        let seleccionCompleta = [...seleccion];
+        if (seleccionCompleta.length < num) {
+            const faltan = num - seleccionCompleta.length;
+            for (let i = 0; i < faltan; i++) {
+                if (nuevosJugadores[i]) seleccionCompleta.push(nuevosJugadores[i]);
             }
-            // reescribimos jugadoresBase temporalmente
-            for (let i = 0; i < jugadoresBase.length; i++) {
-                jugadoresBase[i] = seleccionCompleta[i] || jugadoresBase[i];
-            }
-            // Si hay más seleccionados que jugadoresBase originales, extendemos
-            if (seleccionCompleta.length > jugadoresBase.length) {
-                for (let i = jugadoresBase.length; i < seleccionCompleta.length; i++) jugadoresBase.push(seleccionCompleta[i]);
-            }
+        }
+        // reescribimos jugadoresBase temporalmente
+        for (let i = 0; i < jugadoresBase.length; i++) {
+            jugadoresBase[i] = seleccionCompleta[i] || jugadoresBase[i];
+        }
+        // Si hay más seleccionados que jugadoresBase originales, extendemos
+        if (seleccionCompleta.length > jugadoresBase.length) {
+            for (let i = jugadoresBase.length; i < seleccionCompleta.length; i++) jugadoresBase.push(seleccionCompleta[i]);
         }
 
         // Ejecutar la simulación (usa la variable jugadoresBase modificada)
@@ -1126,7 +1117,6 @@ if (randomSelectBtn) {
         const numSelectEl = document.getElementById('numPlayers');
         if (!numSelectEl) return;
         const num = parseInt(numSelectEl.value);
-        if (num === 10) return; // no aplica
 
         // Generar selección aleatoria de nombres
         const seleccionAuto = elegirAleatorioNombres(num);

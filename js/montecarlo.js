@@ -234,21 +234,15 @@ async function simularMonteCarlo() {
     // Inicializar contadores
     const estadisticas = {};
 
-    // Construir lista de jugadores participantes según selección o por defecto
+    // Construir lista de jugadores participantes según selección
     let jugadoresParticipantes;
-    if (numJugadores === 10) {
-        jugadoresParticipantes = [...jugadoresBase];
-        const jugadoresNecesarios = numJugadores - jugadoresBase.length;
-        for (let i = 0; i < jugadoresNecesarios; i++) jugadoresParticipantes.push(nuevosJugadores[i]);
-    } else {
-        const seleccion = obtenerJugadoresSeleccionadosPorNombre(numJugadores);
-        jugadoresParticipantes = seleccion.slice();
-        // si por algún motivo la selección no está completa, completamos con nuevosJugadores
-        if (jugadoresParticipantes.length < numJugadores) {
-            const faltan = numJugadores - jugadoresParticipantes.length;
-            for (let i = 0; i < faltan; i++) {
-                if (nuevosJugadores[i]) jugadoresParticipantes.push(nuevosJugadores[i]);
-            }
+    const seleccion = obtenerJugadoresSeleccionadosPorNombre(numJugadores);
+    jugadoresParticipantes = seleccion.slice();
+    // si por algún motivo la selección no está completa, completamos con nuevosJugadores
+    if (jugadoresParticipantes.length < numJugadores) {
+        const faltan = numJugadores - jugadoresParticipantes.length;
+        for (let i = 0; i < faltan; i++) {
+            if (nuevosJugadores[i]) jugadoresParticipantes.push(nuevosJugadores[i]);
         }
     }
 
