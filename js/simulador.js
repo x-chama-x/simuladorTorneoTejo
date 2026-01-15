@@ -49,14 +49,28 @@ function simularPartido(jugador1, jugador2) {
 
     let goles1, goles2;
 
+    // Calcular diferencia de goles basada en promedioGoles
+    const promGanador = gana1 ? jugador1.promedioGoles : jugador2.promedioGoles;
+    const promPerdedor = gana1 ? jugador2.promedioGoles : jugador1.promedioGoles;
+
+    // Diferencia base según los promedios (mayor diferencia = partidos más contundentes)
+    const diffPromedio = promGanador - promPerdedor;
+
+    // La diferencia de goles va de 1 a 7, influenciada por la diferencia de promedios
+    // diffPromedio puede ir de -2 a +2 aproximadamente
+    // Convertimos a un bonus de 0 a 2 para la diferencia
+    const bonusDiff = Math.max(0, Math.min(2, diffPromedio));
+
+    // Diferencia base aleatoria (1-4) + bonus por diferencia de nivel
+    const diffBase = Math.floor(Math.random() * 4) + 1;
+    const diffFinal = Math.min(7, Math.round(diffBase + bonusDiff));
+
     if (gana1) {
         goles1 = 7;
-        const diff = Math.floor(Math.random() * 4) + 1;
-        goles2 = Math.max(0, 7 - diff);
+        goles2 = Math.max(0, 7 - diffFinal);
     } else {
         goles2 = 7;
-        const diff = Math.floor(Math.random() * 4) + 1;
-        goles1 = Math.max(0, 7 - diff);
+        goles1 = Math.max(0, 7 - diffFinal);
     }
 
     return {
