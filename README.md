@@ -1,7 +1,7 @@
 # 🏒 Simulador de Torneo Air Hockey
 
 Simulador web para torneos de la RESISTENCIA (amigos de x_chama_x) de Air Hockey (Tejo) que permite simular competencias entre jugadores con diferentes formatos de torneo y análisis estadístico mediante simulaciones Monte Carlo.
-
+Link: https://x-chama-x.github.io/simuladorTorneoTejo/index.html
 ## 🎮 Características
 
 ### Simulador de Torneo Individual
@@ -93,4 +93,4 @@ simuladorTorneoTejo/
 
 ---
 
-*Desarrollado por x_chama_x* 🏒
+*Desarrollado por x_chama_x* 
