@@ -21,14 +21,19 @@ Link: https://x-chama-x.github.io/simuladorTorneoTejo/index.html
 
 ## 📊 Formatos de Torneo Soportados
 
-| Jugadores | Formato | Partidos (Grupos) | Clasifican |
-|-----------|---------|-------------------|------------|
-| 7 | Liga (Round Robin) | 21 | Top 4 |
-| 8 | 2 grupos de 4 | 12 | 2 por grupo |
-| 9 | 3 grupos de 3 | 9 | 1° de cada grupo + mejor 2° |
-| 10 | 2 grupos de 5 | 20 | 2 por grupo |
+| Jugadores | Formato | Partidos Total | Clasifican |
+|-----------|---------|----------------|------------|
+| 7 | Liga (Round Robin) | 25 | Top 4 |
+| 8 | 2 grupos de 4 | 16 | 2 por grupo |
+| 9 | 3 grupos de 3 + Repechajes | 20 | 1° de grupos + ganador eliminatorio |
+| 10 | 2 grupos de 5 | 24 | 2 por grupo |
 
-Todos los formatos incluyen playoffs: **Semifinales + Tercer Puesto + Final**
+### Formato especial de 9 jugadores:
+1. **Fase de grupos**: 3 grupos de 3 (9 partidos)
+2. **Repechaje 2° puestos**: Mini-liga entre los 3 segundos (3 partidos) → Solo el 1° avanza
+3. **Repechaje 3° puestos**: Mini-liga entre los 3 terceros (3 partidos) → Solo el 1° avanza
+4. **Partido eliminatorio**: 1° rep. segundos vs 1° rep. terceros (1 partido) → Ganador clasifica
+5. **Playoffs**: Semifinales + 3er puesto + Final (4 partidos)
 
 ## 🎯 Sistema de Simulación
 

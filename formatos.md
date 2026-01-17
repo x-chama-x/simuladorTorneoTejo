@@ -50,16 +50,38 @@ Estructura:
 Fase de grupos: todos contra todos dentro del grupo.
 
 
-Partidos: 9 en fase de grupos.
-Clasificación:
+Partidos en fase de grupos: 9 partidos.
 
-El primero de cada grupo + el mejor segundo (total 4) avanzan a playoffs.
-Si hay empate entre segundos, eliminación directa.
+Repechaje 2° Puestos (Mini-Liga):
+
+Los 3 segundos de cada grupo juegan todos contra todos (3 partidos).
+Solo el 1° avanza al partido eliminatorio.
+2° y 3° quedan eliminados.
 
 
-Playoffs: Semifinales + Final.
-Costo estimado: $16,800 (precio por partido $1,200).
-Precio por jugador: $2,000 aprox.
+Repechaje 3° Puestos (Mini-Liga):
+
+Los 3 terceros de cada grupo juegan todos contra todos (3 partidos).
+Solo el 1° avanza al partido eliminatorio.
+2° y 3° quedan eliminados.
+
+
+Partido Eliminatorio Pre-Playoffs:
+
+1° del repechaje de segundos vs 1° del repechaje de terceros.
+El ganador clasifica como 4° a playoffs.
+
+
+Clasificación a Playoffs:
+
+3 primeros de cada grupo (directo).
+Ganador del partido eliminatorio.
+Total: 4 clasificados.
+
+
+Total de Partidos: 9 (grupos) + 3 (rep. 2°) + 3 (rep. 3°) + 1 (eliminatorio) + 4 (playoffs) = 20 partidos.
+Costo estimado: $24,000 (precio por partido $1,200).
+Precio por jugador: $2,667 aprox.
 
 
 

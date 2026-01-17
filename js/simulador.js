@@ -425,8 +425,6 @@ function simularTorneo() {
 
         [resultadoA, resultadoB, resultadoC].forEach((resultado, idx) => {
             const nombreGrupo = ['A', 'B', 'C'][idx];
-            // Tabla Grupo X
-            // Añado un estilo inline como fallback para asegurar que el encabezado siempre tenga fondo azul
             html += `<div class="standings"><div class="standings-inner"><h4 class="standings-title" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:10px 12px; margin:0 0 8px 0; border-top-left-radius:10px; border-top-right-radius:10px;">Grupo ${nombreGrupo}</h4><table>`;
             html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
             resultado.rankingGrupo.forEach(r => {
@@ -446,7 +444,7 @@ function simularTorneo() {
         });
         html += '</div>';
 
-        // Clasifican los 3 primeros + mejor segundo
+        // Clasifican los 3 primeros de cada grupo directo
         const primeros = [
             resultadoA.rankingGrupo[0],
             resultadoB.rankingGrupo[0],
@@ -459,32 +457,32 @@ function simularTorneo() {
             resultadoC.rankingGrupo[1]
         ];
 
-        // Nuevo comportamiento: los 3 mejores segundos juegan una mini-liga (3 partidos, todos contra todos)
-        // y el primero de esa mini-tabla pasa a playoffs. Se muestra una tabla especial y los partidos.
-        let mejorSegundo;
-        // Construir objetos jugador completos (buscar en la lista 'jugadores')
+        const terceros = [
+            resultadoA.rankingGrupo[2],
+            resultadoB.rankingGrupo[2],
+            resultadoC.rankingGrupo[2]
+        ];
+
+        // ========== MINI-LIGA ENTRE SEGUNDOS ==========
         const candidatosSegundos = segundos.map(s => ({
             nombre: s.nombre,
             grupo: s.grupo,
-            // buscamos el objeto completo en la lista mezclada 'jugadores' usada en esta simulación
             data: jugadores.find(j => j.nombre === s.nombre) || jugadoresDisponibles.find(j => j.nombre === s.nombre) || { nombre: s.nombre, ranking: 50, winRate: 0.5, promedioGoles: 5 }
         }));
 
-        // Inicializar estadísticas de mini-liga
-        const miniStats = {};
+        const miniStatsSegundos = {};
         candidatosSegundos.forEach(c => {
-            miniStats[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
+            miniStatsSegundos[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
         });
 
-        // Simular los 3 partidos: (0 vs 1), (0 vs 2), (1 vs 2)
-        const miniPartidos = [];
+        const miniPartidosSegundos = [];
         for (let i = 0; i < candidatosSegundos.length; i++) {
             for (let j = i + 1; j < candidatosSegundos.length; j++) {
                 const j1 = candidatosSegundos[i].data;
                 const j2 = candidatosSegundos[j].data;
                 const resultadoMini = simularPartido(j1, j2);
 
-                miniPartidos.push({
+                miniPartidosSegundos.push({
                     azul: j1.nombre,
                     rojo: j2.nombre,
                     golesAzul: resultadoMini.goles1,
@@ -492,15 +490,13 @@ function simularTorneo() {
                     ganador: resultadoMini.ganador
                 });
 
-                // actualizar stats (mismo criterio que en simularGrupo: pts acumulados como goles)
-                miniStats[j1.nombre].pj++;
-                miniStats[j2.nombre].pj++;
-                miniStats[j1.nombre].gf += resultadoMini.goles1;
-                miniStats[j1.nombre].gc += resultadoMini.goles2;
-                miniStats[j2.nombre].gf += resultadoMini.goles2;
-                miniStats[j2.nombre].gc += resultadoMini.goles1;
+                miniStatsSegundos[j1.nombre].pj++;
+                miniStatsSegundos[j2.nombre].pj++;
+                miniStatsSegundos[j1.nombre].gf += resultadoMini.goles1;
+                miniStatsSegundos[j1.nombre].gc += resultadoMini.goles2;
+                miniStatsSegundos[j2.nombre].gf += resultadoMini.goles2;
+                miniStatsSegundos[j2.nombre].gc += resultadoMini.goles1;
 
-                // Actualizar estadísticas globales (mini-liga cuenta como fase de liga)
                 if (estadisticasJugadores[j1.nombre]) {
                     estadisticasJugadores[j1.nombre].golesLiga += resultadoMini.goles1;
                     estadisticasJugadores[j1.nombre].partidosJugados++;
@@ -511,31 +507,29 @@ function simularTorneo() {
                 }
 
                 if (resultadoMini.ganador === j1.nombre) {
-                    miniStats[j1.nombre].pg++;
-                    miniStats[j2.nombre].pp++;
-                    miniStats[j1.nombre].pts += resultadoMini.goles1;
-                    miniStats[j2.nombre].pts += resultadoMini.goles2;
+                    miniStatsSegundos[j1.nombre].pg++;
+                    miniStatsSegundos[j2.nombre].pp++;
+                    miniStatsSegundos[j1.nombre].pts += resultadoMini.goles1;
+                    miniStatsSegundos[j2.nombre].pts += resultadoMini.goles2;
                 } else {
-                    miniStats[j2.nombre].pg++;
-                    miniStats[j1.nombre].pp++;
-                    miniStats[j2.nombre].pts += resultadoMini.goles2;
-                    miniStats[j1.nombre].pts += resultadoMini.goles1;
+                    miniStatsSegundos[j2.nombre].pg++;
+                    miniStatsSegundos[j1.nombre].pp++;
+                    miniStatsSegundos[j2.nombre].pts += resultadoMini.goles2;
+                    miniStatsSegundos[j1.nombre].pts += resultadoMini.goles1;
                 }
             }
         }
 
-        // Generar ranking de la mini-liga
-        const rankingMini = Object.entries(miniStats)
+        const rankingSegundos = Object.entries(miniStatsSegundos)
             .map(entry => ({ nombre: entry[0], ...entry[1] }))
             .sort((a, b) => b.pts - a.pts || b.pg - a.pg || (b.gf - b.gc) - (a.gf - a.gc));
 
-        // Construir HTML de mini-liga (partidos + tabla)
-        html += '<div class="phase-title">⚖️ MINI-LIGA ENTRE 2° (3 PARTIDOS)</div>';
+        html += '<div class="phase-title">⚖️ REPECHAJE 2° PUESTOS - MINI-LIGA (3 PARTIDOS)</div>';
         html += '<div class="matches-grid">';
-        miniPartidos.forEach((p, idx) => {
+        miniPartidosSegundos.forEach((p, idx) => {
             html += `
                 <div class="match-card">
-                    <div class="match-number">Desempate ${idx + 1}</div>
+                    <div class="match-number">Repechaje 2° - Partido ${idx + 1}</div>
                     <div class="match-players">
                         <div class="player blue">${p.azul}</div>
                         <div class="vs">VS</div>
@@ -550,7 +544,7 @@ function simularTorneo() {
 
         html += '<div class="standings"><table>';
         html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
-        rankingMini.forEach((r, index) => {
+        rankingSegundos.forEach((r, index) => {
             const highlight = index === 0 ? 'style="background: #fff9c4;"' : '';
             html += `<tr ${highlight}>
                 <td class="position">${index + 1}°</td>
@@ -564,51 +558,94 @@ function simularTorneo() {
             </tr>`;
         });
         html += '</table></div>';
+        html += '<p style="text-align:center; color:#e67e22; font-weight:600;">🔶 Solo el 1° avanza al Partido Eliminatorio | 2° y 3° quedan eliminados</p>';
 
-        // Determinar mejorSegundo a partir del rankingMini
-        mejorSegundo = rankingMini[0];
+        // ========== REPECHAJE ENTRE TERCEROS ==========
+        const candidatosTerceros = terceros.map(t => ({
+            nombre: t.nombre,
+            grupo: t.grupo,
+            data: jugadores.find(j => j.nombre === t.nombre) || jugadoresDisponibles.find(j => j.nombre === t.nombre) || { nombre: t.nombre, ranking: 50, winRate: 0.5, promedioGoles: 5 }
+        }));
 
-        // Si hay empate absoluto en la mini-liga (mismo pts, pg y gd para el top), desempatar aleatoriamente
-        if (rankingMini.length > 1) {
-            const topPts = rankingMini[0].pts;
-            const topPg = rankingMini[0].pg;
-            const topGd = rankingMini[0].gf - rankingMini[0].gc;
-            const empatadosTop = rankingMini.filter(r => r.pts === topPts && r.pg === topPg && (r.gf - r.gc) === topGd);
-            if (empatadosTop.length > 1) {
-                if (empatadosTop.length === 2) {
-                    // Desempate por enfrentamiento directo dentro de la mini-liga
-                    const a = empatadosTop[0].nombre;
-                    const b = empatadosTop[1].nombre;
-                    const partido = miniPartidos.find(p => (p.azul === a && p.rojo === b) || (p.azul === b && p.rojo === a));
-                    if (partido) {
-                        const ganadorHead = partido.ganador;
-                        const elegido = rankingMini.find(r => r.nombre === ganadorHead) || empatadosTop.find(r => r.nombre === ganadorHead);
-                        html += `<p style="color:#16a34a; font-weight:700;">Desempate por enfrentamiento directo: ${ganadorHead} venció a ${ganadorHead === a ? b : a} en la mini-liga; por lo tanto es el mejor 2°.</p>`;
-                        mejorSegundo = elegido;
-                    } else {
-                        // Caso improbable: no se encontró el partido -> fallback aleatorio
-                        const elegido = empatadosTop[Math.floor(Math.random() * empatadosTop.length)];
-                        html += `<p style="color:#c0392b; font-weight:700;">Nota: Hubo empate absoluto entre ${empatadosTop.map(e=>e.nombre).join(', ')}. No se encontró el enfrentamiento directo; se eligió aleatoriamente a ${elegido.nombre} como mejor 2°.</p>`;
-                        mejorSegundo = elegido;
-                    }
+        const miniStatsTerceros = {};
+        candidatosTerceros.forEach(c => {
+            miniStatsTerceros[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
+        });
+
+        const miniPartidosTerceros = [];
+        for (let i = 0; i < candidatosTerceros.length; i++) {
+            for (let j = i + 1; j < candidatosTerceros.length; j++) {
+                const j1 = candidatosTerceros[i].data;
+                const j2 = candidatosTerceros[j].data;
+                const resultadoMini = simularPartido(j1, j2);
+
+                miniPartidosTerceros.push({
+                    azul: j1.nombre,
+                    rojo: j2.nombre,
+                    golesAzul: resultadoMini.goles1,
+                    golesRojo: resultadoMini.goles2,
+                    ganador: resultadoMini.ganador
+                });
+
+                miniStatsTerceros[j1.nombre].pj++;
+                miniStatsTerceros[j2.nombre].pj++;
+                miniStatsTerceros[j1.nombre].gf += resultadoMini.goles1;
+                miniStatsTerceros[j1.nombre].gc += resultadoMini.goles2;
+                miniStatsTerceros[j2.nombre].gf += resultadoMini.goles2;
+                miniStatsTerceros[j2.nombre].gc += resultadoMini.goles1;
+
+                if (estadisticasJugadores[j1.nombre]) {
+                    estadisticasJugadores[j1.nombre].golesLiga += resultadoMini.goles1;
+                    estadisticasJugadores[j1.nombre].partidosJugados++;
+                }
+                if (estadisticasJugadores[j2.nombre]) {
+                    estadisticasJugadores[j2.nombre].golesLiga += resultadoMini.goles2;
+                    estadisticasJugadores[j2.nombre].partidosJugados++;
+                }
+
+                if (resultadoMini.ganador === j1.nombre) {
+                    miniStatsTerceros[j1.nombre].pg++;
+                    miniStatsTerceros[j2.nombre].pp++;
+                    miniStatsTerceros[j1.nombre].pts += resultadoMini.goles1;
+                    miniStatsTerceros[j2.nombre].pts += resultadoMini.goles2;
                 } else {
-                    // Empate entre 3 o más -> mantener elección aleatoria
-                    const elegido = empatadosTop[Math.floor(Math.random() * empatadosTop.length)];
-                    html += `<p style="color:#c0392b; font-weight:700;">Nota: Hubo empate absoluto en la mini-liga entre ${empatadosTop.map(e=>e.nombre).join(', ')}. Se eligió aleatoriamente a ${elegido.nombre} como mejor 2°.</p>`;
-                    mejorSegundo = elegido;
+                    miniStatsTerceros[j2.nombre].pg++;
+                    miniStatsTerceros[j1.nombre].pp++;
+                    miniStatsTerceros[j2.nombre].pts += resultadoMini.goles2;
+                    miniStatsTerceros[j1.nombre].pts += resultadoMini.goles1;
                 }
             }
         }
 
-        html += '<div class="phase-title">✅ CLASIFICADOS A PLAYOFFS</div>';
-        html += '<div class="standings"><table>';
-        html += '<tr><th>Clasificación</th><th>Jugador</th><th>Grupo</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
+        const rankingTerceros = Object.entries(miniStatsTerceros)
+            .map(entry => ({ nombre: entry[0], ...entry[1] }))
+            .sort((a, b) => b.pts - a.pts || b.pg - a.pg || (b.gf - b.gc) - (a.gf - a.gc));
 
-        primeros.forEach((r) => {
-            html += `<tr style="background: #e8f5e9;">
-                <td><strong>1° Grupo ${r.grupo}</strong></td>
+        html += '<div class="phase-title">⚖️ REPECHAJE 3° PUESTOS - MINI-LIGA (3 PARTIDOS)</div>';
+        html += '<div class="matches-grid">';
+        miniPartidosTerceros.forEach((p, idx) => {
+            html += `
+                <div class="match-card">
+                    <div class="match-number">Repechaje 3° - Partido ${idx + 1}</div>
+                    <div class="match-players">
+                        <div class="player blue">${p.azul}</div>
+                        <div class="vs">VS</div>
+                        <div class="player red">${p.rojo}</div>
+                    </div>
+                    <div class="score">${p.golesAzul} - ${p.golesRojo}</div>
+                    <div class="winner-badge">🏆 ${p.ganador}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+
+        html += '<div class="standings"><table>';
+        html += '<tr><th>Pos</th><th>Jugador</th><th>PJ</th><th>PG</th><th>PP</th><th>GF</th><th>GC</th><th>Pts</th></tr>';
+        rankingTerceros.forEach((r, index) => {
+            const highlight = index === 0 ? 'style="background: #fff9c4;"' : '';
+            html += `<tr ${highlight}>
+                <td class="position">${index + 1}°</td>
                 <td><strong>${r.nombre}</strong></td>
-                <td>${r.grupo}</td>
                 <td>${r.pj}</td>
                 <td>${r.pg}</td>
                 <td>${r.pp}</td>
@@ -617,21 +654,68 @@ function simularTorneo() {
                 <td><strong>${r.pts}</strong></td>
             </tr>`;
         });
+        html += '</table></div>';
+        html += '<p style="text-align:center; color:#e67e22; font-weight:600;">🔶 Solo el 1° avanza al Partido Eliminatorio | 2° y 3° quedan eliminados</p>';
+
+        // ========== PARTIDO ELIMINATORIO PRE-PLAYOFFS ==========
+        // 1° de repechaje segundos vs 1° de repechaje terceros
+        const primeroSegundos = rankingSegundos[0];
+        const primeroTerceros = rankingTerceros[0];
+
+        const dataPrimeroSegundos = jugadores.find(j => j.nombre === primeroSegundos.nombre) || jugadoresDisponibles.find(j => j.nombre === primeroSegundos.nombre);
+        const dataPrimeroTerceros = jugadores.find(j => j.nombre === primeroTerceros.nombre) || jugadoresDisponibles.find(j => j.nombre === primeroTerceros.nombre);
+
+        html += '<div class="phase-title">⚔️ PARTIDO ELIMINATORIO PRE-PLAYOFFS</div>';
+        html += '<div class="matches-grid" style="max-width: 450px; margin: 0 auto 30px auto;">';
+
+        const partidoEliminatorio = simularPartido(dataPrimeroSegundos, dataPrimeroTerceros);
+        if (estadisticasJugadores[dataPrimeroSegundos.nombre]) {
+            estadisticasJugadores[dataPrimeroSegundos.nombre].golesFaseFinal += partidoEliminatorio.goles1;
+            estadisticasJugadores[dataPrimeroSegundos.nombre].partidosJugados++;
+        }
+        if (estadisticasJugadores[dataPrimeroTerceros.nombre]) {
+            estadisticasJugadores[dataPrimeroTerceros.nombre].golesFaseFinal += partidoEliminatorio.goles2;
+            estadisticasJugadores[dataPrimeroTerceros.nombre].partidosJugados++;
+        }
+
+        html += `
+            <div class="match-card" style="border: 2px solid #f39c12;">
+                <div class="match-number">Eliminatorio por el 4° lugar en Playoffs</div>
+                <div class="match-players">
+                    <div class="player blue">${dataPrimeroSegundos.nombre} <small>(1° Rep. 2°)</small></div>
+                    <div class="vs">VS</div>
+                    <div class="player red">${dataPrimeroTerceros.nombre} <small>(1° Rep. 3°)</small></div>
+                </div>
+                <div class="score">${partidoEliminatorio.goles1} - ${partidoEliminatorio.goles2}</div>
+                <div class="winner-badge">🏆 ${partidoEliminatorio.ganador} clasifica a Playoffs!</div>
+            </div>
+        `;
+        html += '</div>';
+
+        // El ganador del partido eliminatorio es el 4° clasificado
+        const cuartoClasificado = partidoEliminatorio.ganador === dataPrimeroSegundos.nombre ? primeroSegundos : primeroTerceros;
+
+        html += '<div class="phase-title">✅ CLASIFICADOS A PLAYOFFS</div>';
+        html += '<div class="standings"><table>';
+        html += '<tr><th>Clasificación</th><th>Jugador</th><th>Vía</th></tr>';
+
+        primeros.forEach((r) => {
+            html += `<tr style="background: #e8f5e9;">
+                <td><strong>1° Grupo ${r.grupo}</strong></td>
+                <td><strong>${r.nombre}</strong></td>
+                <td>Directo</td>
+            </tr>`;
+        });
 
         html += `<tr style="background: #fff9c4;">
-            <td><strong>Mejor 2°</strong></td>
-            <td><strong>${mejorSegundo.nombre}</strong></td>
-            <td>${mejorSegundo.grupo}</td>
-            <td>${mejorSegundo.pj}</td>
-            <td>${mejorSegundo.pg}</td>
-            <td>${mejorSegundo.pp}</td>
-            <td>${mejorSegundo.gf}</td>
-            <td>${mejorSegundo.gc}</td>
-            <td><strong>${mejorSegundo.pts}</strong></td>
+            <td><strong>4° Clasificado</strong></td>
+            <td><strong>${cuartoClasificado.nombre}</strong></td>
+            <td>Partido Eliminatorio</td>
         </tr>`;
+
         html += '</table></div>';
 
-        clasificados = [...primeros, mejorSegundo];
+        clasificados = [...primeros, cuartoClasificado];
 
     } else if (numJugadores === 10) {
         // 2 grupos de 5
@@ -947,21 +1031,41 @@ function mostrarFormato() {
         `;
     } else if (numJugadores === 9) {
         html += `
-            <h3>Grupos (3 grupos de 3) — 9 Jugadores</h3>
+            <h3>Grupos (3 grupos de 3) + Repechajes — 9 Jugadores</h3>
             <p>Estructura: 3 grupos (A, B, C) de 3 jugadores; todos contra todos dentro del grupo.</p>
+            
+            <h4>📊 Fase de Grupos (9 partidos)</h4>
             <ul>
-                <li>Partidos totales (fase de grupos): 9</li>
-                <li>Clasificación: El 1° de cada grupo + el mejor 2° (total 4) avanzan a playoffs.</li>
-                <li>Formato final: Semifinales, tercer puesto y final.</li>
+                <li>Los <strong>1° de cada grupo</strong> clasifican directo a playoffs.</li>
             </ul>
-            <p>Notas: Cuando haya que comparar los segundos de cada grupo, se juega una <strong>mini-liga</strong> entre los 3 segundos (3 partidos, todos contra todos). El primero de esa mini-liga se considera el "Mejor 2°" y avanza a playoffs.</p>
-            <p>Reglas de la mini-liga:
-                <ul>
-                    <li>Orden: se clasifica por <strong>Pts</strong> (suma de goles obtenidos en la mini-liga), luego <strong>PG</strong> (partidos ganados) y luego <strong>GD</strong> (diferencia GF-GC).</li>
-                    <li>Si hay empate absoluto por el primer puesto entre <strong>2 jugadores</strong>, se desempata por el <strong>enfrentamiento directo</strong> que ya se jugó en la mini-liga (el vencedor de ese partido pasa).</li>
-                    <li>Si hay empate absoluto entre los <strong>3</strong> jugadores (o no se pudiera resolver por el enfrentamiento directo), se elige aleatoriamente y se mostrará una nota explicativa.</li>
-                </ul>
-            </p>
+            
+            <h4>⚖️ Repechaje 2° Puestos - Mini-Liga (3 partidos)</h4>
+            <ul>
+                <li>Los 3 segundos juegan todos contra todos.</li>
+                <li><strong>Solo el 1°</strong> avanza al partido eliminatorio.</li>
+                <li>2° y 3° quedan <strong>eliminados</strong>.</li>
+            </ul>
+            
+            <h4>⚖️ Repechaje 3° Puestos - Mini-Liga (3 partidos)</h4>
+            <ul>
+                <li>Los 3 terceros juegan todos contra todos.</li>
+                <li><strong>Solo el 1°</strong> avanza al partido eliminatorio.</li>
+                <li>2° y 3° quedan <strong>eliminados</strong>.</li>
+            </ul>
+            
+            <h4>⚔️ Partido Eliminatorio Pre-Playoffs (1 partido)</h4>
+            <ul>
+                <li>1° del repechaje de segundos vs 1° del repechaje de terceros.</li>
+                <li>El <strong>ganador clasifica</strong> como 4° a playoffs.</li>
+            </ul>
+            
+            <h4>🏆 Playoffs (4 partidos)</h4>
+            <ul>
+                <li><strong>Clasifican:</strong> 3 primeros de grupos + ganador del eliminatorio.</li>
+                <li>Semifinales, tercer puesto y final.</li>
+            </ul>
+            
+            <p><strong>Total: 20 partidos</strong></p>
         `;
     } else if (numJugadores === 10) {
         html += `
