@@ -14,7 +14,6 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null) {
 
     let clasificados = [];
     let matchesPlayed = 0; // contador de partidos en esta simulación
-    let miniLigaRandomResolved = false; // indicador si la mini-liga decidió por aleatorio
 
     if (numJugadores === 7) {
         // Formato Liga
@@ -61,28 +60,32 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null) {
             resultadoC.rankingGrupo[1]
         ];
 
-        // Mini-liga entre segundos: todos contra todos
+        const terceros = [
+            resultadoA.rankingGrupo[2],
+            resultadoB.rankingGrupo[2],
+            resultadoC.rankingGrupo[2]
+        ];
+
+        // ========== MINI-LIGA ENTRE SEGUNDOS (3 partidos) ==========
         const candidatosSegundos = segundos.map(s => ({
             nombre: s.nombre,
             grupo: s.grupo,
             data: jugadores.find(j => j.nombre === s.nombre) || jugadoresDisponibles.find(j => j.nombre === s.nombre) || { nombre: s.nombre, ranking: 50, winRate: 0.5, promedioGoles: 5 }
         }));
 
-        // Inicializar estadísticas de mini-liga
-        const miniStats = {};
+        const miniStatsSegundos = {};
         candidatosSegundos.forEach(c => {
-            miniStats[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
+            miniStatsSegundos[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
         });
 
-        // Simular los 3 partidos: (0 vs 1), (0 vs 2), (1 vs 2)
-        const miniPartidos = [];
+        const miniPartidosSegundos = [];
         for (let i = 0; i < candidatosSegundos.length; i++) {
             for (let j = i + 1; j < candidatosSegundos.length; j++) {
                 const j1 = candidatosSegundos[i].data;
                 const j2 = candidatosSegundos[j].data;
                 const resultadoMini = simularPartido(j1, j2);
 
-                miniPartidos.push({
+                miniPartidosSegundos.push({
                     azul: j1.nombre,
                     rojo: j2.nombre,
                     golesAzul: resultadoMini.goles1,
@@ -90,67 +93,103 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null) {
                     ganador: resultadoMini.ganador
                 });
 
-                // actualizar stats (mismo criterio que en simularGrupo: pts acumulados como goles)
-                miniStats[j1.nombre].pj++;
-                miniStats[j2.nombre].pj++;
-                miniStats[j1.nombre].gf += resultadoMini.goles1;
-                miniStats[j1.nombre].gc += resultadoMini.goles2;
-                miniStats[j2.nombre].gf += resultadoMini.goles2;
-                miniStats[j2.nombre].gc += resultadoMini.goles1;
+                miniStatsSegundos[j1.nombre].pj++;
+                miniStatsSegundos[j2.nombre].pj++;
+                miniStatsSegundos[j1.nombre].gf += resultadoMini.goles1;
+                miniStatsSegundos[j1.nombre].gc += resultadoMini.goles2;
+                miniStatsSegundos[j2.nombre].gf += resultadoMini.goles2;
+                miniStatsSegundos[j2.nombre].gc += resultadoMini.goles1;
 
                 if (resultadoMini.ganador === j1.nombre) {
-                    miniStats[j1.nombre].pg++;
-                    miniStats[j2.nombre].pp++;
-                    miniStats[j1.nombre].pts += resultadoMini.goles1;
-                    miniStats[j2.nombre].pts += resultadoMini.goles2;
+                    miniStatsSegundos[j1.nombre].pg++;
+                    miniStatsSegundos[j2.nombre].pp++;
+                    miniStatsSegundos[j1.nombre].pts += resultadoMini.goles1;
+                    miniStatsSegundos[j2.nombre].pts += resultadoMini.goles2;
                 } else {
-                    miniStats[j2.nombre].pg++;
-                    miniStats[j1.nombre].pp++;
-                    miniStats[j2.nombre].pts += resultadoMini.goles2;
-                    miniStats[j1.nombre].pts += resultadoMini.goles1;
+                    miniStatsSegundos[j2.nombre].pg++;
+                    miniStatsSegundos[j1.nombre].pp++;
+                    miniStatsSegundos[j2.nombre].pts += resultadoMini.goles2;
+                    miniStatsSegundos[j1.nombre].pts += resultadoMini.goles1;
                 }
             }
         }
 
-        matchesPlayed += miniPartidos.length; // sumar los 3 partidos de desempate
+        matchesPlayed += miniPartidosSegundos.length; // 3 partidos
 
-        // Generar ranking de la mini-liga
-        const rankingMini = Object.entries(miniStats)
+        const rankingSegundos = Object.entries(miniStatsSegundos)
             .map(entry => ({ nombre: entry[0], ...entry[1] }))
             .sort((a, b) => b.pts - a.pts || b.pg - a.pg || (b.gf - b.gc) - (a.gf - a.gc));
 
-        // Determinar mejorSegundo a partir del rankingMini
-        let mejorSegundo = rankingMini[0];
+        // ========== REPECHAJE ENTRE TERCEROS (3 partidos) ==========
+        const candidatosTerceros = terceros.map(t => ({
+            nombre: t.nombre,
+            grupo: t.grupo,
+            data: jugadores.find(j => j.nombre === t.nombre) || jugadoresDisponibles.find(j => j.nombre === t.nombre) || { nombre: t.nombre, ranking: 50, winRate: 0.5, promedioGoles: 5 }
+        }));
 
-        // Si hay empate absoluto en la mini-liga (mismo pts, pg y gd para el top), desempatar
-        if (rankingMini.length > 1) {
-            const topPts = rankingMini[0].pts;
-            const topPg = rankingMini[0].pg;
-            const topGd = rankingMini[0].gf - rankingMini[0].gc;
-            const empatadosTop = rankingMini.filter(r => r.pts === topPts && r.pg === topPg && (r.gf - r.gc) === topGd);
-            if (empatadosTop.length > 1) {
-                if (empatadosTop.length === 2) {
-                    // Desempate por enfrentamiento directo dentro de la mini-liga
-                    const a = empatadosTop[0].nombre;
-                    const b = empatadosTop[1].nombre;
-                    const partido = miniPartidos.find(p => (p.azul === a && p.rojo === b) || (p.azul === b && p.rojo === a));
-                    if (partido) {
-                        const ganadorHead = partido.ganador;
-                        mejorSegundo = rankingMini.find(r => r.nombre === ganadorHead) || empatadosTop.find(r => r.nombre === ganadorHead);
-                    } else {
-                        // Fallback aleatorio
-                        mejorSegundo = empatadosTop[Math.floor(Math.random() * empatadosTop.length)];
-                        miniLigaRandomResolved = true;
-                    }
+        const miniStatsTerceros = {};
+        candidatosTerceros.forEach(c => {
+            miniStatsTerceros[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
+        });
+
+        const miniPartidosTerceros = [];
+        for (let i = 0; i < candidatosTerceros.length; i++) {
+            for (let j = i + 1; j < candidatosTerceros.length; j++) {
+                const j1 = candidatosTerceros[i].data;
+                const j2 = candidatosTerceros[j].data;
+                const resultadoMini = simularPartido(j1, j2);
+
+                miniPartidosTerceros.push({
+                    azul: j1.nombre,
+                    rojo: j2.nombre,
+                    golesAzul: resultadoMini.goles1,
+                    golesRojo: resultadoMini.goles2,
+                    ganador: resultadoMini.ganador
+                });
+
+                miniStatsTerceros[j1.nombre].pj++;
+                miniStatsTerceros[j2.nombre].pj++;
+                miniStatsTerceros[j1.nombre].gf += resultadoMini.goles1;
+                miniStatsTerceros[j1.nombre].gc += resultadoMini.goles2;
+                miniStatsTerceros[j2.nombre].gf += resultadoMini.goles2;
+                miniStatsTerceros[j2.nombre].gc += resultadoMini.goles1;
+
+                if (resultadoMini.ganador === j1.nombre) {
+                    miniStatsTerceros[j1.nombre].pg++;
+                    miniStatsTerceros[j2.nombre].pp++;
+                    miniStatsTerceros[j1.nombre].pts += resultadoMini.goles1;
+                    miniStatsTerceros[j2.nombre].pts += resultadoMini.goles2;
                 } else {
-                    // Empate entre 3 -> elección aleatoria
-                    mejorSegundo = empatadosTop[Math.floor(Math.random() * empatadosTop.length)];
-                    miniLigaRandomResolved = true;
+                    miniStatsTerceros[j2.nombre].pg++;
+                    miniStatsTerceros[j1.nombre].pp++;
+                    miniStatsTerceros[j2.nombre].pts += resultadoMini.goles2;
+                    miniStatsTerceros[j1.nombre].pts += resultadoMini.goles1;
                 }
             }
         }
 
-        clasificados = [...primeros, mejorSegundo];
+        matchesPlayed += miniPartidosTerceros.length; // 3 partidos
+
+        const rankingTerceros = Object.entries(miniStatsTerceros)
+            .map(entry => ({ nombre: entry[0], ...entry[1] }))
+            .sort((a, b) => b.pts - a.pts || b.pg - a.pg || (b.gf - b.gc) - (a.gf - a.gc));
+
+        // ========== PARTIDO ELIMINATORIO PRE-PLAYOFFS (1 partido) ==========
+        // 1° de repechaje segundos vs 1° de repechaje terceros
+        const primeroSegundos = rankingSegundos[0];
+        const primeroTerceros = rankingTerceros[0];
+
+        const dataPrimeroSegundos = jugadores.find(j => j.nombre === primeroSegundos.nombre) || jugadoresDisponibles.find(j => j.nombre === primeroSegundos.nombre);
+        const dataPrimeroTerceros = jugadores.find(j => j.nombre === primeroTerceros.nombre) || jugadoresDisponibles.find(j => j.nombre === primeroTerceros.nombre);
+
+        const partidoEliminatorio = simularPartido(dataPrimeroSegundos, dataPrimeroTerceros);
+
+        matchesPlayed += 1; // 1 partido eliminatorio
+
+        // El ganador del partido eliminatorio es el 4° clasificado
+        const cuartoClasificado = partidoEliminatorio.ganador === dataPrimeroSegundos.nombre ? primeroSegundos : primeroTerceros;
+
+        clasificados = [...primeros, cuartoClasificado];
 
     } else if (numJugadores === 10) {
         // 2 grupos de 5
@@ -203,8 +242,7 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null) {
         tercero: tercerPuesto.ganador,
         cuarto: cuarto,
         semifinalistas: semifinalistas.map(s => s.nombre),
-        matchesPlayed,
-        miniLigaRandomResolved
+        matchesPlayed
     };
 }
 
@@ -264,7 +302,6 @@ async function simularMonteCarlo() {
 
     // NUEVAS métricas acumuladas
     let totalMatchesSimulated = 0;
-    let miniLigaRandomCount = 0; // cuenta cuántas simulaciones 9-player se resolvieron por aleatorio
 
     // Ejecutar simulaciones en batches
     for (let batch = 0; batch < totalBatches; batch++) {
@@ -290,7 +327,6 @@ async function simularMonteCarlo() {
 
             // Acumular métricas nuevas
             totalMatchesSimulated += resultado.matchesPlayed || 0;
-            if (numJugadores === 9 && resultado.miniLigaRandomResolved) miniLigaRandomCount++;
 
             simulacionesCompletadas++;
         }
@@ -309,7 +345,7 @@ async function simularMonteCarlo() {
     document.getElementById('btnSimular').disabled = false;
 
     // Mostrar resultados (le paso las métricas nuevas)
-    mostrarResultados(estadisticas, numSimulaciones, numJugadores, { totalMatchesSimulated, miniLigaRandomCount });
+    mostrarResultados(estadisticas, numSimulaciones, numJugadores, { totalMatchesSimulated });
 }
 
 function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras = {}) {
@@ -321,10 +357,6 @@ function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras =
     // Mostrar métricas agregadas si existen
     if (extras.totalMatchesSimulated != null) {
         html += `<div style="text-align:center; margin-bottom:10px; color:#333;"><strong>Partidos simulados (totales):</strong> ${extras.totalMatchesSimulated.toLocaleString()}</div>`;
-    }
-    if (numJugadores === 9 && extras.miniLigaRandomCount != null) {
-        const pct = (extras.miniLigaRandomCount / numSimulaciones) * 100;
-        html += `<div style="text-align:center; margin-bottom:10px; color:#c0392b;"><strong>Mini-liga: aleatorio aplicado en</strong> ${extras.miniLigaRandomCount.toLocaleString()} simulaciones (${pct.toFixed(2)}%)</div>`;
     }
 
     // Convertir a array y ordenar por probabilidad de campeonato
