@@ -138,6 +138,5 @@ Tomy,118,0.6923,6.54
 *Desarrollado por x_chama_x* 
 
 ## proximos features
-- Modificar el formato de 9 jugadores para que se jueguen más partidos pre playoffs.
 - Agregar probabilidad de clasificar a playoffs en los formatos donde hay grupos.
 - Agregar pagina de versus entre dos jugadores, con su historial de partidos y probabilidad de ganar.
