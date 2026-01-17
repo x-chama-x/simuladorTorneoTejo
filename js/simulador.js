@@ -1,22 +1,61 @@
-const jugadoresBase = [
-    { nombre: 'Chama', ranking: 198, winRate: 0.7368, promedioGoles: 6.47 },
-    { nombre: 'Facu', ranking: 126, winRate: 0.6154, promedioGoles: 5.92 },
-    { nombre: 'Tomy', ranking: 118, winRate: 0.6923, promedioGoles: 6.54 },
-    { nombre: 'Marco', ranking: 76, winRate: 0.60, promedioGoles: 6.1 },
-    { nombre: 'Lucas', ranking: 50, winRate: 0.75, promedioGoles: 5.75 },
-    { nombre: 'Rafa', ranking: 35, winRate: 0.3636, promedioGoles: 5.42 },
-    { nombre: 'Pedro', ranking: 21, winRate: 0.3333, promedioGoles: 5.67 },
-    { nombre: 'Hector', ranking: 20, winRate: 0.1667, promedioGoles: 4.67 }
-];
+// Variables globales para los jugadores (se cargan desde ranking.txt)
+let jugadoresBase = [];
+let nuevosJugadores = [];
+let jugadoresDisponibles = [];
 
-const nuevosJugadores = [
-    { nombre: 'Mateo', ranking: 17, winRate: 0.50, promedioGoles: 5.0 },
-    { nombre: 'Santi', ranking: 5, winRate: 0.2308, promedioGoles: 4.77 },
-    { nombre: 'Kovic', ranking: 5, winRate: 0.00, promedioGoles: 2.6 }
-];
+// Función para cargar jugadores desde el archivo ranking.txt
+async function cargarJugadoresDesdeArchivo() {
+    try {
+        const response = await fetch('ranking.txt');
+        if (!response.ok) {
+            throw new Error('No se pudo cargar el archivo ranking.txt');
+        }
+        const texto = await response.text();
+        const lineas = texto.split('\n');
 
-// Agrego la lista combinada de jugadores disponibles y una variable global para la selección
-const jugadoresDisponibles = [...jugadoresBase, ...nuevosJugadores];
+        const jugadores = [];
+        for (const linea of lineas) {
+            const lineaTrimmed = linea.trim();
+            // Ignorar líneas vacías y comentarios
+            if (lineaTrimmed === '' || lineaTrimmed.startsWith('#')) {
+                continue;
+            }
+
+            const partes = lineaTrimmed.split(',');
+            if (partes.length >= 4) {
+                jugadores.push({
+                    nombre: partes[0].trim(),
+                    ranking: parseInt(partes[1].trim()),
+                    winRate: parseFloat(partes[2].trim()),
+                    promedioGoles: parseFloat(partes[3].trim())
+                });
+            }
+        }
+
+        // Validar que se hayan cargado jugadores
+        if (jugadores.length === 0) {
+            throw new Error('El archivo ranking.txt está vacío o no tiene jugadores válidos');
+        }
+
+        // Ordenar por ranking descendente
+        jugadores.sort((a, b) => b.ranking - a.ranking);
+
+        // Los primeros 8 son jugadoresBase, el resto son nuevosJugadores
+        jugadoresBase = jugadores.slice(0, 8);
+        nuevosJugadores = jugadores.slice(8);
+        jugadoresDisponibles = [...jugadores];
+
+        console.log('✅ Jugadores cargados desde ranking.txt:', jugadoresDisponibles);
+        return true;
+    } catch (error) {
+        console.error('❌ Error al cargar jugadores desde ranking.txt:', error);
+        alert('Error: No se pudo cargar el archivo ranking.txt. Verificá que el archivo exista y tenga el formato correcto.');
+        return false;
+    }
+}
+
+// Hacer la función disponible globalmente
+window.cargarJugadoresDesdeArchivo = cargarJugadoresDesdeArchivo;
 window.jugadoresSeleccionadosGlobal = null; // al inicio NINGUNO seleccionado (según requerimiento)
 // Bandera para detectar la primera carga de la página
 window._paginaCargada = false;
@@ -1153,7 +1192,10 @@ if (randomSelectBtn) {
 }
 
 // Asegurarse de renderizar la selección inicial y mostrar el formato al cargar
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Primero cargar los jugadores desde el archivo
+    await cargarJugadoresDesdeArchivo();
+
     const numSelect = document.getElementById('numPlayers');
     if (numSelect) {
         // Cuando cambie el formato, re-renderizamos el formato y la selección
