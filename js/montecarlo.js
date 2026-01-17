@@ -482,7 +482,12 @@ function getFormatoNombre(numJugadores) {
 }
 
 // Conectar el botón de la UI con la función Monte Carlo
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Esperar a que los jugadores se carguen desde el archivo
+    if (typeof cargarJugadoresDesdeArchivo === 'function') {
+        await cargarJugadoresDesdeArchivo();
+    }
+
     const btn = document.getElementById('btnSimular');
     if (btn) {
         btn.addEventListener('click', simularMonteCarlo);
