@@ -19,6 +19,12 @@
                 <option value="10">10 Jugadores</option>
             </select>
 
+            <!-- Selector de modo de armado de grupos -->
+            <label for="modoGrupos" id="modoGruposLabel" style="align-self:center; font-weight:600; color:#333; margin-left:12px; margin-right:6px; display:none;">Armado:</label>
+            <select id="modoGrupos" aria-label="Modo de armado de grupos" style="display:none;">
+                <option value="aleatorio">🎲 Sorteo Aleatorio</option>
+                <option value="manual">✋ Armado Manual</option>
+            </select>
 
             <button id="randomSelectBtn" title="Seleccionar jugadores aleatoriamente">🔀 Seleccionar aleatoriamente</button>
             <button id="simularBtn">🎲 Simular Torneo</button>
@@ -29,6 +35,9 @@
 
         <!-- Contenedor dinámico donde se mostrará la selección de jugadores -->
         <div id="playerSelection"></div>
+
+        <!-- Contenedor para el armado manual de grupos -->
+        <div id="gruposManualContainer" style="display:none; margin-top:15px;"></div>
 
         <div id="resultado"></div>
     </div>

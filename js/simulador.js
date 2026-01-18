@@ -3,6 +3,9 @@ let jugadoresBase = [];
 let nuevosJugadores = [];
 let jugadoresDisponibles = [];
 
+// Variable global para la configuración manual de grupos
+window.gruposManualConfig = null; // { grupoA: [...], grupoB: [...], grupoC: [...] }
+
 // Función para cargar jugadores desde el archivo ranking.txt
 async function cargarJugadoresDesdeArchivo() {
     try {
@@ -78,11 +81,16 @@ function elegirAleatorioNombres(cantidad) {
 }
 
 function simularPartido(jugador1, jugador2) {
+    // Diferencia de ranking - ahora con divisor menor para mayor impacto
     const rankDiff = jugador1.ranking - jugador2.ranking;
-    const prob1 = 0.5 + (rankDiff / 200);
+    const prob1 = 0.5 + (rankDiff / 150);  // Divisor reducido de 200 a 150
 
-    const winRateAdj = (jugador1.winRate - jugador2.winRate) * 0.3;
-    const probFinal = Math.max(0.2, Math.min(0.8, prob1 + winRateAdj));
+    // Ajuste por winRate histórico - ahora con más peso (0.4 en vez de 0.3)
+    const winRateAdj = (jugador1.winRate - jugador2.winRate) * 0.4;
+
+    // Límites expandidos: 10% - 90% para reflejar mejor las diferencias reales
+    // Mantiene algo de variabilidad (upsets posibles) pero castiga más los grupos difíciles
+    const probFinal = Math.max(0.10, Math.min(0.90, prob1 + winRateAdj));
 
     const gana1 = Math.random() < probFinal;
 
@@ -201,8 +209,14 @@ function simularTorneo() {
         jugadores = jugadores.slice(0, numJugadores);
     }
 
-    // Mezclar jugadores para distribuirlos aleatoriamente en grupos
-    jugadores = jugadores.sort(() => Math.random() - 0.5);
+    // Verificar modo de grupos
+    const modoGruposEl = document.getElementById('modoGrupos');
+    const modoGrupos = modoGruposEl ? modoGruposEl.value : 'aleatorio';
+
+    // Solo mezclar si es modo aleatorio O si no hay grupos manuales configurados
+    if (modoGrupos === 'aleatorio' || !window.gruposManualConfig) {
+        jugadores = jugadores.sort(() => Math.random() - 0.5);
+    }
 
     // Inicializar estadísticas de jugadores para la tabla final
     const estadisticasJugadores = {};
@@ -266,8 +280,17 @@ function simularTorneo() {
         // 2 grupos de 4
         html += '<div class="phase-title">📋 FASE DE GRUPOS - 2 GRUPOS DE 4</div>';
 
-        const grupoA = jugadores.slice(0, 4);
-        const grupoB = jugadores.slice(4, 8);
+        let grupoA, grupoB;
+
+        if (modoGrupos === 'manual' && window.gruposManualConfig) {
+            // Usar configuración manual
+            grupoA = window.gruposManualConfig.grupoA.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+            grupoB = window.gruposManualConfig.grupoB.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+        } else {
+            // Distribución aleatoria (ya mezclados)
+            grupoA = jugadores.slice(0, 4);
+            grupoB = jugadores.slice(4, 8);
+        }
 
         const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
@@ -362,9 +385,19 @@ function simularTorneo() {
         // 3 grupos de 3
         html += '<div class="phase-title">📋 FASE DE GRUPOS - 3 GRUPOS DE 3</div>';
 
-        const grupoA = jugadores.slice(0, 3);
-        const grupoB = jugadores.slice(3, 6);
-        const grupoC = jugadores.slice(6, 9);
+        let grupoA, grupoB, grupoC;
+
+        if (modoGrupos === 'manual' && window.gruposManualConfig) {
+            // Usar configuración manual
+            grupoA = window.gruposManualConfig.grupoA.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+            grupoB = window.gruposManualConfig.grupoB.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+            grupoC = window.gruposManualConfig.grupoC.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+        } else {
+            // Distribución aleatoria (ya mezclados)
+            grupoA = jugadores.slice(0, 3);
+            grupoB = jugadores.slice(3, 6);
+            grupoC = jugadores.slice(6, 9);
+        }
 
         const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
@@ -727,8 +760,17 @@ function simularTorneo() {
         // 2 grupos de 5
         html += '<div class="phase-title">📋 FASE DE GRUPOS - 2 GRUPOS DE 5</div>';
 
-        const grupoA = jugadores.slice(0, 5);
-        const grupoB = jugadores.slice(5, 10);
+        let grupoA, grupoB;
+
+        if (modoGrupos === 'manual' && window.gruposManualConfig) {
+            // Usar configuración manual
+            grupoA = window.gruposManualConfig.grupoA.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+            grupoB = window.gruposManualConfig.grupoB.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+        } else {
+            // Distribución aleatoria (ya mezclados)
+            grupoA = jugadores.slice(0, 5);
+            grupoB = jugadores.slice(5, 10);
+        }
 
         const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
@@ -1011,6 +1053,23 @@ function simularTorneo() {
 // Mostrar solo el formato al cargar y actualizar al cambiar selección
 function mostrarFormato() {
     const numJugadores = parseInt(document.getElementById('numPlayers').value);
+
+    // Mostrar/ocultar selector de modo de grupos según el formato
+    const modoGruposEl = document.getElementById('modoGrupos');
+    const modoGruposLabel = document.getElementById('modoGruposLabel');
+    const tieneGrupos = numJugadores >= 8; // 8, 9 y 10 jugadores tienen grupos
+
+    if (modoGruposEl && modoGruposLabel) {
+        modoGruposEl.style.display = tieneGrupos ? '' : 'none';
+        modoGruposLabel.style.display = tieneGrupos ? '' : 'none';
+    }
+
+    // Resetear configuración de grupos manuales al cambiar formato
+    window.gruposManualConfig = null;
+
+    // Renderizar UI de armado manual si corresponde
+    renderGruposManualUI();
+
     let html = '<div class="phase-title">📋 FORMATO DEL TORNEO</div>';
 
     if (numJugadores === 7) {
@@ -1142,6 +1201,245 @@ function mostrarFormato() {
 
     // Actualizar estado del botón simular según la selección
     updateSimularButtonState();
+
+    // Renderizar UI de armado manual si está en modo manual
+    renderGruposManualUI();
+}
+
+// Función para renderizar el UI de armado manual de grupos
+function renderGruposManualUI() {
+    const container = document.getElementById('gruposManualContainer');
+    if (!container) return;
+
+    const numJugadores = parseInt(document.getElementById('numPlayers').value);
+    const modoGruposEl = document.getElementById('modoGrupos');
+    const modoGrupos = modoGruposEl ? modoGruposEl.value : 'aleatorio';
+
+    // Solo mostrar para formatos con grupos y en modo manual
+    if (numJugadores < 8 || modoGrupos !== 'manual') {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    // Verificar que hay jugadores seleccionados
+    if (!window.jugadoresSeleccionadosGlobal || window.jugadoresSeleccionadosGlobal.length !== numJugadores) {
+        container.style.display = 'block';
+        container.innerHTML = `<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #ffc107;">
+            <p style="margin:0; color:#856404; font-weight:600;">⚠️ Primero seleccioná los ${numJugadores} jugadores para poder armar los grupos manualmente.</p>
+        </div>`;
+        return;
+    }
+
+    container.style.display = 'block';
+
+    let html = `<div style="background:#e3f2fd; padding:20px; border-radius:10px; margin-bottom:20px; border:2px solid #2196f3;">
+        <h3 style="margin:0 0 15px 0; color:#1565c0; text-align:center;">✋ ARMADO MANUAL DE GRUPOS</h3>
+        <p style="margin:0 0 15px 0; text-align:center; color:#333;">Arrastrá los jugadores a cada grupo o usá los selectores</p>`;
+
+    const jugadoresSeleccionados = window.jugadoresSeleccionadosGlobal;
+
+    if (numJugadores === 8) {
+        // 2 grupos de 4
+        html += renderGrupoSelector('A', 4, jugadoresSeleccionados);
+        html += renderGrupoSelector('B', 4, jugadoresSeleccionados);
+    } else if (numJugadores === 9) {
+        // 3 grupos de 3
+        html += renderGrupoSelector('A', 3, jugadoresSeleccionados);
+        html += renderGrupoSelector('B', 3, jugadoresSeleccionados);
+        html += renderGrupoSelector('C', 3, jugadoresSeleccionados);
+    } else if (numJugadores === 10) {
+        // 2 grupos de 5
+        html += renderGrupoSelector('A', 5, jugadoresSeleccionados);
+        html += renderGrupoSelector('B', 5, jugadoresSeleccionados);
+    }
+
+    html += `<div style="text-align:center; margin-top:15px;">
+        <button id="confirmarGruposBtn" style="background:#4caf50; color:white; padding:10px 25px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">
+            ✅ Confirmar Grupos
+        </button>
+        <button id="resetGruposBtn" style="background:#ff9800; color:white; padding:10px 25px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; margin-left:10px;">
+            🔄 Resetear
+        </button>
+    </div>`;
+
+    html += `<div id="gruposConfirmados" style="display:none; margin-top:15px; padding:10px; background:#c8e6c9; border-radius:6px; text-align:center;">
+        <p style="margin:0; color:#2e7d32; font-weight:bold;">✅ Grupos confirmados correctamente</p>
+    </div>`;
+
+    html += `<div id="gruposError" style="display:none; margin-top:15px; padding:10px; background:#ffcdd2; border-radius:6px; text-align:center;">
+        <p style="margin:0; color:#c62828; font-weight:bold;" id="gruposErrorMsg"></p>
+    </div>`;
+
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    // Agregar event listeners para los botones
+    const confirmarBtn = document.getElementById('confirmarGruposBtn');
+    const resetBtn = document.getElementById('resetGruposBtn');
+
+    if (confirmarBtn) {
+        confirmarBtn.addEventListener('click', confirmarGruposManuales);
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetearGruposManuales);
+    }
+
+    // Agregar listeners para los selectores de grupo
+    actualizarSelectoresGrupo();
+}
+
+// Función para renderizar un selector de grupo
+function renderGrupoSelector(nombreGrupo, cantidad, jugadoresDisponiblesLista) {
+    let html = `<div class="grupo-manual-container" style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; border:1px solid #ddd;">
+        <h4 style="margin:0 0 10px 0; color:#667eea;">🔷 Grupo ${nombreGrupo} (${cantidad} jugadores)</h4>
+        <div class="grupo-selectors" style="display:flex; flex-wrap:wrap; gap:10px;">`;
+
+    for (let i = 0; i < cantidad; i++) {
+        html += `<select class="grupo-select" data-grupo="${nombreGrupo}" data-pos="${i}" style="padding:8px 12px; border-radius:5px; border:1px solid #ccc; min-width:150px;">
+            <option value="">-- Seleccionar --</option>`;
+        jugadoresDisponiblesLista.forEach(nombre => {
+            html += `<option value="${nombre}">${nombre}</option>`;
+        });
+        html += '</select>';
+    }
+
+    html += '</div></div>';
+    return html;
+}
+
+// Función para actualizar los selectores de grupo (deshabilitar opciones ya usadas)
+function actualizarSelectoresGrupo() {
+    const selectores = document.querySelectorAll('.grupo-select');
+    const usados = new Set();
+
+    // Primero, recolectar todos los valores seleccionados
+    selectores.forEach(select => {
+        if (select.value) {
+            usados.add(select.value);
+        }
+    });
+
+    // Luego, actualizar las opciones de cada selector
+    selectores.forEach(select => {
+        const valorActual = select.value;
+        const opciones = select.querySelectorAll('option');
+
+        opciones.forEach(opcion => {
+            if (opcion.value && opcion.value !== valorActual) {
+                opcion.disabled = usados.has(opcion.value);
+            }
+        });
+    });
+
+    // Agregar listener de cambio a cada selector
+    selectores.forEach(select => {
+        select.removeEventListener('change', onGrupoSelectChange);
+        select.addEventListener('change', onGrupoSelectChange);
+    });
+}
+
+function onGrupoSelectChange() {
+    actualizarSelectoresGrupo();
+    // Resetear confirmación si se cambia algo
+    window.gruposManualConfig = null;
+    const confirmadoDiv = document.getElementById('gruposConfirmados');
+    if (confirmadoDiv) confirmadoDiv.style.display = 'none';
+}
+
+// Función para confirmar los grupos manuales
+function confirmarGruposManuales() {
+    const numJugadores = parseInt(document.getElementById('numPlayers').value);
+    const selectores = document.querySelectorAll('.grupo-select');
+    const errorDiv = document.getElementById('gruposError');
+    const errorMsg = document.getElementById('gruposErrorMsg');
+    const confirmadoDiv = document.getElementById('gruposConfirmados');
+
+    // Ocultar mensajes previos
+    if (errorDiv) errorDiv.style.display = 'none';
+    if (confirmadoDiv) confirmadoDiv.style.display = 'none';
+
+    // Recolectar jugadores por grupo
+    const grupos = { grupoA: [], grupoB: [], grupoC: [] };
+    const todosSeleccionados = [];
+
+    selectores.forEach(select => {
+        const grupo = select.getAttribute('data-grupo');
+        const valor = select.value;
+
+        if (valor) {
+            grupos['grupo' + grupo].push(valor);
+            todosSeleccionados.push(valor);
+        }
+    });
+
+    // Validar que todos los jugadores estén asignados
+    if (todosSeleccionados.length !== numJugadores) {
+        if (errorDiv && errorMsg) {
+            errorMsg.textContent = `❌ Faltan jugadores por asignar. Asignados: ${todosSeleccionados.length}/${numJugadores}`;
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+
+    // Validar que no haya duplicados
+    const unicos = new Set(todosSeleccionados);
+    if (unicos.size !== todosSeleccionados.length) {
+        if (errorDiv && errorMsg) {
+            errorMsg.textContent = '❌ Hay jugadores duplicados. Cada jugador solo puede estar en un grupo.';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+
+    // Validar tamaño de grupos según formato
+    let sizesEsperados;
+    if (numJugadores === 8) {
+        sizesEsperados = { grupoA: 4, grupoB: 4, grupoC: 0 };
+    } else if (numJugadores === 9) {
+        sizesEsperados = { grupoA: 3, grupoB: 3, grupoC: 3 };
+    } else if (numJugadores === 10) {
+        sizesEsperados = { grupoA: 5, grupoB: 5, grupoC: 0 };
+    }
+
+    for (const [key, expected] of Object.entries(sizesEsperados)) {
+        if (grupos[key].length !== expected) {
+            if (errorDiv && errorMsg) {
+                const nombreGrupo = key.replace('grupo', 'Grupo ');
+                errorMsg.textContent = `❌ ${nombreGrupo} debe tener ${expected} jugadores, tiene ${grupos[key].length}`;
+                errorDiv.style.display = 'block';
+            }
+            return;
+        }
+    }
+
+    // Todo validado, guardar configuración
+    window.gruposManualConfig = grupos;
+
+    if (confirmadoDiv) {
+        confirmadoDiv.style.display = 'block';
+    }
+
+    console.log('✅ Grupos manuales configurados:', grupos);
+}
+
+// Función para resetear los grupos manuales
+function resetearGruposManuales() {
+    window.gruposManualConfig = null;
+
+    const selectores = document.querySelectorAll('.grupo-select');
+    selectores.forEach(select => {
+        select.value = '';
+    });
+
+    actualizarSelectoresGrupo();
+
+    const confirmadoDiv = document.getElementById('gruposConfirmados');
+    const errorDiv = document.getElementById('gruposError');
+    if (confirmadoDiv) confirmadoDiv.style.display = 'none';
+    if (errorDiv) errorDiv.style.display = 'none';
 }
 
 // Render y lógica para selección de jugadores (UI debajo del select)
@@ -1178,6 +1476,11 @@ function renderPlayerSelection(numJugadores) {
         } else {
             window.jugadoresSeleccionadosGlobal = null;
         }
+
+        // Resetear grupos manuales cuando cambia la selección y actualizar UI
+        window.gruposManualConfig = null;
+        renderGruposManualUI();
+
         // actualizar estado del botón simular tras cambio manual
         updateSimularButtonState();
     }));
@@ -1244,6 +1547,18 @@ if (simBtn) {
             alert(`Por favor seleccioná exactamente ${num} jugadores antes de simular.`);
             return;
         }
+
+        // Verificar si hay grupos manuales configurados cuando el modo es manual
+        const modoGruposEl = document.getElementById('modoGrupos');
+        const modoGrupos = modoGruposEl ? modoGruposEl.value : 'aleatorio';
+
+        if (modoGrupos === 'manual' && num >= 8) {
+            if (!window.gruposManualConfig) {
+                alert('Por favor configurá y confirmá los grupos manualmente antes de simular.');
+                return;
+            }
+        }
+
         // Llamamos a simularTorneo pero inyectando la selección temporalmente
         // Guardamos jugadoresBase original
         const originalBase = [...jugadoresBase];
@@ -1295,6 +1610,10 @@ if (randomSelectBtn) {
             });
         }
 
+        // Resetear grupos manuales y actualizar UI
+        window.gruposManualConfig = null;
+        renderGruposManualUI();
+
         // Actualizar estado y cerrar listener
         updateSimularButtonState();
         console.info('Selección manual vía botón aleatorio:', seleccionAuto);
@@ -1314,5 +1633,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         mostrarFormato();
         // marcar que la página ya cargo (para cualquier comportamiento futuro que lo necesite)
         window._paginaCargada = true;
+    }
+
+    // Listener para el selector de modo de grupos
+    const modoGruposEl = document.getElementById('modoGrupos');
+    if (modoGruposEl) {
+        modoGruposEl.addEventListener('change', () => {
+            window.gruposManualConfig = null;
+            renderGruposManualUI();
+        });
     }
 });
