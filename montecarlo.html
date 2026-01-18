@@ -33,6 +33,13 @@
                 <option value="10000" selected>10,000 Simulaciones</option>
             </select>
 
+            <!-- Selector de modo de armado de grupos -->
+            <label for="modoGrupos" id="modoGruposLabel" style="font-weight:600; color:#333; margin-left:8px; display:none;">Armado:</label>
+            <select id="modoGrupos" aria-label="Modo de armado de grupos" style="display:none;">
+                <option value="aleatorio">🎲 Sorteo Aleatorio</option>
+                <option value="manual">✋ Armado Manual</option>
+            </select>
+
             <!-- Botón para selección aleatoria de jugadores (aplica solo cuando no son 10) -->
             <button id="randomSelectBtn" title="Seleccionar jugadores aleatoriamente">🎲 Selección Aleatoria</button>
 
@@ -47,6 +54,9 @@
 
         <!-- Contenedor donde se renderiza el selector de jugadores (checkboxes) -->
         <div id="playerSelection" style="margin-top:12px;"></div>
+
+        <!-- Contenedor para el armado manual de grupos -->
+        <div id="gruposManualContainer" style="display:none; margin-top:15px;"></div>
 
         <div id="progreso" style="display: none; margin-top:12px;">
             <div class="progress-container">

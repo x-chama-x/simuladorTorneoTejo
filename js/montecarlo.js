@@ -1,7 +1,8 @@
 // Función para simular un torneo completo y devolver resultados
 // Ahora acepta un parámetro opcional 'participantesOverride' que, si se proporciona,
 // será usado como la lista de jugadores en lugar de 'jugadoresBase'.
-function simularTorneoCompleto(numJugadores, participantesOverride = null) {
+// También acepta 'gruposConfig' para usar grupos manuales fijos
+function simularTorneoCompleto(numJugadores, participantesOverride = null, gruposConfig = null) {
     let jugadores = participantesOverride ? [...participantesOverride] : [...jugadoresBase];
 
     const jugadoresNecesarios = numJugadores - jugadores.length;
@@ -9,8 +10,10 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null) {
         jugadores.push(nuevosJugadores[i]);
     }
 
-    // Mezclar jugadores
-    jugadores = jugadores.sort(() => Math.random() - 0.5);
+    // Mezclar jugadores SOLO si no hay configuración de grupos manuales
+    if (!gruposConfig) {
+        jugadores = jugadores.sort(() => Math.random() - 0.5);
+    }
 
     let clasificados = [];
     let matchesPlayed = 0; // contador de partidos en esta simulación
@@ -23,8 +26,15 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null) {
 
     } else if (numJugadores === 8) {
         // 2 grupos de 4
-        const grupoA = jugadores.slice(0, 4);
-        const grupoB = jugadores.slice(4, 8);
+        let grupoA, grupoB;
+
+        if (gruposConfig) {
+            grupoA = gruposConfig.grupoA.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+            grupoB = gruposConfig.grupoB.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+        } else {
+            grupoA = jugadores.slice(0, 4);
+            grupoB = jugadores.slice(4, 8);
+        }
 
         const resultadoA = simularGrupo(grupoA, 'A', 1);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber);
@@ -38,9 +48,17 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null) {
 
     } else if (numJugadores === 9) {
         // 3 grupos de 3
-        const grupoA = jugadores.slice(0, 3);
-        const grupoB = jugadores.slice(3, 6);
-        const grupoC = jugadores.slice(6, 9);
+        let grupoA, grupoB, grupoC;
+
+        if (gruposConfig) {
+            grupoA = gruposConfig.grupoA.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+            grupoB = gruposConfig.grupoB.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+            grupoC = gruposConfig.grupoC.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+        } else {
+            grupoA = jugadores.slice(0, 3);
+            grupoB = jugadores.slice(3, 6);
+            grupoC = jugadores.slice(6, 9);
+        }
 
         const resultadoA = simularGrupo(grupoA, 'A', 1);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber);
@@ -193,8 +211,15 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null) {
 
     } else if (numJugadores === 10) {
         // 2 grupos de 5
-        const grupoA = jugadores.slice(0, 5);
-        const grupoB = jugadores.slice(5, 10);
+        let grupoA, grupoB;
+
+        if (gruposConfig) {
+            grupoA = gruposConfig.grupoA.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+            grupoB = gruposConfig.grupoB.map(nombre => jugadores.find(j => j.nombre === nombre)).filter(Boolean);
+        } else {
+            grupoA = jugadores.slice(0, 5);
+            grupoB = jugadores.slice(5, 10);
+        }
 
         const resultadoA = simularGrupo(grupoA, 'A', 1);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber);
@@ -251,17 +276,29 @@ async function simularMonteCarlo() {
     const numJugadores = parseInt(document.getElementById('numPlayers').value);
     const numSimulaciones = parseInt(document.getElementById('numSimulaciones').value);
 
-    // Validar selección actual: si no son 10, obligar a haber exactamente N seleccionados
-    if (numJugadores !== 10) {
-        const seleccion = obtenerJugadoresSeleccionadosPorNombre(numJugadores);
-        if (!seleccion || seleccion.length !== numJugadores) {
-            const topWarn = document.getElementById('topSelectionWarning');
-            if (topWarn) {
-                topWarn.textContent = `Por favor seleccioná exactamente ${numJugadores} jugadores antes de simular.`;
-                topWarn.style.display = 'block';
-            }
+    // Obtener modo de grupos
+    const modoGruposEl = document.getElementById('modoGrupos');
+    const modoGrupos = modoGruposEl ? modoGruposEl.value : 'aleatorio';
+
+    // Validar selección actual
+    const seleccion = obtenerJugadoresSeleccionadosPorNombre(numJugadores);
+    if (!seleccion || seleccion.length !== numJugadores) {
+        const topWarn = document.getElementById('topSelectionWarning');
+        if (topWarn) {
+            topWarn.textContent = `Por favor seleccioná exactamente ${numJugadores} jugadores antes de simular.`;
+            topWarn.style.display = 'block';
+        }
+        return;
+    }
+
+    // Validar grupos manuales si está en ese modo
+    let gruposConfig = null;
+    if (modoGrupos === 'manual' && numJugadores >= 8) {
+        if (!window.gruposManualConfig) {
+            alert('Por favor configurá y confirmá los grupos manualmente antes de simular.');
             return;
         }
+        gruposConfig = window.gruposManualConfig;
     }
 
     // Mostrar barra de progreso
@@ -273,9 +310,7 @@ async function simularMonteCarlo() {
     const estadisticas = {};
 
     // Construir lista de jugadores participantes según selección
-    let jugadoresParticipantes;
-    const seleccion = obtenerJugadoresSeleccionadosPorNombre(numJugadores);
-    jugadoresParticipantes = seleccion.slice();
+    let jugadoresParticipantes = seleccion.slice();
     // si por algún motivo la selección no está completa, completamos con nuevosJugadores
     if (jugadoresParticipantes.length < numJugadores) {
         const faltan = numJugadores - jugadoresParticipantes.length;
@@ -290,8 +325,8 @@ async function simularMonteCarlo() {
             subcampeon: 0,
             tercero: 0,
             cuarto: 0,
-            semifinalista: 0,
-            noClasifica: 0
+            semifinalista: 0,  // Llega a playoffs (top 4)
+            noClasifica: 0     // No llega a playoffs
         };
     });
 
@@ -308,7 +343,8 @@ async function simularMonteCarlo() {
         const actualBatchSize = Math.min(batchSize, numSimulaciones - simulacionesCompletadas);
         for (let i = 0; i < actualBatchSize; i++) {
             // En cada iteración usamos la lista fija de jugadoresParticipantes
-            const resultado = simularTorneoCompleto(numJugadores, jugadoresParticipantes);
+            // Pasamos gruposConfig para mantener grupos manuales fijos
+            const resultado = simularTorneoCompleto(numJugadores, jugadoresParticipantes, gruposConfig);
 
             estadisticas[resultado.campeon].campeon++;
             estadisticas[resultado.subcampeon].subcampeon++;
@@ -344,8 +380,8 @@ async function simularMonteCarlo() {
     document.getElementById('progreso').style.display = 'none';
     document.getElementById('btnSimular').disabled = false;
 
-    // Mostrar resultados (le paso las métricas nuevas)
-    mostrarResultados(estadisticas, numSimulaciones, numJugadores, { totalMatchesSimulated });
+    // Mostrar resultados (le paso las métricas nuevas y la configuración de grupos)
+    mostrarResultados(estadisticas, numSimulaciones, numJugadores, { totalMatchesSimulated, gruposConfig });
 }
 
 function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras = {}) {
@@ -353,6 +389,31 @@ function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras =
 
     html += `<div class="phase-title">📊 RESULTADOS DE ${numSimulaciones.toLocaleString()} SIMULACIONES</div>`;
     html += `<div class="subtitle" style="text-align: center; margin-bottom: 30px;">Formato: ${getFormatoNombre(numJugadores)}</div>`;
+
+    // Mostrar configuración de grupos si es manual
+    if (extras.gruposConfig && numJugadores >= 8) {
+        html += `<div style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #2196f3;">
+            <h4 style="margin:0 0 10px 0; color:#1565c0; text-align:center;">✋ GRUPOS CONFIGURADOS MANUALMENTE</h4>
+            <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">`;
+
+        if (extras.gruposConfig.grupoA && extras.gruposConfig.grupoA.length > 0) {
+            html += `<div style="background:white; padding:10px 15px; border-radius:6px; min-width:150px;">
+                <strong style="color:#667eea;">Grupo A:</strong><br>${extras.gruposConfig.grupoA.join(', ')}
+            </div>`;
+        }
+        if (extras.gruposConfig.grupoB && extras.gruposConfig.grupoB.length > 0) {
+            html += `<div style="background:white; padding:10px 15px; border-radius:6px; min-width:150px;">
+                <strong style="color:#667eea;">Grupo B:</strong><br>${extras.gruposConfig.grupoB.join(', ')}
+            </div>`;
+        }
+        if (extras.gruposConfig.grupoC && extras.gruposConfig.grupoC.length > 0) {
+            html += `<div style="background:white; padding:10px 15px; border-radius:6px; min-width:150px;">
+                <strong style="color:#667eea;">Grupo C:</strong><br>${extras.gruposConfig.grupoC.join(', ')}
+            </div>`;
+        }
+
+        html += `</div></div>`;
+    }
 
     // Mostrar métricas agregadas si existen
     if (extras.totalMatchesSimulated != null) {
@@ -368,7 +429,7 @@ function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras =
             probSubcampeon: (stats.subcampeon / numSimulaciones) * 100,
             probTercero: (stats.tercero / numSimulaciones) * 100,
             probCuarto: (stats.cuarto / numSimulaciones) * 100,
-            probSemi: (stats.semifinalista / numSimulaciones) * 100,
+            probSemi: (stats.semifinalista / numSimulaciones) * 100,  // Clasifica a playoffs
             probNoClasifica: (stats.noClasifica / numSimulaciones) * 100
         }))
         .sort((a, b) => b.probCampeon - a.probCampeon);
@@ -405,7 +466,7 @@ function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras =
         <th>🥈 Subcampeón</th>
         <th>🥉 3er Puesto</th>
         <th>4° Puesto</th>
-        <th>🏅 Semifinalista</th>
+        <th>✅ Clasifica Playoffs</th>
         <th>❌ No Clasifica</th>
     </tr>`;
 
@@ -417,7 +478,7 @@ function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras =
             <td><span class="prob-badge silver">${j.probSubcampeon.toFixed(1)}%</span></td>
             <td><span class="prob-badge bronze">${j.probTercero.toFixed(1)}%</span></td>
             <td><span class="prob-badge">${j.probCuarto.toFixed(1)}%</span></td>
-            <td><span class="prob-badge blue">${j.probSemi.toFixed(1)}%</span></td>
+            <td><span class="prob-badge" style="background:#4caf50; color:white;">${j.probSemi.toFixed(1)}%</span></td>
             <td><span class="prob-badge gray">${j.probNoClasifica.toFixed(1)}%</span></td>
         </tr>`;
     });
@@ -513,6 +574,27 @@ function getFormatoNombre(numJugadores) {
     return formatos[numJugadores] || 'Formato desconocido';
 }
 
+// Función para actualizar visibilidad del selector de modo de grupos en Monte Carlo
+function actualizarModoGruposMC() {
+    const numJugadores = parseInt(document.getElementById('numPlayers').value);
+    const modoGruposEl = document.getElementById('modoGrupos');
+    const modoGruposLabel = document.getElementById('modoGruposLabel');
+    const tieneGrupos = numJugadores >= 8;
+
+    if (modoGruposEl && modoGruposLabel) {
+        modoGruposEl.style.display = tieneGrupos ? '' : 'none';
+        modoGruposLabel.style.display = tieneGrupos ? '' : 'none';
+    }
+
+    // Resetear configuración de grupos manuales
+    window.gruposManualConfig = null;
+
+    // Renderizar UI de armado manual si la función existe
+    if (typeof renderGruposManualUI === 'function') {
+        renderGruposManualUI();
+    }
+}
+
 // Conectar el botón de la UI con la función Monte Carlo
 document.addEventListener('DOMContentLoaded', async () => {
     // Esperar a que los jugadores se carguen desde el archivo
@@ -523,5 +605,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btn = document.getElementById('btnSimular');
     if (btn) {
         btn.addEventListener('click', simularMonteCarlo);
+    }
+
+    // Listener para cambio de número de jugadores
+    const numPlayersEl = document.getElementById('numPlayers');
+    if (numPlayersEl) {
+        numPlayersEl.addEventListener('change', actualizarModoGruposMC);
+        // Ejecutar al inicio
+        actualizarModoGruposMC();
+    }
+
+    // Listener para el selector de modo de grupos
+    const modoGruposEl = document.getElementById('modoGrupos');
+    if (modoGruposEl) {
+        modoGruposEl.addEventListener('change', () => {
+            window.gruposManualConfig = null;
+            if (typeof renderGruposManualUI === 'function') {
+                renderGruposManualUI();
+            }
+        });
     }
 });
