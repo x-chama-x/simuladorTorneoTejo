@@ -191,8 +191,14 @@ function simularTorneo() {
     let jugadores = [...jugadoresBase];
 
     const jugadoresNecesarios = numJugadores - jugadoresBase.length;
-    for (let i = 0; i < jugadoresNecesarios; i++) {
-        jugadores.push(nuevosJugadores[i]);
+    if (jugadoresNecesarios > 0) {
+        // Agregar jugadores adicionales si se necesitan más que los 8 base
+        for (let i = 0; i < jugadoresNecesarios; i++) {
+            jugadores.push(nuevosJugadores[i]);
+        }
+    } else if (jugadoresNecesarios < 0) {
+        // Recortar jugadores si se necesitan menos que los 8 base
+        jugadores = jugadores.slice(0, numJugadores);
     }
 
     // Mezclar jugadores para distribuirlos aleatoriamente en grupos
