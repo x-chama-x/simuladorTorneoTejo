@@ -1,69 +1,10 @@
 # ============================================
-# HISTORIAL DE ENFRENTAMIENTOS DIRECTOS
+# HISTORIAL DE PARTIDOS
 # ============================================
-# Extraído del archivo enfrentamientos.html (datos reales de torneos y amistosos)
-
-# ============================================
-# SECCIÓN 1: RESUMEN POR ENFRENTAMIENTO
-# Formato: jugador1,jugador2,victorias_j1,victorias_j2,goles_j1,goles_j2
-# ============================================
-
-[RESUMEN]
-# Enfrentamientos de Chama
-Chama,Rafa,3,1,21,18
-Chama,Tomy,2,2,24,24
-Chama,Marco,2,2,24,23
-Chama,Facu,2,1,19,18
-Chama,Santi,2,0,14,9
-Chama,Hector,1,0,7,4
-Chama,Pedro,1,0,7,6
-Chama,Mateo,1,0,7,3
-Chama,Kovic,1,0,7,1
-
-# Enfrentamientos de Tomy/Tomi (mismo jugador)
-Tomy,Rafa,1,1,10,12
-Tomy,Marco,2,0,14,10
-Tomy,Facu,1,0,7,1
-Tomy,Santi,2,1,16,14
-Tomy,Hector,1,0,7,3
-Tomy,Pedro,1,0,7,4
-Tomy,Kovic,1,0,7,2
-
-# Enfrentamientos de Facu
-Facu,Rafa,2,0,14,11
-Facu,Marco,0,1,5,7
-Facu,Santi,3,0,21,14
-Facu,Hector,0,1,4,7
-Facu,Lucas,1,0,7,2
-Facu,Kovic,1,0,7,3
-
-# Enfrentamientos de Marco
-Marco,Rafa,1,0,7,5
-Marco,Santi,1,0,7,1
-Marco,Hector,1,0,7,6
-
-# Enfrentamientos de Rafa
-Rafa,Santi,1,1,12,11
-Rafa,Hector,1,0,7,3
-Rafa,Lucas,0,1,4,7
-
-# Enfrentamientos de Santi
-Santi,Lucas,0,1,5,7
-Santi,Mateo,0,1,5,7
-
-# Enfrentamientos de Pedro
-Pedro,Kovic,1,0,7,3
-
-# Enfrentamientos de Lucas
-Lucas,Kovic,1,0,7,4
-
-# ============================================
-# SECCIÓN 2: PARTIDOS DETALLADOS
 # Formato: jugador1,jugador2,resultado_j1,marcador,torneo,fecha,fase
-# resultado_j1: "G" = Ganó, "P" = Perdió
+# resultado_j1: "G" = Ganó jugador1, "P" = Perdió jugador1
 # ============================================
 
-[PARTIDOS]
 # Torneo 1 - Primer torneo de hockey de mesa (3/5/2025)
 Chama,Rafa,G,7-2,Primer torneo de hockey de mesa,3/5/2025,Final
 Tomy,Rafa,P,5-7,Primer torneo de hockey de mesa,3/5/2025,Semifinal
