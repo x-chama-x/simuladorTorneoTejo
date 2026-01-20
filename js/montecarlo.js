@@ -209,6 +209,10 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null, grupo
 
         clasificados = [...primeros, cuartoClasificado];
 
+        // Para formato 9 jugadores: guardar info de clasificación directa vs indirecta
+        var clasificadosDirectos9 = primeros.map(p => p.nombre); // 1ros de grupo clasifican directo
+        var clasificadoIndirecto9 = cuartoClasificado.nombre; // El que ganó el eliminatorio
+
     } else if (numJugadores === 10) {
         // 2 grupos de 5
         let grupoA, grupoB;
@@ -261,7 +265,8 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null, grupo
     const cuarto = tercerPuesto.ganador === perdedorSF1 ? perdedorSF2 : perdedorSF1;
     const subcampeon = final.ganador === sf1.ganador ? sf2.ganador : sf1.ganador;
 
-    return {
+    // Resultado base
+    const resultadoBase = {
         campeon: final.ganador,
         subcampeon: subcampeon,
         tercero: tercerPuesto.ganador,
@@ -269,6 +274,14 @@ function simularTorneoCompleto(numJugadores, participantesOverride = null, grupo
         semifinalistas: semifinalistas.map(s => s.nombre),
         matchesPlayed
     };
+
+    // Si es formato 9 jugadores, agregar info de clasificación directa vs indirecta
+    if (numJugadores === 9 && typeof clasificadosDirectos9 !== 'undefined') {
+        resultadoBase.clasificadosDirectos = clasificadosDirectos9;
+        resultadoBase.clasificadoIndirecto = clasificadoIndirecto9;
+    }
+
+    return resultadoBase;
 }
 
 // Función principal Monte Carlo
@@ -326,7 +339,9 @@ async function simularMonteCarlo() {
             tercero: 0,
             cuarto: 0,
             semifinalista: 0,  // Llega a playoffs (top 4)
-            noClasifica: 0     // No llega a playoffs
+            noClasifica: 0,    // No llega a playoffs
+            clasificaDirecto: 0,   // Para formato 9: clasifica como 1° de grupo
+            clasificaIndirecto: 0  // Para formato 9: clasifica por repechaje
         };
     });
 
@@ -354,6 +369,16 @@ async function simularMonteCarlo() {
             resultado.semifinalistas.forEach(nombre => {
                 estadisticas[nombre].semifinalista++;
             });
+
+            // Para formato 9 jugadores: registrar clasificación directa vs indirecta
+            if (numJugadores === 9 && resultado.clasificadosDirectos) {
+                resultado.clasificadosDirectos.forEach(nombre => {
+                    estadisticas[nombre].clasificaDirecto++;
+                });
+                if (resultado.clasificadoIndirecto) {
+                    estadisticas[resultado.clasificadoIndirecto].clasificaIndirecto++;
+                }
+            }
 
             jugadoresParticipantes.forEach(j => {
                 if (!resultado.semifinalistas.includes(j.nombre)) {
@@ -430,7 +455,9 @@ function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras =
             probTercero: (stats.tercero / numSimulaciones) * 100,
             probCuarto: (stats.cuarto / numSimulaciones) * 100,
             probSemi: (stats.semifinalista / numSimulaciones) * 100,  // Clasifica a playoffs
-            probNoClasifica: (stats.noClasifica / numSimulaciones) * 100
+            probNoClasifica: (stats.noClasifica / numSimulaciones) * 100,
+            probClasificaDirecto: (stats.clasificaDirecto / numSimulaciones) * 100,  // 1° de grupo
+            probClasificaIndirecto: (stats.clasificaIndirecto / numSimulaciones) * 100  // Por repechaje
         }))
         .sort((a, b) => b.probCampeon - a.probCampeon);
 
@@ -484,6 +511,41 @@ function mostrarResultados(estadisticas, numSimulaciones, numJugadores, extras =
     });
 
     html += '</table></div>';
+
+    // Tabla especial para formato 9 jugadores: Clasificación Directa vs Indirecta
+    if (numJugadores === 9) {
+        html += '<div class="phase-title">🎯 PROBABILIDADES DE CLASIFICACIÓN A PLAYOFFS (9 JUGADORES)</div>';
+        html += '<div style="background:#fff3e0; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #ff9800;">';
+        html += '<p style="margin:0 0 10px 0; color:#e65100; text-align:center; font-weight:bold;">🔥 En formato 9 jugadores, hay 2 vías para clasificar a Playoffs:</p>';
+        html += '<ul style="margin:0 0 15px 20px; color:#555;"><li><strong>Directa:</strong> Ser 1° de tu grupo (3 clasificados directos)</li><li><strong>Indirecta:</strong> Ganar el repechaje + partido eliminatorio (1 clasificado)</li></ul>';
+        html += '</div>';
+
+        html += '<div class="standings"><table>';
+        html += `<tr>
+            <th>Pos</th>
+            <th>Jugador</th>
+            <th>🏆 Clasifica Directo (1° Grupo)</th>
+            <th>🔄 Clasifica por Repechaje</th>
+            <th>✅ Total Clasificación</th>
+            <th>❌ No Clasifica</th>
+        </tr>`;
+
+        // Ordenar por probabilidad total de clasificación para esta tabla
+        const rankingClasif = [...ranking].sort((a, b) => b.probSemi - a.probSemi);
+
+        rankingClasif.forEach((j, index) => {
+            html += `<tr>
+                <td class="position">${index + 1}°</td>
+                <td><strong>${j.nombre}</strong></td>
+                <td><span class="prob-badge" style="background:#2e7d32; color:white;">${j.probClasificaDirecto.toFixed(1)}%</span></td>
+                <td><span class="prob-badge" style="background:#ff9800; color:white;">${j.probClasificaIndirecto.toFixed(1)}%</span></td>
+                <td><span class="prob-badge" style="background:#4caf50; color:white;">${j.probSemi.toFixed(1)}%</span></td>
+                <td><span class="prob-badge gray">${j.probNoClasifica.toFixed(1)}%</span></td>
+            </tr>`;
+        });
+
+        html += '</table></div>';
+    }
 
     // Top 3 destacado
     html += '<div class="phase-title">👑 TOP 3 FAVORITOS</div>';

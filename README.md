@@ -20,6 +20,9 @@ Link: https://x-chama-x.github.io/simuladorTorneoTejo/index.html
   - 4️⃣ Quedar cuarto
   - ✅ Clasificar a playoffs
   - ❌ No clasificar a playoffs
+- **Para formato 9 jugadores**: Muestra probabilidades de:
+  - 🏆 Clasificación directa (como 1° de grupo)
+  - 🔄 Clasificación indirecta (a través del repechaje)
 - Muestra estadísticas agregadas y porcentajes
 - **Análisis por grupo**: Permite simular con grupos configurados manualmente para ver cómo afecta un "grupo de la muerte" a las probabilidades
 
@@ -38,6 +41,14 @@ Link: https://x-chama-x.github.io/simuladorTorneoTejo/index.html
 3. **Repechaje 3° puestos**: Mini-liga entre los 3 terceros (3 partidos) → Solo el 1° avanza
 4. **Partido eliminatorio**: 1° rep. segundos vs 1° rep. terceros (1 partido) → Ganador clasifica
 5. **Playoffs**: Semifinales + 3er puesto + Final (4 partidos)
+
+#### Vías de clasificación a Playoffs (9 jugadores):
+| Vía | Descripción | Cantidad |
+|-----|-------------|----------|
+| **Directa** 🏆 | Terminar 1° en tu grupo | 3 jugadores |
+| **Indirecta** 🔄 | Ganar repechaje + partido eliminatorio | 1 jugador |
+
+**Nota:** En Monte Carlo se muestran las probabilidades separadas de clasificar por cada vía, lo que permite ver qué tan probable es que un jugador termine primero vs que necesite ir por repechaje.
 
 ## ✋ Armado Manual de Grupos
 
@@ -62,42 +73,76 @@ Cuando se usa armado manual en Monte Carlo, los grupos se mantienen **fijos** du
 
 La simulación de partidos tiene en cuenta:
 
-1. **Ranking FIFA**: Puntos acumulados de cada jugador
-2. **Win Rate**: Porcentaje histórico de victorias
+1. **Ranking FIFA**: Puntos acumulados de cada jugador (peso 40%)
+2. **Win Rate**: Porcentaje histórico de victorias (peso 60%)
 3. **Promedio de Goles**: Influye en la diferencia de goles de cada partido
 
-### Fórmula de Probabilidad
+### Fórmula de Probabilidad (Logística/Sigmoide)
+
+Se usa una función **sigmoide** que es más sensible a diferencias de nivel y nunca llega exactamente a 0% ni 100%:
 
 ```
-probBase = 0.5 + (diferenciaRanking / 150)
-ajusteWinRate = (winRate1 - winRate2) * 0.4
-probabilidadFinal = probBase + ajusteWinRate
+factorFuerza = (ranking × 0.4) + (winRate × 100 × 0.6)
+diferencia = factorFuerza1 - factorFuerza2
+probabilidad = 1 / (1 + e^(-diferencia / 30))
 ```
 
-**Límites:** 10% - 90%
+**¿Por qué el winRate tiene más peso (60%) que el ranking (40%)?**
+- El ranking puede estar "inflado" por jugar más torneos
+- El winRate refleja mejor el rendimiento real partido a partido
+- Esto equilibra mejor las probabilidades y permite más upsets
 
-#### Ejemplo de cálculo:
+#### Tabla de probabilidades según diferencia de fuerza:
+
+| Diferencia | Probabilidad | Ejemplo |
+|------------|--------------|---------|
+| 0 | 50% | Jugadores iguales |
+| 20 | 66% | Ventaja leve |
+| 40 | 79% | Ventaja moderada |
+| 60 | 88% | Ventaja clara |
+| 80 | 93% | Ventaja grande |
+
+#### Ejemplos de cálculo:
+
 **Chama (198 pts, 73.68% WR) vs Kovic (5 pts, 0% WR):**
 ```
-probBase = 0.5 + (198-5)/150 = 0.5 + 1.29 = 1.79
-ajusteWinRate = (0.7368 - 0.00) * 0.4 = 0.29
-probabilidadFinal = 1.79 + 0.29 = 2.08 → limitado a 90%
+fuerza_Chama = (198 × 0.4) + (73.68 × 0.6) = 79.2 + 44.21 = 123.41
+fuerza_Kovic = (5 × 0.4) + (0 × 0.6) = 2 + 0 = 2
+diferencia = 123.41 - 2 = 121.41
+probabilidad = 1 / (1 + e^(-121.41/30)) = 98.3%
 ```
-Chama tiene **90%** de probabilidad de ganar.
+Chama tiene **98.3%** de probabilidad de ganar (muy favorito pero no imposible el upset).
 
-**Tomy (118 pts, 69.23% WR) vs Facu (126 pts, 61.54% WR):**
+**Chama vs Tomy (118 pts, 69.23% WR):**
 ```
-probBase = 0.5 + (118-126)/150 = 0.5 - 0.053 = 0.447
-ajusteWinRate = (0.6923 - 0.6154) * 0.4 = 0.031
-probabilidadFinal = 0.447 + 0.031 = 0.478 → 47.8%
+fuerza_Chama = 123.41
+fuerza_Tomy = (118 × 0.4) + (69.23 × 0.6) = 47.2 + 41.54 = 88.74
+diferencia = 123.41 - 88.74 = 34.67
+probabilidad = 1 / (1 + e^(-34.67/30)) = 76%
 ```
-Tomy tiene **47.8%** de probabilidad de ganar (partido muy parejo).
+Chama tiene **76%** de probabilidad de ganar (favorito pero Tomy tiene chances reales).
 
-#### ¿Por qué los límites de 10%-90%?
-- Mantiene algo de **variabilidad** (los upsets son posibles)
-- Pero **castiga mucho** estar en un grupo difícil
-- Un jugador débil vs uno top tiene solo 10% de ganar
-- Esto hace que el "grupo de la muerte" tenga un impacto real en las probabilidades de clasificar
+**Chama vs Facu (126 pts, 61.54% WR):**
+```
+fuerza_Facu = (126 × 0.4) + (61.54 × 0.6) = 50.4 + 36.92 = 87.32
+diferencia = 123.41 - 87.32 = 36.09
+probabilidad = 1 / (1 + e^(-36.09/30)) = 77%
+```
+Chama tiene **77%** de ganar contra Facu.
+
+**Tomy vs Facu:**
+```
+diferencia = 88.74 - 87.32 = 1.42
+probabilidad = 1 / (1 + e^(-1.42/30)) = 52.4%
+```
+Tomy tiene **52.4%** de ganar (partido muy parejo, leve ventaja Tomy por mejor winRate).
+
+#### ¿Por qué la fórmula sigmoide?
+- ✅ **Nunca llega a 0% ni 100%**: Siempre hay chance de upset (realista)
+- ✅ **Curva suave (k=30)**: Permite más sorpresas que una curva agresiva
+- ✅ **WinRate pesa más**: Refleja rendimiento real, no solo cantidad de torneos jugados
+- ✅ **Grupos de la muerte impactan**: Chama tiene 76% vs Tomy pero 98% vs Kovic
+- ✅ **Probabilidades más realistas**: El mejor jugador puede perder en fase de grupos
 
 ## 🏆 Ranking FIFA Actual
 
