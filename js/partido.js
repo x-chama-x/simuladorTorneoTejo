@@ -1,8 +1,8 @@
 // Variables para almacenar el historial de enfrentamientos directos
-let enfrentamientosDirectos = {};
+let enfrentamientosDirectos = {}; // Calculado automáticamente desde los partidos
 let partidosDetallados = []; // Array con todos los partidos individuales
 
-// Función para cargar todo el historial desde el archivo unificado
+// Función para cargar partidos y calcular estadísticas automáticamente
 async function cargarHistorialCompleto() {
     try {
         const response = await fetch('enfrentamientos_directos.txt');
@@ -12,11 +12,10 @@ async function cargarHistorialCompleto() {
         const texto = await response.text();
         const lineas = texto.split('\n');
 
-        enfrentamientosDirectos = {};
         partidosDetallados = [];
+        enfrentamientosDirectos = {};
 
-        let seccionActual = null; // 'RESUMEN' o 'PARTIDOS'
-
+        // Cargar todos los partidos
         for (const linea of lineas) {
             const lineaTrimmed = linea.trim();
 
@@ -25,37 +24,9 @@ async function cargarHistorialCompleto() {
                 continue;
             }
 
-            // Detectar cambio de sección
-            if (lineaTrimmed === '[RESUMEN]') {
-                seccionActual = 'RESUMEN';
-                continue;
-            }
-            if (lineaTrimmed === '[PARTIDOS]') {
-                seccionActual = 'PARTIDOS';
-                continue;
-            }
-
             const partes = lineaTrimmed.split(',');
 
-            // Procesar según la sección actual
-            if (seccionActual === 'RESUMEN' && partes.length >= 6) {
-                const jugador1 = partes[0].trim();
-                const jugador2 = partes[1].trim();
-                const victoriasJ1 = parseInt(partes[2].trim());
-                const victoriasJ2 = parseInt(partes[3].trim());
-                const golesJ1 = parseInt(partes[4].trim());
-                const golesJ2 = parseInt(partes[5].trim());
-
-                // Crear clave única para el enfrentamiento (ordenada alfabéticamente)
-                const clave = [jugador1, jugador2].sort().join('_vs_');
-
-                // Guardar en el formato correcto
-                enfrentamientosDirectos[clave] = {
-                    jugadores: [jugador1, jugador2],
-                    victorias: { [jugador1]: victoriasJ1, [jugador2]: victoriasJ2 },
-                    goles: { [jugador1]: golesJ1, [jugador2]: golesJ2 }
-                };
-            } else if (seccionActual === 'PARTIDOS' && partes.length >= 7) {
+            if (partes.length >= 7) {
                 const jugador1 = partes[0].trim();
                 const jugador2 = partes[1].trim();
                 const resultado = partes[2].trim(); // G o P para jugador1
@@ -67,7 +38,7 @@ async function cargarHistorialCompleto() {
                 // Parsear marcador
                 const [goles1, goles2] = marcador.split('-').map(g => parseInt(g.trim()));
 
-                partidosDetallados.push({
+                const partido = {
                     jugador1,
                     jugador2,
                     ganador: resultado === 'G' ? jugador1 : jugador2,
@@ -78,12 +49,37 @@ async function cargarHistorialCompleto() {
                     torneo,
                     fecha,
                     fase
-                });
+                };
+
+                partidosDetallados.push(partido);
+
+                // Calcular estadísticas del enfrentamiento automáticamente
+                const clave = [jugador1, jugador2].sort().join('_vs_');
+
+                if (!enfrentamientosDirectos[clave]) {
+                    enfrentamientosDirectos[clave] = {
+                        jugadores: [jugador1, jugador2].sort(),
+                        victorias: {},
+                        goles: {}
+                    };
+                    // Inicializar para ambos jugadores
+                    enfrentamientosDirectos[clave].victorias[jugador1] = 0;
+                    enfrentamientosDirectos[clave].victorias[jugador2] = 0;
+                    enfrentamientosDirectos[clave].goles[jugador1] = 0;
+                    enfrentamientosDirectos[clave].goles[jugador2] = 0;
+                }
+
+                // Sumar victoria al ganador
+                enfrentamientosDirectos[clave].victorias[partido.ganador]++;
+
+                // Sumar goles a cada jugador
+                enfrentamientosDirectos[clave].goles[jugador1] += goles1;
+                enfrentamientosDirectos[clave].goles[jugador2] += goles2;
             }
         }
 
-        console.log('✅ Enfrentamientos directos cargados:', Object.keys(enfrentamientosDirectos).length);
-        console.log('✅ Partidos detallados cargados:', partidosDetallados.length);
+        console.log('✅ Partidos cargados:', partidosDetallados.length);
+        console.log('✅ Enfrentamientos calculados:', Object.keys(enfrentamientosDirectos).length);
         return true;
     } catch (error) {
         console.error('❌ Error al cargar historial:', error);
