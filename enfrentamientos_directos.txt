@@ -1,0 +1,121 @@
+# ============================================
+# HISTORIAL DE ENFRENTAMIENTOS DIRECTOS
+# ============================================
+# Extraído del archivo enfrentamientos.html (datos reales de torneos y amistosos)
+
+# ============================================
+# SECCIÓN 1: RESUMEN POR ENFRENTAMIENTO
+# Formato: jugador1,jugador2,victorias_j1,victorias_j2,goles_j1,goles_j2
+# ============================================
+
+[RESUMEN]
+# Enfrentamientos de Chama
+Chama,Rafa,3,1,21,18
+Chama,Tomy,2,2,24,24
+Chama,Marco,2,2,24,23
+Chama,Facu,2,1,19,18
+Chama,Santi,2,0,14,9
+Chama,Hector,1,0,7,4
+Chama,Pedro,1,0,7,6
+Chama,Mateo,1,0,7,3
+Chama,Kovic,1,0,7,1
+
+# Enfrentamientos de Tomy/Tomi (mismo jugador)
+Tomy,Rafa,1,1,10,12
+Tomy,Marco,2,0,14,10
+Tomy,Facu,1,0,7,1
+Tomy,Santi,2,1,16,14
+Tomy,Hector,1,0,7,3
+Tomy,Pedro,1,0,7,4
+Tomy,Kovic,1,0,7,2
+
+# Enfrentamientos de Facu
+Facu,Rafa,2,0,14,11
+Facu,Marco,0,1,5,7
+Facu,Santi,3,0,21,14
+Facu,Hector,0,1,4,7
+Facu,Lucas,1,0,7,2
+Facu,Kovic,1,0,7,3
+
+# Enfrentamientos de Marco
+Marco,Rafa,1,0,7,5
+Marco,Santi,1,0,7,1
+Marco,Hector,1,0,7,6
+
+# Enfrentamientos de Rafa
+Rafa,Santi,1,1,12,11
+Rafa,Hector,1,0,7,3
+Rafa,Lucas,0,1,4,7
+
+# Enfrentamientos de Santi
+Santi,Lucas,0,1,5,7
+Santi,Mateo,0,1,5,7
+
+# Enfrentamientos de Pedro
+Pedro,Kovic,1,0,7,3
+
+# Enfrentamientos de Lucas
+Lucas,Kovic,1,0,7,4
+
+# ============================================
+# SECCIÓN 2: PARTIDOS DETALLADOS
+# Formato: jugador1,jugador2,resultado_j1,marcador,torneo,fecha,fase
+# resultado_j1: "G" = Ganó, "P" = Perdió
+# ============================================
+
+[PARTIDOS]
+# Torneo 1 - Primer torneo de hockey de mesa (3/5/2025)
+Chama,Rafa,G,7-2,Primer torneo de hockey de mesa,3/5/2025,Final
+Tomy,Rafa,P,5-7,Primer torneo de hockey de mesa,3/5/2025,Semifinal
+Chama,Marco,G,7-5,Primer torneo de hockey de mesa,3/5/2025,Semifinal
+Tomy,Marco,G,7-5,Primer torneo de hockey de mesa,3/5/2025,Tercer Puesto
+Chama,Facu,G,7-5,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Tomy,Santi,P,5-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Marco,Rafa,G,7-5,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Chama,Marco,G,7-4,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Rafa,Tomy,P,3-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Facu,Santi,G,7-3,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Rafa,Hector,G,7-3,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Facu,Hector,P,4-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Tomy,Chama,P,6-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Santi,Marco,P,1-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Hector,Chama,P,4-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Facu,Tomy,P,1-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Hector,Santi,P,5-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Chama,Rafa,P,6-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Marco,Facu,G,7-5,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Santi,Rafa,P,5-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Hector,Tomy,P,3-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Marco,Tomy,P,5-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Santi,Chama,P,5-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Facu,Rafa,G,7-6,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+Hector,Marco,P,6-7,Primer torneo de hockey de mesa,3/5/2025,Fase de Liga
+
+# Torneo 2 - Segundo torneo de hockey de mesa (11/01/2026)
+Tomy,Chama,P,6-7,Segundo torneo de hockey de mesa,11/01/2026,Final
+Santi,Tomy,P,2-7,Segundo torneo de hockey de mesa,11/01/2026,Semifinal
+Chama,Facu,G,7-6,Segundo torneo de hockey de mesa,11/01/2026,Semifinal
+Facu,Santi,G,7-6,Segundo torneo de hockey de mesa,11/01/2026,Tercer Puesto
+Santi,Rafa,G,7-4,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (A)
+Lucas,Facu,P,2-7,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (A)
+Facu,Rafa,G,7-5,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (A)
+Santi,Lucas,P,5-7,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (A)
+Facu,Santi,G,7-5,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (A)
+Lucas,Rafa,G,7-4,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (A)
+Kovic,Chama,P,1-7,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (B)
+Pedro,Tomy,P,4-7,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (B)
+Tomy,Kovic,G,7-2,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (B)
+Chama,Pedro,G,7-6,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (B)
+Pedro,Kovic,G,7-3,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (B)
+Tomy,Chama,G,7-4,Segundo torneo de hockey de mesa,11/01/2026,Fase de Grupos (B)
+
+# Amistosos
+Chama,Rafa,G,7-3,Amistoso,11/01/2026,Amistoso
+Chama,Facu,P,5-7,Amistoso,7/5/2025,Amistoso
+Chama,Mateo,G,7-3,Amistoso,7/5/2025,Amistoso
+Marco,Chama,G,7-5,Amistoso,21/7/2025,Amistoso
+Marco,Chama,G,7-5,Amistoso,21/7/2025,Amistoso
+Chama,Santi,G,7-4,Amistoso,7/5/2025,Amistoso
+Mateo,Santi,G,7-5,Amistoso,7/5/2025,Amistoso
+Facu,Kovic,G,7-3,Amistoso,7/5/2025,Amistoso
+Lucas,Kovic,G,7-4,Amistoso,2/8/2025,Amistoso
