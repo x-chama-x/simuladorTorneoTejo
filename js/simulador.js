@@ -81,16 +81,26 @@ function elegirAleatorioNombres(cantidad) {
 }
 
 function simularPartido(jugador1, jugador2) {
-    // Diferencia de ranking - ahora con divisor menor para mayor impacto
-    const rankDiff = jugador1.ranking - jugador2.ranking;
-    const prob1 = 0.5 + (rankDiff / 150);  // Divisor reducido de 200 a 150
+    // FÓRMULA LOGÍSTICA (SIGMOIDE) - Más sensible a diferencias grandes
+    //
+    // Factor de fuerza combinado: 40% ranking + 60% winRate
+    // El winRate tiene más peso porque refleja mejor el rendimiento real
+    // El ranking puede estar inflado por jugar más partidos
+    const fuerza1 = (jugador1.ranking * 0.4) + (jugador1.winRate * 100 * 0.6);
+    const fuerza2 = (jugador2.ranking * 0.4) + (jugador2.winRate * 100 * 0.6);
 
-    // Ajuste por winRate histórico - ahora con más peso (0.4 en vez de 0.3)
-    const winRateAdj = (jugador1.winRate - jugador2.winRate) * 0.4;
+    // Diferencia de fuerza
+    const diffFuerza = fuerza1 - fuerza2;
 
-    // Límites expandidos: 10% - 90% para reflejar mejor las diferencias reales
-    // Mantiene algo de variabilidad (upsets posibles) pero castiga más los grupos difíciles
-    const probFinal = Math.max(0.10, Math.min(0.90, prob1 + winRateAdj));
+    // Función sigmoide: prob = 1 / (1 + e^(-x/k))
+    // k=30 da una curva más suave que permite más upsets:
+    // - Diferencia 0 → 50%
+    // - Diferencia 20 → 66%
+    // - Diferencia 40 → 79%
+    // - Diferencia 60 → 88%
+    // - Diferencia 80 → 93%
+    const k = 30;
+    const probFinal = 1 / (1 + Math.exp(-diffFuerza / k));
 
     const gana1 = Math.random() < probFinal;
 
