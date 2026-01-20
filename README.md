@@ -26,6 +26,13 @@ Link: https://x-chama-x.github.io/simuladorTorneoTejo/index.html
 - Muestra estadísticas agregadas y porcentajes
 - **Análisis por grupo**: Permite simular con grupos configurados manualmente para ver cómo afecta un "grupo de la muerte" a las probabilidades
 
+### Simulador de Partido 1vs1
+- Simula enfrentamientos directos entre dos jugadores
+- **Barra de probabilidad**: Muestra automáticamente el porcentaje de victoria de cada jugador al seleccionarlos
+- **Historial de enfrentamientos**: Muestra victorias totales, goles y los últimos 5 partidos entre los jugadores
+- **Datos calculados automáticamente**: Las estadísticas se calculan desde el archivo `enfrentamientos_directos.txt`
+- La probabilidad considera tanto las estadísticas generales como el historial directo entre jugadores
+
 ## 📊 Formatos de Torneo Soportados
 
 | Jugadores | Formato | Partidos Total | Clasifican |
@@ -164,17 +171,21 @@ Tomy tiene **52.4%** de ganar (partido muy parejo, leve ventaja Tomy por mejor w
 
 ```
 simuladorTorneoTejo/
-├── index.html          # Simulador de torneo individual
-├── montecarlo.html     # Simulador Monte Carlo
-├── ranking.txt         # Archivo con el ranking FIFA (editable)
-├── formatos.md         # Documentación de formatos
-├── README.md           # Este archivo
+├── index.html                    # Simulador de torneo individual
+├── montecarlo.html               # Simulador Monte Carlo
+├── partido.html                  # Simulador de partido 1vs1
+├── ranking.txt                   # Archivo con el ranking FIFA (editable)
+├── enfrentamientos_directos.txt  # Historial de partidos entre jugadores
+├── formatos.md                   # Documentación de formatos
+├── README.md                     # Este archivo
 ├── css/
-│   ├── styles.css      # Estilos principales
-│   └── montecarlo.css  # Estilos específicos Monte Carlo
+│   ├── styles.css                # Estilos principales
+│   ├── montecarlo.css            # Estilos específicos Monte Carlo
+│   └── partido.css               # Estilos específicos Partido 1vs1
 └── js/
-    ├── simulador.js    # Lógica principal de simulación
-    └── montecarlo.js   # Lógica de simulaciones múltiples
+    ├── simulador.js              # Lógica principal de simulación
+    ├── montecarlo.js             # Lógica de simulaciones múltiples
+    └── partido.js                # Lógica de partido 1vs1
 ```
 
 ## 📝 Configuración de Jugadores (ranking.txt)
@@ -205,6 +216,40 @@ Tomy,118,0.6923,6.54
 
 **Nota:** Los primeros 8 jugadores del archivo se consideran "jugadores base" y los restantes "nuevos jugadores".
 
+## 📋 Configuración de Enfrentamientos (enfrentamientos_directos.txt)
+
+El historial de partidos entre jugadores se carga desde el archivo `enfrentamientos_directos.txt`. Este archivo permite registrar todos los partidos jugados y el sistema calcula automáticamente las estadísticas.
+
+### Formato del archivo:
+```
+# Comentarios empiezan con #
+jugador1,jugador2,resultado_j1,marcador,torneo,fecha,fase
+```
+
+### Campos:
+| Campo | Descripción | Ejemplo |
+|-------|-------------|---------|
+| jugador1 | Nombre del primer jugador | Chama |
+| jugador2 | Nombre del segundo jugador | Rafa |
+| resultado_j1 | G = Ganó jugador1, P = Perdió jugador1 | G |
+| marcador | Resultado del partido | 7-2 |
+| torneo | Nombre del torneo o evento | Primer torneo de hockey de mesa |
+| fecha | Fecha del partido | 3/5/2025 |
+| fase | Fase del torneo | Final |
+
+### Ejemplo:
+```
+Chama,Rafa,G,7-2,Primer torneo de hockey de mesa,3/5/2025,Final
+Tomy,Rafa,P,5-7,Primer torneo de hockey de mesa,3/5/2025,Semifinal
+Chama,Facu,P,5-7,Amistoso,7/5/2025,Amistoso
+```
+
+### Estadísticas calculadas automáticamente:
+- **Victorias totales** de cada jugador en el enfrentamiento directo
+- **Goles totales** de cada jugador
+- **Total de partidos jugados** entre ambos
+- **Últimos 5 partidos** con detalle de torneo, fase y fecha
+
 ## 🚀 Uso
 
 1. **Importante:** Debido a que el proyecto carga el ranking desde un archivo externo, debe ejecutarse desde un servidor web:
@@ -230,7 +275,5 @@ Tomy,118,0.6923,6.54
 
 ---
 
-*Desarrollado por x_chama_x* 
+*Desarrollado por x_chama_x*
 
-## 📋 Próximos Features
-- Agregar página de versus entre dos jugadores, con su historial de partidos y probabilidad de ganar.
