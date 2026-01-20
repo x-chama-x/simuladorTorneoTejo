@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Partido - Torneo Air Hockey</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/partido.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚔️ Simulador de Partido 1vs1</h1>
+        <p class="subtitle">Simula un enfrentamiento directo entre dos jugadores</p>
+
+        <div class="controls">
+            <div class="player-selectors">
+                <div class="player-select-box blue-box">
+                    <label for="jugador1">🔵 Jugador Azul</label>
+                    <select id="jugador1">
+                        <option value="">Seleccionar jugador...</option>
+                    </select>
+                </div>
+
+                <div class="vs-divider">
+                    <span>VS</span>
+                </div>
+
+                <div class="player-select-box red-box">
+                    <label for="jugador2">🔴 Jugador Rojo</label>
+                    <select id="jugador2">
+                        <option value="">Seleccionar jugador...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="buttons-row">
+                <button id="simularPartidoBtn" disabled>🎲 Simular Partido</button>
+                <button id="simularMultiplesBtn" disabled>📊 Simular 1000 veces</button>
+            </div>
+
+            <!-- Enlace al Simulador normal -->
+            <a href="index.html" class="nav-link green">🏠 Ir al Simulador de Torneo</a>
+            <a href="montecarlo.html" class="nav-link purple">📊 Simulador Monte Carlo</a>
+        </div>
+
+        <!-- Historial de enfrentamientos directos -->
+        <div id="historialDirecto" class="historial-container" style="display:none;">
+            <h3>📜 Historial de Enfrentamientos</h3>
+            <div id="historialContent"></div>
+        </div>
+
+        <!-- Resultado del partido -->
+        <div id="resultado"></div>
+
+        <!-- Resultado de simulaciones múltiples -->
+        <div id="resultadoMultiple" style="display:none;"></div>
+    </div>
+
+    <script src="js/simulador.js"></script>
+    <script src="js/partido.js"></script>
+</body>
+</html>
