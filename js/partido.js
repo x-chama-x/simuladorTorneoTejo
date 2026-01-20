@@ -271,94 +271,6 @@ function mostrarResultadoPartido(jugador1, jugador2, resultado) {
     `;
 }
 
-// Función para simular múltiples partidos
-function simularMultiplesPartidos(jugador1, jugador2, cantidad) {
-    let victoriasJ1 = 0;
-    let victoriasJ2 = 0;
-    let golesJ1 = 0;
-    let golesJ2 = 0;
-
-    for (let i = 0; i < cantidad; i++) {
-        const resultado = simularPartidoConHistorial(jugador1, jugador2);
-        if (resultado.ganador === jugador1.nombre) {
-            victoriasJ1++;
-        } else {
-            victoriasJ2++;
-        }
-        golesJ1 += resultado.goles1;
-        golesJ2 += resultado.goles2;
-    }
-
-    return {
-        cantidad,
-        victoriasJ1,
-        victoriasJ2,
-        porcentajeJ1: (victoriasJ1 / cantidad * 100).toFixed(1),
-        porcentajeJ2: (victoriasJ2 / cantidad * 100).toFixed(1),
-        promedioGolesJ1: (golesJ1 / cantidad).toFixed(2),
-        promedioGolesJ2: (golesJ2 / cantidad).toFixed(2)
-    };
-}
-
-// Función para mostrar resultados de simulación múltiple
-function mostrarResultadosMultiples(jugador1, jugador2, stats) {
-    const resultadoDiv = document.getElementById('resultadoMultiple');
-
-    resultadoDiv.innerHTML = `
-        <div class="multiple-results">
-            <h3>📊 Análisis de ${stats.cantidad.toLocaleString()} Simulaciones</h3>
-            
-            <div class="probability-bars">
-                <div class="probability-bar">
-                    <div class="label">
-                        <span style="color: #2196F3;">🔵 ${jugador1.nombre}</span>
-                        <span>${stats.victoriasJ1.toLocaleString()} victorias</span>
-                    </div>
-                    <div class="bar-container">
-                        <div class="bar-fill blue" style="width: ${stats.porcentajeJ1}%;">
-                            <span class="percentage">${stats.porcentajeJ1}%</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="probability-bar">
-                    <div class="label">
-                        <span style="color: #f44336;">🔴 ${jugador2.nombre}</span>
-                        <span>${stats.victoriasJ2.toLocaleString()} victorias</span>
-                    </div>
-                    <div class="bar-container">
-                        <div class="bar-fill red" style="width: ${stats.porcentajeJ2}%;">
-                            <span class="percentage">${stats.porcentajeJ2}%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="stats-summary">
-                <h4>📈 Estadísticas Detalladas</h4>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">Promedio goles ${jugador1.nombre}</div>
-                        <div class="stat-value">${stats.promedioGolesJ1}</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Promedio goles ${jugador2.nombre}</div>
-                        <div class="stat-value">${stats.promedioGolesJ2}</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Favorito</div>
-                        <div class="stat-value">${stats.porcentajeJ1 > stats.porcentajeJ2 ? jugador1.nombre : jugador2.nombre}</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Diferencia</div>
-                        <div class="stat-value">${Math.abs(stats.porcentajeJ1 - stats.porcentajeJ2).toFixed(1)}%</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    resultadoDiv.style.display = 'block';
-}
 
 // Función para poblar los selectores con jugadores
 function poblarSelectores() {
@@ -381,21 +293,92 @@ function obtenerJugadorPorNombre(nombre) {
     return jugadoresDisponibles.find(j => j.nombre === nombre);
 }
 
+// Función para calcular la probabilidad de victoria (sin simular, usando la fórmula directa)
+function calcularProbabilidad(jugador1, jugador2) {
+    // Obtener historial de enfrentamientos
+    const historial = obtenerHistorialEnfrentamiento(jugador1.nombre, jugador2.nombre);
+
+    // FÓRMULA LOGÍSTICA (SIGMOIDE) - Base del simulador
+    let fuerza1 = (jugador1.ranking * 0.4) + (jugador1.winRate * 100 * 0.6);
+    let fuerza2 = (jugador2.ranking * 0.4) + (jugador2.winRate * 100 * 0.6);
+
+    // Ajuste por historial de enfrentamientos directos (si existe)
+    if (historial) {
+        const totalEnfrentamientos = (historial.victorias[jugador1.nombre] || 0) + (historial.victorias[jugador2.nombre] || 0);
+
+        if (totalEnfrentamientos > 0) {
+            const winRateDirecto1 = historial.victorias[jugador1.nombre] / totalEnfrentamientos;
+            const winRateDirecto2 = historial.victorias[jugador2.nombre] / totalEnfrentamientos;
+
+            const pesoHistorial = Math.min(0.2, totalEnfrentamientos * 0.02);
+
+            fuerza1 += (winRateDirecto1 - 0.5) * 100 * pesoHistorial;
+            fuerza2 += (winRateDirecto2 - 0.5) * 100 * pesoHistorial;
+        }
+    }
+
+    const diffFuerza = fuerza1 - fuerza2;
+    const k = 30;
+    const probJ1 = 1 / (1 + Math.exp(-diffFuerza / k));
+
+    return {
+        probJ1: (probJ1 * 100).toFixed(1),
+        probJ2: ((1 - probJ1) * 100).toFixed(1)
+    };
+}
+
+// Función para mostrar la barra de probabilidad
+function mostrarProbabilidad(nombreJ1, nombreJ2) {
+    const container = document.getElementById('probabilidadContainer');
+    const content = document.getElementById('probabilidadContent');
+
+    const jugador1 = obtenerJugadorPorNombre(nombreJ1);
+    const jugador2 = obtenerJugadorPorNombre(nombreJ2);
+
+    if (!jugador1 || !jugador2) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const prob = calcularProbabilidad(jugador1, jugador2);
+
+    content.innerHTML = `
+        <div class="probabilidad-barra-container">
+            <div class="probabilidad-labels">
+                <span class="prob-label blue">🔵 ${nombreJ1}</span>
+                <span class="prob-label red">🔴 ${nombreJ2}</span>
+            </div>
+            <div class="probabilidad-barra">
+                <div class="prob-fill blue" style="width: ${prob.probJ1}%;">
+                    <span class="prob-percent">${prob.probJ1}%</span>
+                </div>
+                <div class="prob-fill red" style="width: ${prob.probJ2}%;">
+                    <span class="prob-percent">${prob.probJ2}%</span>
+                </div>
+            </div>
+            <div class="favorito-label">
+                ⭐ Favorito: <strong>${parseFloat(prob.probJ1) > parseFloat(prob.probJ2) ? nombreJ1 : nombreJ2}</strong>
+            </div>
+        </div>
+    `;
+    container.style.display = 'block';
+}
+
 // Función para actualizar el estado de los botones
 function actualizarBotones() {
     const jugador1 = document.getElementById('jugador1').value;
     const jugador2 = document.getElementById('jugador2').value;
     const btnSimular = document.getElementById('simularPartidoBtn');
-    const btnMultiples = document.getElementById('simularMultiplesBtn');
 
     const habilitado = jugador1 && jugador2 && jugador1 !== jugador2;
     btnSimular.disabled = !habilitado;
-    btnMultiples.disabled = !habilitado;
 
-    // Mostrar historial si ambos jugadores están seleccionados
+    // Mostrar probabilidad e historial si ambos jugadores están seleccionados
     if (habilitado) {
+        mostrarProbabilidad(jugador1, jugador2);
         mostrarHistorial(jugador1, jugador2);
     } else {
+        document.getElementById('probabilidadContainer').style.display = 'none';
         document.getElementById('historialDirecto').style.display = 'none';
     }
 }
@@ -416,14 +399,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         actualizarBotones();
         // Limpiar resultados anteriores
         document.getElementById('resultado').innerHTML = '';
-        document.getElementById('resultadoMultiple').style.display = 'none';
     });
 
     document.getElementById('jugador2').addEventListener('change', () => {
         actualizarBotones();
         // Limpiar resultados anteriores
         document.getElementById('resultado').innerHTML = '';
-        document.getElementById('resultadoMultiple').style.display = 'none';
     });
 
     // Evento de simular partido
@@ -437,22 +418,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (jugador1 && jugador2) {
             const resultado = simularPartidoConHistorial(jugador1, jugador2);
             mostrarResultadoPartido(jugador1, jugador2, resultado);
-            document.getElementById('resultadoMultiple').style.display = 'none';
-        }
-    });
-
-    // Evento de simular múltiples partidos
-    document.getElementById('simularMultiplesBtn').addEventListener('click', () => {
-        const nombreJ1 = document.getElementById('jugador1').value;
-        const nombreJ2 = document.getElementById('jugador2').value;
-
-        const jugador1 = obtenerJugadorPorNombre(nombreJ1);
-        const jugador2 = obtenerJugadorPorNombre(nombreJ2);
-
-        if (jugador1 && jugador2) {
-            const stats = simularMultiplesPartidos(jugador1, jugador2, 1000);
-            mostrarResultadosMultiples(jugador1, jugador2, stats);
-            document.getElementById('resultado').innerHTML = '';
         }
     });
 });

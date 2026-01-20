@@ -35,12 +35,16 @@
 
             <div class="buttons-row">
                 <button id="simularPartidoBtn" disabled>🎲 Simular Partido</button>
-                <button id="simularMultiplesBtn" disabled>📊 Simular 1000 veces</button>
+                <!-- Enlace al Simulador normal -->
+                <a href="index.html" class="nav-link green">🏠 Ir al Simulador de Torneo</a>
+                <a href="montecarlo.html" class="nav-link purple">📊 Simulador Monte Carlo</a>
             </div>
+        </div>
 
-            <!-- Enlace al Simulador normal -->
-            <a href="index.html" class="nav-link green">🏠 Ir al Simulador de Torneo</a>
-            <a href="montecarlo.html" class="nav-link purple">📊 Simulador Monte Carlo</a>
+        <!-- Barra de probabilidad de victoria -->
+        <div id="probabilidadContainer" class="probabilidad-container" style="display:none;">
+            <h3>📊 Probabilidad de Victoria</h3>
+            <div id="probabilidadContent"></div>
         </div>
 
         <!-- Historial de enfrentamientos directos -->
@@ -51,9 +55,6 @@
 
         <!-- Resultado del partido -->
         <div id="resultado"></div>
-
-        <!-- Resultado de simulaciones múltiples -->
-        <div id="resultadoMultiple" style="display:none;"></div>
     </div>
 
     <script src="js/simulador.js"></script>
