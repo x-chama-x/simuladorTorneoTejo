@@ -3,10 +3,10 @@
 # Una línea por jugador
 # Las líneas que empiezan con # son comentarios
 
-Chama,198,0.7368,6.47
-Facu,126,0.6154,5.92
+Chama,221,0.7619,6.52
 Tomy,118,0.6923,6.54
-Marco,76,0.60,6.1
+Facu,111,0.5333,5.73
+Marco,80,0.5833,6.08
 Lucas,50,0.75,5.75
 Rafa,35,0.3636,5.42
 Pedro,21,0.3333,5.67
