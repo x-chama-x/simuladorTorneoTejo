@@ -196,8 +196,10 @@ function getBarClass(prob) {
 function renderFormatoConfig(numJugadores) {
     const container = document.getElementById('formatoContainer');
     if (!container) return;
+    
+    container.style.display = 'block';
 
-    let html = '<div class="phase-title">📋 FORMATO DEL TORNEO</div>';
+    let html = '<div class="phase-title">Ÿ“‹ FORMATO DEL TORNEO</div>';
 
     if (numJugadores === 7) {
         html += `
@@ -310,8 +312,13 @@ function sortearGrupos() {
     const numJugadores = parseInt(document.getElementById('numPlayers').value);
     const nombres = getJugadoresSeleccionados();
     if (nombres.length !== numJugadores) {
-        alert(`Seleccioná exactamente ${numJugadores} jugadores.`);
+        alert(`Seleccione exactamente ${numJugadores} jugadores.`);
         return;
+    }
+
+    const formatoContainer = document.getElementById('formatoContainer');
+    if (formatoContainer) {
+        formatoContainer.style.display = 'none';
     }
 
     const jugadores = shuffleArray(nombres.map(n => jugadoresDisponibles.find(j => j.nombre === n)));
