@@ -411,6 +411,20 @@ function sortearGrupos() {
         return;
     }
 
+    // Ocultar controles y selección de jugadores, dejando solo los nav-links
+    const controls = document.querySelector('.controls');
+    if (controls) {
+        Array.from(controls.children).forEach(child => {
+            if (!child.classList.contains('nav-links')) {
+                child.style.display = 'none';
+            }
+        });
+    }
+    const playerSelectionContainer = document.getElementById('playerSelection');
+    if (playerSelectionContainer) playerSelectionContainer.style.display = 'none';
+    const btnSortearContainer = document.getElementById('sortearContainer');
+    if (btnSortearContainer) btnSortearContainer.style.display = 'none';
+
     const formatoContainer = document.getElementById('formatoContainer');
     if (formatoContainer) {
         formatoContainer.style.display = 'none';
