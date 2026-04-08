@@ -197,22 +197,22 @@ function mostrarResultados(bracket, probs) {
         html += `<div class="sf-card">
             <div class="sf-card-header">${label}</div>
             <div class="sf-matchup">
-                <div class="sf-player">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                     <div class="sf-player-info">
                         <span class="sf-player-name">${j1.nombre}</span>
                         <span class="sf-ranking-badge">${j1.ranking} pts</span>
                     </div>
-                    <span class="sf-prob-badge ${clase1}">${pct(pJ1)}</span>
+                    <div class="sf-player-info" style="align-items: flex-end;">
+                        <span class="sf-player-name">${j2.nombre}</span>
+                        <span class="sf-ranking-badge">${j2.ranking} pts</span>
+                    </div>
                 </div>
                 <div class="sf-split-bar">
                     <div class="split-segment ${clase1}" style="width:${pJ1 * 100}%"></div>
                     <div class="split-segment ${clase2}" style="width:${pJ2 * 100}%"></div>
                 </div>
-                <div class="sf-player">
-                    <div class="sf-player-info">
-                        <span class="sf-player-name">${j2.nombre}</span>
-                        <span class="sf-ranking-badge">${j2.ranking} pts</span>
-                    </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                    <span class="sf-prob-badge ${clase1}">${pct(pJ1)}</span>
                     <span class="sf-prob-badge ${clase2}">${pct(pJ2)}</span>
                 </div>
             </div>
@@ -274,16 +274,16 @@ function mostrarResultados(bracket, probs) {
                 <span class="final-prob-badge">P(ocurra): ${probFinalPct}%</span>
             </div>
             <div class="final-matchup">
-                <div class="final-player">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                     <span class="final-player-name">${j1.nombre}</span>
-                    <span class="final-prob-text ${clase1}">${pct(pWin_j1)}</span>
+                    <span class="final-player-name">${j2.nombre}</span>
                 </div>
                 <div class="final-split-bar">
                     <div class="split-segment ${clase1}" style="width:${pWin_j1 * 100}%"></div>
                     <div class="split-segment ${clase2}" style="width:${pWin_j2 * 100}%"></div>
                 </div>
-                <div class="final-player">
-                    <span class="final-player-name">${j2.nombre}</span>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                    <span class="final-prob-text ${clase1}">${pct(pWin_j1)}</span>
                     <span class="final-prob-text ${clase2}">${pct(pWin_j2)}</span>
                 </div>
             </div>
