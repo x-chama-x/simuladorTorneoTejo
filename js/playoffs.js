@@ -130,6 +130,20 @@ function definirBracket() {
         return;
     }
 
+    // Ocultar controles de selección de jugadores para no volver a modificar
+    const controls = document.querySelector('.controls');
+    if (controls) {
+        Array.from(controls.children).forEach(child => {
+            if (!child.classList.contains('nav-links')) {
+                child.style.display = 'none';
+            }
+        });
+    }
+    const playerSelectionContainer = document.getElementById('playerSelection');
+    if (playerSelectionContainer) playerSelectionContainer.style.display = 'none';
+    const bracketConfigContainer = document.getElementById('bracketConfigContainer');
+    if (bracketConfigContainer) bracketConfigContainer.style.display = 'none';
+
     const jugadores = seleccionados.map(n => jugadoresDisponibles.find(j => j.nombre === n));
     let bracket;
 
