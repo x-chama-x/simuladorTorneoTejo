@@ -588,8 +588,9 @@ select:hover {
 
 @media (max-width: 480px) {
     .player-label {
-        width: 100%;
+        width: calc(50% - 4px);
         min-width: unset;
         justify-content: flex-start;
+        padding: 8px 6px;
     }
 }
