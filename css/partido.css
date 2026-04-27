@@ -2,7 +2,7 @@
 
 .subtitle {
     text-align: center;
-    color: #666;
+    color: #8b949e;
     margin-bottom: 25px;
     font-size: 1.1em;
 }
@@ -28,7 +28,7 @@
 
 .player-select-box:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .player-select-box label {
@@ -38,7 +38,7 @@
 }
 
 .blue-box {
-    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    background: linear-gradient(135deg, #1f6feb 0%, #1158c7 100%);
 }
 
 .blue-box label {
@@ -46,7 +46,7 @@
 }
 
 .red-box {
-    background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+    background: linear-gradient(135deg, #da3633 0%, #b32a28 100%);
 }
 
 .red-box label {
@@ -58,9 +58,9 @@
     padding: 10px 15px;
     font-size: 16px;
     border-radius: 8px;
-    border: none;
-    background: white;
-    color: #333;
+    border: 1px solid #30363d;
+    background: #0d1117;
+    color: #c9d1d9;
     cursor: pointer;
     font-weight: 600;
 }
@@ -71,13 +71,14 @@
     justify-content: center;
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #21262d;
+    border: 2px solid #30363d;
     border-radius: 50%;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
 }
 
 .vs-divider span {
-    color: white;
+    color: #c9d1d9;
     font-size: 1.8em;
     font-weight: bold;
 }
@@ -112,6 +113,7 @@
     font-weight: 700;
     font-size: 14px;
     transition: all 0.3s;
+    border: 1px solid #30363d;
 }
 
 .nav-link {
@@ -126,41 +128,46 @@
 
 .nav-link:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
 }
 
 .nav-link.green {
-    background: #43a047;
+    background: #238636;
     color: white;
+    border-color: #2ea043;
 }
 
 .nav-link.purple {
-    background: #667eea;
+    background: #8957e5;
     color: white;
+    border-color: #a371f7;
 }
 
 .nav-link.teal {
-    background: #11998e;
+    background: #0550ae;
     color: white;
+    border-color: #1f6feb;
 }
 
 .nav-link.pink {
-    background: #e91e63;
+    background: #a371f7;
     color: white;
+    border-color: #bc8cff;
 }
 
 /* Barra de probabilidad */
 .probabilidad-container {
     margin: 25px 0;
     padding: 25px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: #161b22;
     border-radius: 15px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    border: 1px solid #30363d;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
 }
 
 .probabilidad-container h3 {
     text-align: center;
-    color: #fff;
+    color: #c9d1d9;
     margin-bottom: 20px;
     font-size: 1.2em;
 }
@@ -182,11 +189,11 @@
 }
 
 .prob-label.blue {
-    color: #2196F3;
+    color: #58a6ff;
 }
 
 .prob-label.red {
-    color: #f44336;
+    color: #f85149;
 }
 
 .probabilidad-barra {
@@ -194,7 +201,7 @@
     height: 50px;
     border-radius: 25px;
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
 .prob-fill {
@@ -206,11 +213,11 @@
 }
 
 .prob-fill.blue {
-    background: linear-gradient(90deg, #2196F3, #1976D2);
+    background: linear-gradient(90deg, #1f6feb, #58a6ff);
 }
 
 .prob-fill.red {
-    background: linear-gradient(90deg, #e53935, #c62828);
+    background: linear-gradient(90deg, #da3633, #f85149);
 }
 
 .prob-percent {
@@ -223,7 +230,7 @@
 .favorito-label {
     text-align: center;
     margin-top: 15px;
-    color: #ffd700;
+    color: #d29922;
     font-size: 1.1em;
 }
 
@@ -231,14 +238,15 @@
 .historial-container {
     margin: 30px 0;
     padding: 25px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ed 100%);
+    background: #161b22;
+    border: 1px solid #30363d;
     border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
 .historial-container h3 {
     text-align: center;
-    color: #667eea;
+    color: #c9d1d9;
     margin-bottom: 20px;
 }
 
@@ -253,24 +261,25 @@
 .historial-player {
     text-align: center;
     padding: 15px 25px;
-    background: white;
+    background: #21262d;
     border-radius: 12px;
     min-width: 150px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    border: 1px solid #30363d;
 }
 
 .historial-player.blue {
-    border-left: 5px solid #2196F3;
+    border-left: 5px solid #58a6ff;
 }
 
 .historial-player.red {
-    border-left: 5px solid #f44336;
+    border-left: 5px solid #f85149;
 }
 
 .historial-player .nombre {
     font-size: 1.2em;
     font-weight: bold;
-    color: #333;
+    color: #c9d1d9;
     margin-bottom: 8px;
 }
 
@@ -280,16 +289,16 @@
 }
 
 .historial-player.blue .victorias {
-    color: #2196F3;
+    color: #58a6ff;
 }
 
 .historial-player.red .victorias {
-    color: #f44336;
+    color: #f85149;
 }
 
 .historial-player .goles {
     font-size: 0.9em;
-    color: #666;
+    color: #8b949e;
     margin-top: 5px;
 }
 
@@ -301,18 +310,18 @@
 .historial-middle .total-partidos {
     font-size: 1.5em;
     font-weight: bold;
-    color: #333;
+    color: #c9d1d9;
 }
 
 .historial-middle .subtitulo {
     font-size: 0.9em;
-    color: #666;
+    color: #8b949e;
 }
 
 .no-historial {
     text-align: center;
     padding: 20px;
-    color: #888;
+    color: #8b949e;
     font-style: italic;
 }
 
@@ -321,15 +330,16 @@
     max-width: 500px;
     margin: 30px auto;
     padding: 30px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: #161b22;
+    border: 1px solid #30363d;
     border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     text-align: center;
 }
 
 .resultado-partido .match-header {
     font-size: 1.3em;
-    color: #667eea;
+    color: #c9d1d9;
     font-weight: bold;
     margin-bottom: 20px;
 }
@@ -350,31 +360,31 @@
 }
 
 .resultado-partido .player-name.blue {
-    background: #2196F3;
+    background: #1f6feb;
     color: white;
 }
 
 .resultado-partido .player-name.red {
-    background: #f44336;
+    background: #da3633;
     color: white;
 }
 
 .resultado-partido .score-display {
     font-size: 4em;
     font-weight: bold;
-    color: #333;
+    color: #c9d1d9;
     margin: 20px 0;
 }
 
 .resultado-partido .winner-announcement {
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-    color: #333;
+    background: #d29922;
+    color: #000;
     padding: 15px 30px;
     border-radius: 30px;
     font-size: 1.4em;
     font-weight: bold;
     display: inline-block;
-    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+    box-shadow: 0 5px 20px rgba(210, 153, 34, 0.4);
 }
 
 /* Resultados de simulación múltiple */
@@ -382,14 +392,15 @@
     max-width: 700px;
     margin: 30px auto;
     padding: 30px;
-    background: white;
+    background: #161b22;
+    border: 1px solid #30363d;
     border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 .multiple-results h3 {
     text-align: center;
-    color: #667eea;
+    color: #c9d1d9;
     margin-bottom: 25px;
 }
 
@@ -408,11 +419,12 @@
     justify-content: space-between;
     margin-bottom: 8px;
     font-weight: bold;
+    color: #c9d1d9;
 }
 
 .probability-bar .bar-container {
     height: 40px;
-    background: #e0e0e0;
+    background: #30363d;
     border-radius: 20px;
     overflow: hidden;
     position: relative;
@@ -428,11 +440,11 @@
 }
 
 .probability-bar .bar-fill.blue {
-    background: linear-gradient(90deg, #2196F3, #1976D2);
+    background: linear-gradient(90deg, #1f6feb, #58a6ff);
 }
 
 .probability-bar .bar-fill.red {
-    background: linear-gradient(90deg, #f44336, #c62828);
+    background: linear-gradient(90deg, #da3633, #f85149);
 }
 
 .probability-bar .percentage {
@@ -444,14 +456,15 @@
 .stats-summary {
     margin-top: 25px;
     padding: 20px;
-    background: #f5f7fa;
+    background: #21262d;
+    border: 1px solid #30363d;
     border-radius: 10px;
 }
 
 .stats-summary h4 {
     text-align: center;
     margin-bottom: 15px;
-    color: #333;
+    color: #c9d1d9;
 }
 
 .stats-grid {
@@ -463,33 +476,34 @@
 .stat-item {
     text-align: center;
     padding: 10px;
-    background: white;
+    background: #161b22;
+    border: 1px solid #30363d;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .stat-item .stat-label {
     font-size: 0.85em;
-    color: #666;
+    color: #8b949e;
     margin-bottom: 5px;
 }
 
 .stat-item .stat-value {
     font-size: 1.3em;
     font-weight: bold;
-    color: #667eea;
+    color: #58a6ff;
 }
 
 /* Partidos previos */
 .partidos-previos {
     margin-top: 25px;
     padding-top: 20px;
-    border-top: 2px solid #e0e0e0;
+    border-top: 2px solid #30363d;
 }
 
 .partidos-previos h4 {
     text-align: center;
-    color: #667eea;
+    color: #c9d1d9;
     margin-bottom: 15px;
     font-size: 1.1em;
 }
@@ -501,11 +515,11 @@
 }
 
 .partido-item {
-    background: white;
+    background: #21262d;
     border-radius: 10px;
     padding: 12px 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border-left: 4px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    border-left: 4px solid #30363d;
     transition: transform 0.2s;
 }
 
@@ -514,11 +528,11 @@
 }
 
 .partido-item.win-j1 {
-    border-left-color: #2196F3;
+    border-left-color: #58a6ff;
 }
 
 .partido-item.win-j2 {
-    border-left-color: #f44336;
+    border-left-color: #f85149;
 }
 
 .partido-resultado {
@@ -537,12 +551,12 @@
 
 .partido-resultado .jugador-nombre:first-child {
     text-align: right;
-    color: #2196F3;
+    color: #58a6ff;
 }
 
 .partido-resultado .jugador-nombre:last-child {
     text-align: left;
-    color: #f44336;
+    color: #f85149;
 }
 
 .partido-resultado .jugador-nombre.ganador {
@@ -552,9 +566,10 @@
 .partido-resultado .marcador {
     font-size: 1.3em;
     font-weight: bold;
-    color: #333;
+    color: #c9d1d9;
     padding: 5px 15px;
-    background: #f5f5f5;
+    background: #161b22;
+    border: 1px solid #30363d;
     border-radius: 8px;
     min-width: 70px;
     text-align: center;
@@ -565,25 +580,26 @@
     justify-content: center;
     gap: 15px;
     font-size: 0.85em;
-    color: #666;
+    color: #8b949e;
     flex-wrap: wrap;
 }
 
 .partido-info .torneo {
     font-weight: 500;
-    color: #667eea;
+    color: #58a6ff;
 }
 
 .partido-info .fase {
-    background: #e8f5e9;
-    color: #388e3c;
+    background: rgba(46, 160, 67, 0.15);
+    color: #3fb950;
+    border: 1px solid rgba(46, 160, 67, 0.4);
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 0.9em;
 }
 
 .partido-info .fecha {
-    color: #999;
+    color: #8b949e;
 }
 
 /* Responsive */

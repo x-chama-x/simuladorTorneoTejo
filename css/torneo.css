@@ -5,7 +5,7 @@
 /* --- Subtítulo de página --- */
 .page-subtitle {
     text-align: center;
-    color: #777;
+    color: #8b949e;
     font-size: 1.05em;
     margin: -15px 0 25px 0;
     font-style: italic;
@@ -20,7 +20,7 @@
 
 .selection-instruccion {
     font-size: 1em;
-    color: #555;
+    color: #8b949e;
     margin-bottom: 12px;
 }
 
@@ -36,49 +36,49 @@
     align-items: center;
     gap: 8px;
     padding: 9px 14px;
-    border: 2px solid #ddd;
+    border: 1px solid #30363d;
     border-radius: 8px;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
-    background: white;
+    background: #21262d;
     min-width: 155px;
     user-select: none;
 }
 
 .player-label:hover {
-    border-color: #667eea;
-    background: #f8f9ff;
+    border-color: #58a6ff;
+    background: #30363d;
 }
 
 .player-label:has(input:checked) {
-    border-color: #667eea;
-    background: #eff1ff;
+    border-color: #58a6ff;
+    background: #1f2428;
 }
 
 .player-label input[type="checkbox"] {
     cursor: pointer;
     width: 16px;
     height: 16px;
-    accent-color: #667eea;
+    accent-color: #58a6ff;
     flex-shrink: 0;
 }
 
 .player-name-text {
     font-weight: 600;
-    color: #333;
+    color: #c9d1d9;
     flex: 1;
     font-size: 0.95em;
 }
 
 .player-pts-text {
     font-size: 0.78em;
-    color: #aaa;
+    color: #8b949e;
     white-space: nowrap;
 }
 
 .selection-count {
     font-size: 0.9em;
-    color: #667eea;
+    color: #58a6ff;
     font-weight: 600;
     margin-top: 8px;
     display: block;
@@ -88,46 +88,51 @@
    BOTONES DE ACCIÓN
    ================================================ */
 .btn-sortear {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    background: #238636;
     color: white;
-    border: none;
+    border: 1px solid #2ea043;
     padding: 14px 40px;
     font-size: 1.1em;
     font-weight: 700;
     border-radius: 10px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.35);
+    box-shadow: 0 4px 15px rgba(35, 134, 54, 0.35);
     transition: transform 0.2s, box-shadow 0.2s;
     letter-spacing: 0.02em;
 }
 
 .btn-sortear:hover:not(:disabled) {
+    background: #2ea043;
     transform: translateY(-2px);
-    box-shadow: 0 7px 22px rgba(17, 153, 142, 0.5);
+    box-shadow: 0 7px 22px rgba(35, 134, 54, 0.5);
 }
 
 .btn-sortear:disabled {
-    opacity: 0.45;
+    background: #21262d;
+    color: #8b949e;
+    border: 1px solid #30363d;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
 }
 
 .btn-nuevo-sorteo {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
+    background: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
     padding: 12px 30px;
     font-size: 1em;
     font-weight: 700;
     border-radius: 10px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .btn-nuevo-sorteo:hover {
+    background: #30363d;
     transform: translateY(-2px);
-    box-shadow: 0 7px 22px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 7px 22px rgba(0, 0, 0, 0.5);
 }
 
 /* ================================================
@@ -135,7 +140,7 @@
    ================================================ */
 .prob-subtitulo {
     text-align: center;
-    color: #777;
+    color: #8b949e;
     font-size: 0.93em;
     margin: -10px 0 22px 0;
     font-style: italic;
@@ -143,7 +148,7 @@
 
 .clasifican-note {
     text-align: center;
-    color: #43a047;
+    color: #3fb950;
     font-weight: 600;
     margin-top: 12px;
     font-size: 0.95em;
@@ -163,27 +168,29 @@
    TARJETA DE GRUPO
    ================================================ */
 .grupo-card {
-    background: white;
+    background: #161b22;
     border-radius: 14px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    border: 1px solid #eee;
+    border: 1px solid #30363d;
 }
 
 .grupo-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: #21262d;
+    color: #c9d1d9;
     padding: 13px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 1.15em;
     font-weight: 700;
+    border-bottom: 1px solid #30363d;
 }
 
 .clasifican-badge {
     font-size: 0.7em;
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.1);
+    color: #c9d1d9;
     padding: 3px 10px;
     border-radius: 12px;
     font-weight: 600;
@@ -199,7 +206,7 @@
 
 .jugador-row {
     padding: 13px 16px;
-    border-bottom: 1px solid #f3f3f3;
+    border-bottom: 1px solid #30363d;
     transition: background 0.15s;
 }
 
@@ -208,7 +215,7 @@
 }
 
 .jugador-row:hover {
-    background: #fafafa;
+    background: #21262d;
 }
 
 .jugador-info {
@@ -220,14 +227,14 @@
 
 .jugador-nombre {
     font-weight: 700;
-    color: #222;
+    color: #c9d1d9;
     font-size: 1em;
 }
 
 .jugador-ranking-badge {
     font-size: 0.78em;
-    color: #888;
-    background: #f0f0f0;
+    color: #8b949e;
+    background: #21262d;
     padding: 2px 8px;
     border-radius: 8px;
     white-space: nowrap;
@@ -245,7 +252,7 @@
 .prob-bar-track {
     flex: 1;
     height: 10px;
-    background: #ebebeb;
+    background: #30363d;
     border-radius: 5px;
     overflow: hidden;
     min-width: 50px;
@@ -263,19 +270,19 @@
 
 /* Colores por nivel de probabilidad */
 .prob-bar-fill.alta {
-    background: linear-gradient(90deg, #388e3c, #66bb6a);
+    background: linear-gradient(90deg, #238636, #2ea043);
 }
 
 .prob-bar-fill.media-alta {
-    background: linear-gradient(90deg, #689f38, #9ccc65);
+    background: linear-gradient(90deg, #9e6a03, #d29922);
 }
 
 .prob-bar-fill.media {
-    background: linear-gradient(90deg, #ef6c00, #ffa726);
+    background: linear-gradient(90deg, #a67f22, #e3b341);
 }
 
 .prob-bar-fill.baja {
-    background: linear-gradient(90deg, #c62828, #ef5350);
+    background: linear-gradient(90deg, #da3633, #f85149);
 }
 
 .prob-label {
@@ -286,10 +293,10 @@
     white-space: nowrap;
 }
 
-.prob-label.alta       { color: #388e3c; }
-.prob-label.media-alta { color: #689f38; }
-.prob-label.media      { color: #ef6c00; }
-.prob-label.baja       { color: #c62828; }
+.prob-label.alta       { color: #3fb950; }
+.prob-label.media-alta { color: #d29922; }
+.prob-label.media      { color: #e3b341; }
+.prob-label.baja       { color: #f85149; }
 
 /* ================================================
    DESGLOSE PARA 9 JUGADORES (REPECHAJE)
@@ -308,7 +315,7 @@
 
 .prob-type {
     font-size: 0.79em;
-    color: #888;
+    color: #8b949e;
     width: 74px;
     flex-shrink: 0;
 }
@@ -316,7 +323,7 @@
 .prob-value-small {
     font-size: 0.79em;
     font-weight: 600;
-    color: #666;
+    color: #8b949e;
     min-width: 42px;
     text-align: right;
     white-space: nowrap;
@@ -328,26 +335,26 @@
     gap: 8px;
     margin-top: 4px;
     padding-top: 6px;
-    border-top: 1px dashed #e0e0e0;
+    border-top: 1px dashed #30363d;
 }
 
 /* ================================================
    CAJA INFORMATIVA DE REPECHAJE (9 JUGADORES)
    ================================================ */
 .repechaje-info {
-    background: #fff8e1;
-    border: 1px solid #ffe082;
+    background: #2d2311;
+    border: 1px solid #d29922;
     border-radius: 10px;
     padding: 15px 20px;
     margin: 16px 0;
     font-size: 0.9em;
-    color: #5d4037;
+    color: #c9d1d9;
     line-height: 1.6;
 }
 
 .repechaje-info strong {
     display: block;
-    color: #e65100;
+    color: #d29922;
     font-size: 1em;
     margin-bottom: 8px;
 }
@@ -360,7 +367,7 @@
    TABLA DE 7 JUGADORES
    ================================================ */
 .ranking-col {
-    color: #999;
+    color: #8b949e;
     font-size: 0.88em;
     white-space: nowrap;
 }

@@ -5,7 +5,7 @@
 /* --- Subtítulo de página --- */
 .page-subtitle {
     text-align: center;
-    color: #777;
+    color: #8b949e;
     font-size: 1.05em;
     margin: -15px 0 25px 0;
     font-style: italic;
@@ -36,49 +36,49 @@
     align-items: center;
     gap: 8px;
     padding: 9px 14px;
-    border: 2px solid #ddd;
+    border: 1px solid #30363d;
     border-radius: 8px;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
-    background: white;
+    background: #21262d;
     min-width: 155px;
     user-select: none;
 }
 
 .player-label:hover {
-    border-color: #e91e63;
-    background: #fff5f8;
+    border-color: #58a6ff;
+    background: #30363d;
 }
 
 .player-label:has(input:checked) {
-    border-color: #e91e63;
-    background: #ffeef4;
+    border-color: #58a6ff;
+    background: #1f2428;
 }
 
 .player-label input[type="checkbox"] {
     cursor: pointer;
     width: 16px;
     height: 16px;
-    accent-color: #e91e63;
+    accent-color: #58a6ff;
     flex-shrink: 0;
 }
 
 .player-name-text {
     font-weight: 600;
-    color: #333;
+    color: #c9d1d9;
     flex: 1;
     font-size: 0.95em;
 }
 
 .player-pts-text {
     font-size: 0.78em;
-    color: #aaa;
+    color: #8b949e;
     white-space: nowrap;
 }
 
 .selection-count {
     font-size: 0.9em;
-    color: #e91e63;
+    color: #58a6ff;
     font-weight: 600;
     margin-top: 8px;
     display: block;
@@ -88,8 +88,8 @@
    CONFIGURACIÓN DEL BRACKET
    ================================================ */
 .bracket-config-box {
-    background: #f8f9ff;
-    border: 2px solid #dde;
+    background: #161b22;
+    border: 1px solid #30363d;
     border-radius: 12px;
     padding: 18px 22px;
     margin: 18px 0;
@@ -97,7 +97,7 @@
 
 .bracket-config-box h3 {
     margin: 0 0 14px 0;
-    color: #444;
+    color: #c9d1d9;
     font-size: 1em;
 }
 
@@ -111,78 +111,85 @@
 
 .bracket-config-row label {
     font-weight: 600;
-    color: #555;
+    color: #8b949e;
     white-space: nowrap;
 }
 
 .bracket-config-row select {
     padding: 8px 12px;
     border-radius: 6px;
-    border: 1px solid #ccc;
+    border: 1px solid #30363d;
+    background: #21262d;
+    color: #c9d1d9;
     font-size: 0.95em;
     min-width: 130px;
     cursor: pointer;
 }
 
 .sf2-auto-display {
-    background: #e8f5e9;
-    border: 1px solid #a5d6a7;
+    background: #161b22;
+    border: 1px solid #2ea043;
     border-radius: 8px;
     padding: 10px 16px;
     font-size: 0.93em;
-    color: #2e7d32;
+    color: #2ea043;
 }
 
 .sf2-auto-display strong {
     display: inline-block;
     margin-right: 8px;
-    color: #1b5e20;
+    color: #3fb950;
 }
 
 /* ================================================
    BOTONES
    ================================================ */
 .btn-bracket {
-    background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+    background: #238636;
     color: white;
-    border: none;
+    border: 1px solid #2ea043;
     padding: 13px 36px;
     font-size: 1.1em;
     font-weight: 700;
     border-radius: 10px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.35);
+    box-shadow: 0 4px 15px rgba(35, 134, 54, 0.35);
     transition: transform 0.2s, box-shadow 0.2s;
     letter-spacing: 0.02em;
 }
 
 .btn-bracket:hover:not(:disabled) {
+    background: #2ea043;
     transform: translateY(-2px);
-    box-shadow: 0 7px 22px rgba(233, 30, 99, 0.5);
+    box-shadow: 0 7px 22px rgba(35, 134, 54, 0.5);
 }
 
 .btn-bracket:disabled {
-    opacity: 0.45;
+    background: #21262d;
+    color: #8b949e;
+    border: 1px solid #30363d;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
 }
 
 .btn-nuevo-sorteo {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
+    background: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
     padding: 12px 30px;
     font-size: 1em;
     font-weight: 700;
     border-radius: 10px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .btn-nuevo-sorteo:hover {
+    background: #30363d;
     transform: translateY(-2px);
-    box-shadow: 0 7px 22px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 7px 22px rgba(0, 0, 0, 0.5);
 }
 
 /* ================================================
@@ -196,21 +203,22 @@
 }
 
 .sf-card {
-    background: white;
+    background: #161b22;
     border-radius: 14px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    border: 1px solid #eee;
+    border: 1px solid #30363d;
 }
 
 .sf-card-header {
-    background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
-    color: white;
+    background: #21262d;
+    color: #c9d1d9;
     padding: 12px 18px;
     font-size: 1.1em;
     font-weight: 700;
     text-align: center;
     letter-spacing: 0.03em;
+    border-bottom: 1px solid #30363d;
 }
 
 .sf-matchup {
@@ -233,13 +241,13 @@
 .sf-player-name {
     font-weight: 700;
     font-size: 1.1em;
-    color: #222;
+    color: #c9d1d9;
 }
 
 .sf-ranking-badge {
     font-size: 0.77em;
-    color: #999;
-    background: #f0f0f0;
+    color: #8b949e;
+    background: #21262d;
     padding: 2px 7px;
     border-radius: 8px;
     display: inline-block;
@@ -256,10 +264,10 @@
     text-align: center;
 }
 
-.sf-prob-badge.alta       { color: #388e3c; background: #e8f5e9; }
-.sf-prob-badge.media-alta { color: #689f38; background: #f1f8e9; }
-.sf-prob-badge.media      { color: #ef6c00; background: #fff3e0; }
-.sf-prob-badge.baja       { color: #c62828; background: #ffebee; }
+.sf-prob-badge.alta       { color: #3fb950; background: #2386361a; }
+.sf-prob-badge.media-alta { color: #d29922; background: #d299221a; }
+.sf-prob-badge.media      { color: #e3b341; background: #e3b3411a; }
+.sf-prob-badge.baja       { color: #f85149; background: #f851491a; }
 
 /* Barra dividida de probabilidad */
 .sf-split-bar {
@@ -268,7 +276,7 @@
     border-radius: 6px;
     overflow: hidden;
     margin: 6px 0;
-    background: #f0f0f0;
+    background: #30363d;
 }
 
 .split-segment {
@@ -276,18 +284,18 @@
     transition: width 0.6s ease;
 }
 
-.split-segment.alta       { background: linear-gradient(90deg, #388e3c, #66bb6a); }
-.split-segment.media-alta { background: linear-gradient(90deg, #689f38, #9ccc65); }
-.split-segment.media      { background: linear-gradient(90deg, #ef6c00, #ffa726); }
-.split-segment.baja       { background: linear-gradient(90deg, #c62828, #ef5350); }
+.split-segment.alta       { background: linear-gradient(90deg, #238636, #2ea043); }
+.split-segment.media-alta { background: linear-gradient(90deg, #9e6a03, #d29922); }
+.split-segment.media      { background: linear-gradient(90deg, #a67f22, #e3b341); }
+.split-segment.baja       { background: linear-gradient(90deg, #da3633, #f85149); }
 
 .sf-insight {
     text-align: center;
     font-size: 0.85em;
-    color: #888;
+    color: #8b949e;
     font-style: italic;
     padding: 8px 16px 14px;
-    border-top: 1px solid #f5f5f5;
+    border-top: 1px solid #30363d;
     margin-top: 6px;
 }
 
@@ -295,11 +303,11 @@
    PROBABILIDADES DE CAMPEÓN
    ================================================ */
 .champion-card {
-    background: white;
+    background: #161b22;
     border-radius: 14px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    border: 1px solid #eee;
+    border: 1px solid #30363d;
     margin: 16px 0;
 }
 
@@ -308,7 +316,7 @@
     align-items: center;
     gap: 14px;
     padding: 14px 20px;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #30363d;
     transition: background 0.15s;
 }
 
@@ -317,11 +325,11 @@
 }
 
 .champion-row:first-child {
-    background: linear-gradient(to right, #fffde7, #ffffff);
+    background: #21262d;
 }
 
 .champion-row:hover {
-    background: #fafafa;
+    background: #21262d;
 }
 
 .champion-left {
@@ -347,12 +355,12 @@
 .champion-name {
     font-weight: 700;
     font-size: 1em;
-    color: #222;
+    color: #c9d1d9;
 }
 
 .champion-subfact {
     font-size: 0.77em;
-    color: #999;
+    color: #8b949e;
 }
 
 .champion-bar-area {
@@ -371,7 +379,7 @@
 .prob-bar-track {
     flex: 1;
     height: 10px;
-    background: #ebebeb;
+    background: #30363d;
     border-radius: 5px;
     overflow: hidden;
     min-width: 50px;
@@ -387,10 +395,10 @@
     transition: width 0.6s ease;
 }
 
-.prob-bar-fill.alta       { background: linear-gradient(90deg, #388e3c, #66bb6a); }
-.prob-bar-fill.media-alta { background: linear-gradient(90deg, #689f38, #9ccc65); }
-.prob-bar-fill.media      { background: linear-gradient(90deg, #ef6c00, #ffa726); }
-.prob-bar-fill.baja       { background: linear-gradient(90deg, #c62828, #ef5350); }
+.prob-bar-fill.alta       { background: linear-gradient(90deg, #238636, #2ea043); }
+.prob-bar-fill.media-alta { background: linear-gradient(90deg, #9e6a03, #d29922); }
+.prob-bar-fill.media      { background: linear-gradient(90deg, #a67f22, #e3b341); }
+.prob-bar-fill.baja       { background: linear-gradient(90deg, #da3633, #f85149); }
 
 .prob-label {
     font-size: 0.9em;
@@ -400,10 +408,10 @@
     white-space: nowrap;
 }
 
-.prob-label.alta       { color: #388e3c; }
-.prob-label.media-alta { color: #689f38; }
-.prob-label.media      { color: #ef6c00; }
-.prob-label.baja       { color: #c62828; }
+.prob-label.alta       { color: #3fb950; }
+.prob-label.media-alta { color: #d29922; }
+.prob-label.media      { color: #e3b341; }
+.prob-label.baja       { color: #f85149; }
 
 /* ================================================
    FINALES MÁS PROBABLES
@@ -416,16 +424,16 @@
 }
 
 .final-posible {
-    background: white;
+    background: #161b22;
     border-radius: 12px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    border: 1px solid #eee;
+    border: 1px solid #30363d;
 }
 
 .final-posible.top-final {
-    border-color: #ffd54f;
-    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.25);
+    border-color: #d29922;
+    box-shadow: 0 4px 16px rgba(210, 153, 34, 0.25);
 }
 
 .final-pos-header {
@@ -433,22 +441,22 @@
     justify-content: space-between;
     align-items: center;
     padding: 9px 14px;
-    background: #f8f9ff;
-    border-bottom: 1px solid #eee;
+    background: #21262d;
+    border-bottom: 1px solid #30363d;
     font-size: 0.85em;
 }
 
 .final-posible.top-final .final-pos-header {
-    background: linear-gradient(to right, #fff8e1, #f8f9ff);
+    background: #2d2311;
 }
 
 .final-pos-label {
     font-weight: 700;
-    color: #555;
+    color: #c9d1d9;
 }
 
 .final-prob-badge {
-    color: #888;
+    color: #8b949e;
     font-size: 0.85em;
 }
 
@@ -465,7 +473,7 @@
 
 .final-player-name {
     font-weight: 700;
-    color: #222;
+    color: #c9d1d9;
     font-size: 0.95em;
 }
 
@@ -474,10 +482,10 @@
     font-weight: 700;
 }
 
-.final-prob-text.alta       { color: #388e3c; }
-.final-prob-text.media-alta { color: #689f38; }
-.final-prob-text.media      { color: #ef6c00; }
-.final-prob-text.baja       { color: #c62828; }
+.final-prob-text.alta       { color: #3fb950; }
+.final-prob-text.media-alta { color: #d29922; }
+.final-prob-text.media      { color: #e3b341; }
+.final-prob-text.baja       { color: #f85149; }
 
 .final-split-bar {
     display: flex;
@@ -485,7 +493,7 @@
     border-radius: 4px;
     overflow: hidden;
     margin: 4px 0;
-    background: #f0f0f0;
+    background: #30363d;
 }
 
 /* ================================================
