@@ -471,7 +471,7 @@ function mostrarResultados(grupos, probs, numJugadores) {
         jugadoresOrdenados.forEach((j, idx) => {
             const prob = parseFloat(probs[j.nombre].total);
             const barClass = getBarClass(prob);
-            const clasifica = idx < 4 ? 'style="background:#e8f5e9;"' : '';
+            const clasifica = idx < 4 ? 'style="background: rgba(46, 160, 67, 0.15);"' : '';
             html += `<tr ${clasifica}>
                 <td class="position">${idx + 1}°</td>
                 <td><strong>${j.nombre}</strong></td>
