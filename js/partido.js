@@ -296,7 +296,8 @@ function mostrarProbabilidad(nombreJ1, nombreJ2) {
     const clase2 = getBarClass(pJ2);
 
     content.innerHTML = `
-        <div class="sf-card" style="margin: 0;">
+        <div class="sf-card" style="margin: 0 auto; max-width: 420px; width: 100%;">
+            <div class="sf-card-header">Partido</div>
             <div class="sf-matchup">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                     <div class="sf-player-info">
@@ -317,6 +318,7 @@ function mostrarProbabilidad(nombreJ1, nombreJ2) {
                     <span class="sf-prob-badge ${clase2}">${prob.probJ2}%</span>
                 </div>
             </div>
+            <div class="sf-insight">Probabilidad de ganar</div>
         </div>
     `;
     container.style.display = 'block';
