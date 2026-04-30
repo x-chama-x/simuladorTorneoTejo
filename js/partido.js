@@ -308,17 +308,17 @@ function mostrarProbabilidad(nombreJ1, nombreJ2) {
                             <span class="sf-player-name">${jugador2.nombre}</span>
                         </div>
                     </div>
-                <div class="sf-split-bar">
-                    <div class="split-segment ${clase1}" style="width:${prob.probJ1}%"></div>
-                    <div class="split-segment ${clase2}" style="width:${prob.probJ2}%"></div>
+                    <div class="sf-split-bar">
+                        <div class="split-segment ${clase1}" style="width:${prob.probJ1}%"></div>
+                        <div class="split-segment ${clase2}" style="width:${prob.probJ2}%"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                        <span class="sf-prob-badge ${clase1}">${prob.probJ1}%</span>
+                        <span class="sf-prob-badge ${clase2}">${prob.probJ2}%</span>
+                    </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 6px;">
-                    <span class="sf-prob-badge ${clase1}">${prob.probJ1}%</span>
-                    <span class="sf-prob-badge ${clase2}">${prob.probJ2}%</span>
-                </div>
+                <div class="sf-insight">Probabilidad de ganar</div>
             </div>
-            <div class="sf-insight">Probabilidad de ganar</div>
-        </div>
         </div>
     `;
     container.style.display = 'block';
