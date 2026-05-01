@@ -644,7 +644,8 @@ select:hover {
     transform: translateX(5px);
 }
 
-.sidebar a[href="index.html"] { background: #43a047; }
+.sidebar a[href="simulador.html"] { background: #43a047; }
+.sidebar a[href="index.html"] { background: #ff9800; }
 .sidebar a[href="montecarlo.html"] { background: #667eea; }
 .sidebar a[href="partido.html"] { background: #e91e63; }
 .sidebar a[href="torneo.html"] { background: #11998e; }
