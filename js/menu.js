@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <nav id="sidebar" class="sidebar">
         <h2>Tejo</h2>
         <a href="index.html" title="Inicio">🏠 Inicio</a>
-        <a href="simulador.html" title="Simulador">🏠 Simulador</a>
+        <a href="simulador.html" title="Simulador">🕹️ Simulador</a>
         <a href="montecarlo.html" title="Cálculo de predicciones">📊 Predicciones</a>
         <a href="partido.html" title="Simulador de Partido 1vs1">⚔️ Partido 1vs1</a>
         <a href="torneo.html" title="Creador de Torneo">🏆 Creador de Torneo</a>
