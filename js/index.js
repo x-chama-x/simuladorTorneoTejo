@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const tbody = document.querySelector('#ranking-table tbody');
             if(tbody) {
                 jugadores.forEach((j, index) => {
-                    const wrDisplay = (j.winRate * 100).toFixed(1) + '%';
                     const tr = document.createElement('tr');
 
                     const tdPos = document.createElement('td');
@@ -40,13 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     tdRanking.textContent = j.ranking;
                     tr.appendChild(tdRanking);
 
-                    const tdWinRate = document.createElement('td');
-                    tdWinRate.textContent = wrDisplay;
-                    tr.appendChild(tdWinRate);
-
-                    const tdGoles = document.createElement('td');
-                    tdGoles.textContent = j.promedioGoles.toFixed(2);
-                    tr.appendChild(tdGoles);
 
                     tbody.appendChild(tr);
                 });
