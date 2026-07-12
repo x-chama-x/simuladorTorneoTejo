@@ -1035,6 +1035,7 @@ select:hover {
     display: flex;
     gap: 4px;
     align-items: center;
+    justify-content: center;
 }
 
 .streak-box {
