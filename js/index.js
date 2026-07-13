@@ -538,61 +538,78 @@ function renderResultadosPorFecha(partidos) {
         fechasMap.get(key).push(p);
     });
 
-    container.innerHTML = '';
+    const fechas = Array.from(fechasMap.keys());
+    if (fechas.length === 0) return;
 
-    fechasMap.forEach((matchs, fechaStr) => {
-        // Formatear la fecha como "3 May 2025"
-        let fechaLabel = fechaStr;
+    let currentIndex = 0;
+
+    function formatFecha(fechaStr) {
         const parts = fechaStr.split('/');
         if (parts.length === 3) {
             const d = parseInt(parts[0], 10);
             const m = parseInt(parts[1], 10) - 1;
             const y = parts[2];
-            if (m >= 0 && m < 12) fechaLabel = `${d} ${meses[m]} ${y}`;
+            if (m >= 0 && m < 12) return `${d} ${meses[m]} ${y}`;
         }
+        return fechaStr;
+    }
 
-        const dateBlock = document.createElement('div');
-        dateBlock.style.marginBottom = '1.5rem';
-
-        const dateHeader = document.createElement('h3');
-        dateHeader.style.cssText = 'margin-bottom: 0.6rem; color: #58a6ff; font-size: 1rem; border-bottom: 1px solid #30363d; padding-bottom: 0.35rem;';
-        dateHeader.textContent = fechaLabel;
-
-        const divResp = document.createElement('div');
-        divResp.className = 'table-responsive';
-
-        const table = document.createElement('table');
-        table.className = 'ranking-table large-table-font';
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th style="text-align: right;">Azul</th>
-                    <th style="text-align: center;">Resultado</th>
-                    <th style="text-align: left;">Rojo</th>
-                    <th style="text-align: center; color: #8b949e; font-weight: normal;">Tipo</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${matchs.map(m => {
-                    const g = m.marcador.split('-').map(Number);
-                    const w1 = g[0] > g[1];
-                    const w2 = g[1] > g[0];
-                    const tipo = getTipoLabel(m);
-                    return `
+    function buildTable(matchs) {
+        return `
+            <div class="table-responsive">
+                <table class="ranking-table large-table-font">
+                    <thead>
                         <tr>
-                            <td style="text-align: right; ${w1 ? 'font-weight: bold; color: #58a6ff;' : ''}">${m.j1}</td>
-                            <td style="text-align: center; font-weight: bold; letter-spacing: 2px;">${m.marcador}</td>
-                            <td style="text-align: left; ${w2 ? 'font-weight: bold; color: #f85149;' : ''}">${m.j2}</td>
-                            <td style="text-align: center; font-size: 0.78em; color: #8b949e;">${tipo}</td>
+                            <th style="text-align: right;">Azul</th>
+                            <th style="text-align: center;">Resultado</th>
+                            <th style="text-align: left;">Rojo</th>
+                            <th style="text-align: center; color: #8b949e; font-weight: normal;">Tipo</th>
                         </tr>
-                    `;
-                }).join('')}
-            </tbody>
+                    </thead>
+                    <tbody>
+                        ${matchs.map(m => {
+                            const g = m.marcador.split('-').map(Number);
+                            const w1 = g[0] > g[1];
+                            const w2 = g[1] > g[0];
+                            const tipo = getTipoLabel(m);
+                            return `
+                                <tr>
+                                    <td style="text-align: right; ${w1 ? 'font-weight: bold; color: #58a6ff;' : ''}">${m.j1}</td>
+                                    <td style="text-align: center; font-weight: bold; letter-spacing: 2px;">${m.marcador}</td>
+                                    <td style="text-align: left; ${w2 ? 'font-weight: bold; color: #f85149;' : ''}">${m.j2}</td>
+                                    <td style="text-align: center; font-size: 0.78em; color: #8b949e;">${tipo}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    function render() {
+        const fechaStr = fechas[currentIndex];
+        const matchs = fechasMap.get(fechaStr);
+        const isPrev = currentIndex < fechas.length - 1;
+        const isNext = currentIndex > 0;
+
+        container.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; gap: 0.5rem;">
+                <button id="btn-fecha-prev" style="background: none; border: 1px solid #30363d; color: ${isPrev ? '#58a6ff' : '#3d444d'}; border-radius: 6px; padding: 0.3rem 0.75rem; cursor: ${isPrev ? 'pointer' : 'default'}; font-size: 1.1rem; line-height: 1;" ${isPrev ? '' : 'disabled'}>&#8592;</button>
+                <span style="color: #58a6ff; font-size: 1rem; font-weight: bold; text-align: center;">${formatFecha(fechaStr)}</span>
+                <button id="btn-fecha-next" style="background: none; border: 1px solid #30363d; color: ${isNext ? '#58a6ff' : '#3d444d'}; border-radius: 6px; padding: 0.3rem 0.75rem; cursor: ${isNext ? 'pointer' : 'default'}; font-size: 1.1rem; line-height: 1;" ${isNext ? '' : 'disabled'}>&#8594;</button>
+            </div>
+            <div style="text-align: center; color: #8b949e; font-size: 0.8em; margin-bottom: 0.75rem;">${currentIndex + 1} / ${fechas.length}</div>
+            ${buildTable(matchs)}
         `;
 
-        divResp.appendChild(table);
-        dateBlock.appendChild(dateHeader);
-        dateBlock.appendChild(divResp);
-        container.appendChild(dateBlock);
-    });
+        document.getElementById('btn-fecha-prev').addEventListener('click', () => {
+            if (currentIndex < fechas.length - 1) { currentIndex++; render(); }
+        });
+        document.getElementById('btn-fecha-next').addEventListener('click', () => {
+            if (currentIndex > 0) { currentIndex--; render(); }
+        });
+    }
+
+    render();
 }
