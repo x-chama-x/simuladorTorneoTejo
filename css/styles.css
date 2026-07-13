@@ -954,6 +954,22 @@ select:hover {
         margin-top: 2rem;
     }
 
+    /* Separar resultados y formatos para que sean flex items independientes */
+    #resultados-formatos-col {
+        display: contents;
+    }
+
+    /* Orden mobile: encuesta 1°, resultados 2°, ranking 3°, stats 4°, campeones 5°, formatos último */
+    #resultados-fechas-panel { order: 0; }
+    #ranking-col { order: 1; }
+    #stats-col { order: 2; }
+    .campeones-block { order: 3; }
+
+    /* Sin scroll horizontal en la tabla de resultados */
+    #resultados-fechas .table-responsive {
+        overflow-x: visible;
+    }
+
     .panel {
         padding: 10px; /* Reducido para dar mas espacio a las tablas */
     }
