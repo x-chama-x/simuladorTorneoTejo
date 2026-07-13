@@ -117,6 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        renderResultadosPorFecha(partidos);
+
         // Procesar partidos ya ordenados
         for (const partido of partidos) {
             const { j1, j2, res, marcador, torneo } = partido;
@@ -504,3 +506,93 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error al cargar datos:', error);
     });
 });
+
+function getTipoLabel(partido) {
+    const torneo = partido.torneo;
+    const fase = partido.fase;
+
+    if (torneo.toLowerCase().includes('amistoso')) return 'Amistoso';
+
+    let torneoLabel = '';
+    const tl = torneo.toLowerCase();
+    if (tl.includes('primer')) torneoLabel = 'T1';
+    else if (tl.includes('segundo')) torneoLabel = 'T2';
+    else if (tl.includes('tercer')) torneoLabel = 'T3';
+    else if (tl.includes('cuarto')) torneoLabel = 'T4';
+    else torneoLabel = torneo.split(' ')[0];
+
+    return `${fase} (${torneoLabel})`;
+}
+
+function renderResultadosPorFecha(partidos) {
+    const container = document.getElementById('resultados-fechas');
+    if (!container) return;
+
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    // Agrupar por fecha (más reciente primero)
+    const fechasMap = new Map();
+    [...partidos].reverse().forEach(p => {
+        const key = p.fechaStr || 'Sin fecha';
+        if (!fechasMap.has(key)) fechasMap.set(key, []);
+        fechasMap.get(key).push(p);
+    });
+
+    container.innerHTML = '';
+
+    fechasMap.forEach((matchs, fechaStr) => {
+        // Formatear la fecha como "3 May 2025"
+        let fechaLabel = fechaStr;
+        const parts = fechaStr.split('/');
+        if (parts.length === 3) {
+            const d = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10) - 1;
+            const y = parts[2];
+            if (m >= 0 && m < 12) fechaLabel = `${d} ${meses[m]} ${y}`;
+        }
+
+        const dateBlock = document.createElement('div');
+        dateBlock.style.marginBottom = '1.5rem';
+
+        const dateHeader = document.createElement('h3');
+        dateHeader.style.cssText = 'margin-bottom: 0.6rem; color: #58a6ff; font-size: 1rem; border-bottom: 1px solid #30363d; padding-bottom: 0.35rem;';
+        dateHeader.textContent = fechaLabel;
+
+        const divResp = document.createElement('div');
+        divResp.className = 'table-responsive';
+
+        const table = document.createElement('table');
+        table.className = 'ranking-table large-table-font';
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th style="text-align: right;">Azul</th>
+                    <th style="text-align: center;">Resultado</th>
+                    <th style="text-align: left;">Rojo</th>
+                    <th style="text-align: center; color: #8b949e; font-weight: normal;">Tipo</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${matchs.map(m => {
+                    const g = m.marcador.split('-').map(Number);
+                    const w1 = g[0] > g[1];
+                    const w2 = g[1] > g[0];
+                    const tipo = getTipoLabel(m);
+                    return `
+                        <tr>
+                            <td style="text-align: right; ${w1 ? 'font-weight: bold; color: #58a6ff;' : ''}">${m.j1}</td>
+                            <td style="text-align: center; font-weight: bold; letter-spacing: 2px;">${m.marcador}</td>
+                            <td style="text-align: left; ${w2 ? 'font-weight: bold; color: #f85149;' : ''}">${m.j2}</td>
+                            <td style="text-align: center; font-size: 0.78em; color: #8b949e;">${tipo}</td>
+                        </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        `;
+
+        divResp.appendChild(table);
+        dateBlock.appendChild(dateHeader);
+        dateBlock.appendChild(divResp);
+        container.appendChild(dateBlock);
+    });
+}
