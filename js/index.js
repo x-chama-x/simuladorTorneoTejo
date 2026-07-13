@@ -557,7 +557,7 @@ function renderResultadosPorFecha(partidos) {
     function buildTable(matchs) {
         return `
             <div class="table-responsive">
-                <table class="ranking-table">
+                <table class="ranking-table large-table-font">
                     <thead>
                         <tr>
                             <th style="text-align: right;">Azul</th>
