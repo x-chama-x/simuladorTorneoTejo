@@ -511,17 +511,24 @@ function getTipoLabel(partido) {
     const torneo = partido.torneo;
     const fase = partido.fase;
 
-    if (torneo.toLowerCase().includes('amistoso')) return 'Amistoso';
+    if (torneo.toLowerCase().includes('amistoso')) return 'Am.';
 
-    let torneoLabel = '';
+    let tn = '';
     const tl = torneo.toLowerCase();
-    if (tl.includes('primer')) torneoLabel = 'T1';
-    else if (tl.includes('segundo')) torneoLabel = 'T2';
-    else if (tl.includes('tercer')) torneoLabel = 'T3';
-    else if (tl.includes('cuarto')) torneoLabel = 'T4';
-    else torneoLabel = torneo.split(' ')[0];
+    if (tl.includes('primer')) tn = 'T1';
+    else if (tl.includes('segundo')) tn = 'T2';
+    else if (tl.includes('tercer')) tn = 'T3';
+    else if (tl.includes('cuarto')) tn = 'T4';
+    else tn = torneo.split(' ')[0];
 
-    return `${fase} (${torneoLabel})`;
+    const fl = fase.toLowerCase();
+    if (fl.includes('liga')) return `Liga ${tn}`;
+    const grupoMatch = fase.match(/\(([A-Z])\)/);
+    if (grupoMatch) return `Grp ${grupoMatch[1]} ${tn}`;
+    if (fl.includes('semifinal')) return `Semi ${tn}`;
+    if (fl.includes('tercer')) return `3er P. ${tn}`;
+    if (fl.includes('final')) return `Final ${tn}`;
+    return `${fase} ${tn}`;
 }
 
 function renderResultadosPorFecha(partidos) {

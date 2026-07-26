@@ -979,11 +979,15 @@ select:hover {
         box-shadow: none;
     }
 
-    /* Reducir fuente de la tabla de resultados en mobile (override large-table-font) */
+    /* Tabla de resultados en mobile: sin fondo en headers, fuente más grande */
+    #resultados-fechas .ranking-table th {
+        background: transparent;
+        border-bottom: 1px solid #30363d;
+    }
     #resultados-fechas .ranking-table.large-table-font th,
     #resultados-fechas .ranking-table.large-table-font td {
-        font-size: 0.75rem;
-        padding: 4px 4px;
+        font-size: 0.95rem;
+        padding: 6px 4px;
     }
 
     .panel {
@@ -1014,8 +1018,8 @@ select:hover {
     /* Override large-table-font para resultados en pantallas muy pequeñas */
     #resultados-fechas .ranking-table.large-table-font th,
     #resultados-fechas .ranking-table.large-table-font td {
-        font-size: 9.5px;
-        padding: 3px 1px;
+        font-size: 0.85rem;
+        padding: 5px 3px;
     }
 
     /* Achicar cajas de rachas para que no empujen el ancho */
