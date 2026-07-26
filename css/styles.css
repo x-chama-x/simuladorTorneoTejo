@@ -970,6 +970,15 @@ select:hover {
         overflow-x: visible;
     }
 
+    /* Resultados ocupa todo el ancho sin recuadro */
+    #resultados-fechas-panel {
+        background: none;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+    }
+
     /* Reducir fuente de la tabla de resultados en mobile (override large-table-font) */
     #resultados-fechas .ranking-table.large-table-font th,
     #resultados-fechas .ranking-table.large-table-font td {
