@@ -240,6 +240,13 @@ function simularPartido(jugador1, jugador2) {
         }
     }
 
+    // Peso extra al último campeón (bicampeonato). Calibrado con la
+    // referencia mundialista del ~10%, repartido por etapa. Ver js/campeon.js
+    if (typeof ajustarFuerzaPorCampeon === 'function') {
+        fuerza1 = ajustarFuerzaPorCampeon(fuerza1, jugador1.nombre);
+        fuerza2 = ajustarFuerzaPorCampeon(fuerza2, jugador2.nombre);
+    }
+
     // Diferencia de fuerza
     const diffFuerza = fuerza1 - fuerza2;
 
@@ -287,6 +294,29 @@ function simularPartido(jugador1, jugador2) {
         goles2: goles2,
         resultado: `${goles1}${goles2}`
     };
+}
+
+// --- Helpers ligeros para el Monte Carlo de bicampeonato ---
+// Simula un round-robin y devuelve el ranking (1°..n°) sin efectos secundarios.
+function simGrupoBicampeon(jugadoresGrupo) {
+    const stats = {};
+    jugadoresGrupo.forEach(j => { stats[j.nombre] = { pg: 0, pp: 0, gf: 0, gc: 0, pts: 0 }; });
+    for (let i = 0; i < jugadoresGrupo.length; i++) {
+        for (let j = i + 1; j < jugadoresGrupo.length; j++) {
+            const r = simularPartido(jugadoresGrupo[i], jugadoresGrupo[j]);
+            const a = jugadoresGrupo[i].nombre, b = jugadoresGrupo[j].nombre;
+            stats[a].gf += r.goles1; stats[a].gc += r.goles2;
+            stats[b].gf += r.goles2; stats[b].gc += r.goles1;
+            if (r.ganador === a) {
+                stats[a].pg++; stats[b].pp++; stats[a].pts += r.goles1; stats[b].pts += r.goles2;
+            } else {
+                stats[b].pg++; stats[a].pp++; stats[b].pts += r.goles2; stats[a].pts += r.goles1;
+            }
+        }
+    }
+    return Object.entries(stats)
+        .sort((x, y) => y[1].pts - x[1].pts || y[1].pg - x[1].pg || (y[1].gf - y[1].gc) - (x[1].gf - x[1].gc))
+        .map((e, i) => ({ pos: i + 1, nombre: e[0], ...e[1] }));
 }
 
 function simularGrupo(jugadoresGrupo, nombreGrupo, matchNumberInicial, estadisticasGlobales = null) {
@@ -515,6 +545,8 @@ function simularTorneo(mantenerGrupos = false) {
     let htmlFase = '';
     let clasificados = [];
     let repechajePreMatch = null;
+    // Estructura de grupos para el cálculo de bicampeonato (Monte Carlo)
+    let gruposBicampeon = null;
 
     if (numJugadores === 7) {
         // Formato Liga: Todos contra todos
@@ -526,6 +558,7 @@ function simularTorneo(mantenerGrupos = false) {
         htmlFase += renderGrupoUIX(partidos, rankingGrupo, 4);
 
         clasificados = rankingGrupo.slice(0, 4);
+        gruposBicampeon = { all: jugadores.slice() };
 
     } else if (numJugadores === 8) {
         // 2 grupos de 4
@@ -558,6 +591,7 @@ function simularTorneo(mantenerGrupos = false) {
             ...resultadoA.rankingGrupo.slice(0, 2),
             ...resultadoB.rankingGrupo.slice(0, 2)
         ];
+        gruposBicampeon = { A: grupoA.slice(), B: grupoB.slice() };
 
     } else if (numJugadores === 9) {
         // 3 grupos de 3
@@ -574,6 +608,7 @@ function simularTorneo(mantenerGrupos = false) {
             grupos[1] = jugadores.slice(3, 6);
             grupos[2] = jugadores.slice(6, 9);
         }
+        gruposBicampeon = { A: grupos[0].slice(), B: grupos[1].slice(), C: grupos[2].slice() };
 
         let resultadosGrupos9 = [];
         // Simular y mostrar cada grupo
@@ -772,6 +807,7 @@ function simularTorneo(mantenerGrupos = false) {
             grupos[0] = jugadores.slice(0, 5);
             grupos[1] = jugadores.slice(5, 10);
         }
+        gruposBicampeon = { A: grupos[0].slice(), B: grupos[1].slice() };
 
         let resultadosGrupos = [];
         // Simular y mostrar cada grupo
@@ -1008,7 +1044,20 @@ function simularTorneo(mantenerGrupos = false) {
     
     reSimulateButtons += `</div>`;
 
-    document.getElementById('resultado').innerHTML = reSimulateButtons + htmlPlayoffs + htmlFase + htmlStats;
+    // ---- Panel de probabilidad de bicampeonato (campeón defensor) ----
+    let htmlBicampeon = '';
+    if (typeof calcularBicampeonato === 'function' && window.CAMPEON && window.CAMPEON.nombre && gruposBicampeon) {
+        const infoBi = calcularBicampeonato({
+            grupos: gruposBicampeon,
+            numJugadores,
+            campeon: window.CAMPEON.nombre,
+            simPartido: (a, b) => simularPartido(a, b),
+            simGrupo: simGrupoBicampeon
+        });
+        if (infoBi) htmlBicampeon = renderPanelBicampeon(infoBi);
+    }
+
+    document.getElementById('resultado').innerHTML = reSimulateButtons + htmlBicampeon + htmlPlayoffs + htmlFase + htmlStats;
 
     // Draw SVG lines after injecting HTML
     setTimeout(() => {
@@ -1475,6 +1524,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Primero cargar los jugadores desde el archivo
     await cargarJugadoresDesdeArchivo();
     await cargarHistorialCompleto();
+    // Detectar el último campeón para el peso de bicampeonato
+    if (typeof detectarUltimoCampeon === 'function') {
+        await detectarUltimoCampeon();
+    }
 
     const numSelect = document.getElementById('numPlayers');
     if (numSelect) {
