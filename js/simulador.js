@@ -1695,20 +1695,17 @@ function ejecutarSimulacionSilenciosa() {
     } else if (numJugadores === 9) {
        const grupos = [jugadores.slice(0, 3), jugadores.slice(3, 6), jugadores.slice(6, 9)];
        let matchNum = 1;
+       const resultadosGrupos = [];
+        
        ['A', 'B', 'C'].forEach((nombre, idx) => {
            const resultado = simularGrupo(grupos[idx], nombre, matchNum, estadisticasJugadores);
            resultadosCompletos.push(...resultado.partidos.map(p => ({ fase: `grupo${nombre}`, ...p })));
+           resultadosGrupos.push(resultado);
            matchNum = resultado.matchNumber;
        });
-       // Tomar primero de cada grupo + repechaje
-       const primeros = [[], [], []];
-       const segundos = [[], [], []];
-       [0, 1, 2].forEach(i => {
-           const res = simularGrupo(grupos[i], ['A', 'B', 'C'][i], 1, {});
-           if (res.rankingGrupo.length > 0) primeros[i].push(res.rankingGrupo[0]);
-           if (res.rankingGrupo.length > 1) segundos[i].push(res.rankingGrupo[1]);
-       });
-       clasificados = [...primeros.flat()].slice(0, 4);
+        
+       // Tomar primero de cada grupo para semifinales (simplificado: sin mini-liga de segundos)
+       clasificados = resultadosGrupos.map(r => r.rankingGrupo[0]).slice(0, 3);
     } else if (numJugadores === 10) {
        const grupoA = jugadores.slice(0, 5);
        const grupoB = jugadores.slice(5, 10);
@@ -1719,25 +1716,49 @@ function ejecutarSimulacionSilenciosa() {
        clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 3)];
     }
 
-    // Fase final (simplificado para monte carlo)
+    // Fase semifinal
     if (typeof establecerEtapaBicampeon === 'function') {
        establecerEtapaBicampeon('semifinal');
     }
 
     if (clasificados.length >= 2) {
-       // Semifinales simplificadas
-       const sf1 = simularPartido(clasificados[0], clasificados[3]);
-       const sf2 = simularPartido(clasificados[1], clasificados[2]);
-       resultadosCompletos.push({ fase: 'semifinal', azul: clasificados[0].nombre, rojo: clasificados[3].nombre, ganador: sf1.ganador, golesAzul: sf1.g1, golesRojo: sf1.g2 });
-       resultadosCompletos.push({ fase: 'semifinal', azul: clasificados[1].nombre, rojo: clasificados[2].nombre, ganador: sf2.ganador, golesAzul: sf2.g1, golesRojo: sf2.g2 });
+       // Semifinales
+       const sf1 = simularPartido(clasificados[0], clasificados[clasificados.length - 1]);
+       const sf2 = simularPartido(clasificados[1], clasificados[clasificados.length - 2] || clasificados[0]);
+        
+       resultadosCompletos.push({ 
+           fase: 'semifinal', 
+           azul: clasificados[0].nombre, 
+           rojo: clasificados[clasificados.length - 1].nombre, 
+           ganador: sf1.ganador, 
+           golesAzul: sf1.goles1, 
+           golesRojo: sf1.goles2 
+       });
+        
+       resultadosCompletos.push({ 
+           fase: 'semifinal', 
+           azul: clasificados[1].nombre, 
+           rojo: (clasificados[clasificados.length - 2] || clasificados[0]).nombre, 
+           ganador: sf2.ganador, 
+           golesAzul: sf2.goles1, 
+           golesRojo: sf2.goles2 
+       });
 
+       // Establecer final
        if (typeof establecerEtapaBicampeon === 'function') {
            establecerEtapaBicampeon('final');
        }
 
        // Final
        const final = simularPartido({ nombre: sf1.ganador }, { nombre: sf2.ganador });
-       resultadosCompletos.push({ fase: 'final', azul: sf1.ganador, rojo: sf2.ganador, ganador: final.ganador, golesAzul: final.g1, golesRojo: final.g2 });
+       resultadosCompletos.push({ 
+           fase: 'final', 
+           azul: sf1.ganador, 
+           rojo: sf2.ganador, 
+           ganador: final.ganador, 
+           golesAzul: final.goles1, 
+           golesRojo: final.goles2 
+       });
     }
 
     return resultadosCompletos;
