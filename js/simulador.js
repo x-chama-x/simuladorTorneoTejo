@@ -1550,3 +1550,319 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
+
+// ===============================================
+// SIMULACIÓN MONTE CARLO: 10,000 TORNEOS
+// Registra los cruces y resultados más probables
+// ===============================================
+
+window.simularTorneoMonteCarlo = async function() {
+    const num = parseInt(document.getElementById('numPlayers').value);
+    const seleccion = obtenerJugadoresSeleccionadosPorNombre(num);
+    if (seleccion.length !== num) {
+       alert(`Por favor seleccioná exactamente ${num} jugadores antes de simular.`);
+       return;
+    }
+
+    // Ocultar controles
+    const controls = document.querySelector('.controls');
+    if (controls) {
+       Array.from(controls.children).forEach(child => {
+           if (!child.classList.contains('nav-links')) {
+               child.style.display = 'none';
+           }
+       });
+    }
+    document.getElementById('playerSelection').style.display = 'none';
+
+    // Mostrar banner de progreso
+    const resultado = document.getElementById('resultado');
+    resultado.innerHTML = `
+       <div style="text-align:center; padding:40px; background:#0d1117; border-radius:10px; margin:20px 0;">
+           <h2 style="color:#58a6ff; margin-bottom:20px;">⏳ Simulando 10,000 torneos...</h2>
+           <div style="background:#30363d; border-radius:6px; overflow:hidden;">
+               <div id="mcProgressBar" style="height:30px; width:0%; background:linear-gradient(90deg, #58a6ff, #1f6feb); transition:width 0.1s; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">0%</div>
+           </div>
+           <p style="color:#8b949e; margin-top:15px;">Esto puede tomar unos segundos...</p>
+       </div>
+    `;
+
+    // Guardar configuración original
+    const originalBase = [...jugadoresBase];
+    let seleccionCompleta = [...seleccion];
+    if (seleccionCompleta.length < num) {
+       const faltan = num - seleccionCompleta.length;
+       for (let i = 0; i < faltan; i++) {
+           if (nuevosJugadores[i]) seleccionCompleta.push(nuevosJugadores[i]);
+       }
+    }
+
+    // Reemplazar jugadoresBase con la selección
+    for (let i = 0; i < jugadoresBase.length; i++) {
+       jugadoresBase[i] = seleccionCompleta[i] || jugadoresBase[i];
+    }
+    if (seleccionCompleta.length > jugadoresBase.length) {
+       for (let i = jugadoresBase.length; i < seleccionCompleta.length; i++) jugadoresBase.push(seleccionCompleta[i]);
+    }
+
+    // Estructura para registrar partidos
+    const matchHistory = {};  // { "jugador1-vs-jugador2": { jugador1: wins, jugador2: wins } }
+    const simulacionesCount = 10000;
+    let completadas = 0;
+
+    // Simular en chunks para no bloquear la UI
+    return new Promise((resolve) => {
+       const simularChunk = () => {
+           const chunkSize = 50;
+           const hasta = Math.min(completadas + chunkSize, simulacionesCount);
+
+           for (let sim = completadas; sim < hasta; sim++) {
+               // Ejecutar una simulación silenciosa
+               const resultados = ejecutarSimulacionSilenciosa();
+                
+               // Registrar todos los partidos
+               registrarPartidos(resultados, matchHistory);
+
+               // Actualizar progreso
+               completadas++;
+               const porcentaje = Math.round((completadas / simulacionesCount) * 100);
+               const progressBar = document.getElementById('mcProgressBar');
+               if (progressBar) {
+                   progressBar.style.width = porcentaje + '%';
+                   progressBar.textContent = porcentaje + '%';
+               }
+           }
+
+           if (completadas < simulacionesCount) {
+               // Continuar con siguiente chunk
+               setTimeout(simularChunk, 10);
+           } else {
+               // Listo: mostrar resultados
+               mostrarTorneoMasPromedio(matchHistory, seleccionCompleta);
+                
+               // Restaurar jugadoresBase
+               for (let i = 0; i < originalBase.length; i++) jugadoresBase[i] = originalBase[i];
+               jugadoresBase.length = originalBase.length;
+                
+               resolve();
+           }
+       };
+
+       simularChunk();
+    });
+};
+
+// Ejecuta una simulación completa y retorna todos los partidos jugados
+function ejecutarSimulacionSilenciosa() {
+    const numJugadores = parseInt(document.getElementById('numPlayers').value);
+    let jugadores = [...jugadoresBase].slice(0, numJugadores);
+    if (jugadores.length < numJugadores) {
+       for (let i = 0; i < numJugadores - jugadores.length; i++) {
+           jugadores.push(nuevosJugadores[i]);
+       }
+    }
+
+    jugadores = jugadores.sort(() => Math.random() - 0.5);
+    const estadisticasJugadores = {};
+    jugadores.forEach(j => {
+       estadisticasJugadores[j.nombre] = {
+           golesLiga: 0, golesFaseFinal: 0, gc: 0, 
+           partidosJugados: 0, pg: 0, pp: 0
+       };
+    });
+
+    const resultadosCompletos = [];
+    let clasificados = [];
+
+    // Establecer etapa 'grupos'
+    if (typeof establecerEtapaBicampeon === 'function') {
+       establecerEtapaBicampeon('grupos');
+    }
+
+    // Fase inicial (según formato)
+    if (numJugadores === 7) {
+       const { partidos, rankingGrupo } = simularGrupo(jugadores, 'Liga', 1, estadisticasJugadores);
+       resultadosCompletos.push(...partidos.map(p => ({ fase: 'liga', ...p })));
+       clasificados = rankingGrupo.slice(0, 4);
+    } else if (numJugadores === 8) {
+       const grupoA = jugadores.slice(0, 4);
+       const grupoB = jugadores.slice(4, 8);
+       const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
+       const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
+       resultadosCompletos.push(...resultadoA.partidos.map(p => ({ fase: 'grupoA', ...p })));
+       resultadosCompletos.push(...resultadoB.partidos.map(p => ({ fase: 'grupoB', ...p })));
+       clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 2)];
+    } else if (numJugadores === 9) {
+       const grupos = [jugadores.slice(0, 3), jugadores.slice(3, 6), jugadores.slice(6, 9)];
+       let matchNum = 1;
+       ['A', 'B', 'C'].forEach((nombre, idx) => {
+           const resultado = simularGrupo(grupos[idx], nombre, matchNum, estadisticasJugadores);
+           resultadosCompletos.push(...resultado.partidos.map(p => ({ fase: `grupo${nombre}`, ...p })));
+           matchNum = resultado.matchNumber;
+       });
+       // Tomar primero de cada grupo + repechaje
+       const primeros = [[], [], []];
+       const segundos = [[], [], []];
+       [0, 1, 2].forEach(i => {
+           const res = simularGrupo(grupos[i], ['A', 'B', 'C'][i], 1, {});
+           if (res.rankingGrupo.length > 0) primeros[i].push(res.rankingGrupo[0]);
+           if (res.rankingGrupo.length > 1) segundos[i].push(res.rankingGrupo[1]);
+       });
+       clasificados = [...primeros.flat()].slice(0, 4);
+    } else if (numJugadores === 10) {
+       const grupoA = jugadores.slice(0, 5);
+       const grupoB = jugadores.slice(5, 10);
+       const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
+       const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
+       resultadosCompletos.push(...resultadoA.partidos.map(p => ({ fase: 'grupoA', ...p })));
+       resultadosCompletos.push(...resultadoB.partidos.map(p => ({ fase: 'grupoB', ...p })));
+       clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 3)];
+    }
+
+    // Fase final (simplificado para monte carlo)
+    if (typeof establecerEtapaBicampeon === 'function') {
+       establecerEtapaBicampeon('semifinal');
+    }
+
+    if (clasificados.length >= 2) {
+       // Semifinales simplificadas
+       const sf1 = simularPartido(clasificados[0], clasificados[3]);
+       const sf2 = simularPartido(clasificados[1], clasificados[2]);
+       resultadosCompletos.push({ fase: 'semifinal', azul: clasificados[0].nombre, rojo: clasificados[3].nombre, ganador: sf1.ganador, golesAzul: sf1.g1, golesRojo: sf1.g2 });
+       resultadosCompletos.push({ fase: 'semifinal', azul: clasificados[1].nombre, rojo: clasificados[2].nombre, ganador: sf2.ganador, golesAzul: sf2.g1, golesRojo: sf2.g2 });
+
+       if (typeof establecerEtapaBicampeon === 'function') {
+           establecerEtapaBicampeon('final');
+       }
+
+       // Final
+       const final = simularPartido({ nombre: sf1.ganador }, { nombre: sf2.ganador });
+       resultadosCompletos.push({ fase: 'final', azul: sf1.ganador, rojo: sf2.ganador, ganador: final.ganador, golesAzul: final.g1, golesRojo: final.g2 });
+    }
+
+    return resultadosCompletos;
+}
+
+// Registra los partidos en la estructura matchHistory
+function registrarPartidos(partidos, matchHistory) {
+    partidos.forEach(p => {
+       const j1 = p.azul;
+       const j2 = p.rojo;
+       const key = [j1, j2].sort().join(' vs ');
+
+       if (!matchHistory[key]) {
+           matchHistory[key] = { [j1]: 0, [j2]: 0, _finales: [] };
+       }
+
+       matchHistory[key][p.ganador]++;
+        
+       // Registrar si fue final
+       if (p.fase === 'final') {
+           matchHistory[key]._finales = matchHistory[key]._finales || [];
+           matchHistory[key]._finales.push(p.ganador);
+       }
+    });
+}
+
+// Muestra el torneo con los resultados más probables
+function mostrarTorneoMasPromedio(matchHistory, jugadores) {
+    const resultado = document.getElementById('resultado');
+    let html = '<div style="text-align:center; margin:30px 0;">';
+    html += '<h2 style="color:#58a6ff; margin-bottom:20px;">📊 Análisis de 10,000 Simulaciones</h2>';
+    html += '<p style="color:#8b949e; margin-bottom:30px; font-size:14px;">Estadísticas de cruces y resultados más probables</p>';
+
+    // Calcular estadísticas de campeones (finales)
+    const campeones = {};
+    Object.entries(matchHistory).forEach(([key, stats]) => {
+       if (stats._finales && stats._finales.length > 0) {
+           stats._finales.forEach(ganador => {
+               campeones[ganador] = (campeones[ganador] || 0) + 1;
+           });
+       }
+    });
+
+    // Mostrar top 5 campeones
+    if (Object.keys(campeones).length > 0) {
+       html += '<div style="background:linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); padding:20px; border-radius:10px; margin:20px 0; box-shadow:0 4px 15px rgba(0,0,0,0.1);">';
+       html += '<h3 style="color:#000; margin:0 0 15px 0;">👑 Campeones Más Frecuentes</h3>';
+        
+       const campeonesSorted = Object.entries(campeones)
+           .sort((a, b) => b[1] - a[1])
+           .slice(0, 5);
+
+       campeonesSorted.forEach(([nombre, ganancias], idx) => {
+           const porcentaje = ((ganancias / 10000) * 100).toFixed(2);
+           const medal = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][idx];
+           html += `<div style="background:rgba(0,0,0,0.1); padding:10px; border-radius:6px; margin:8px 0;">
+               <strong style="font-size:16px; color:#000;">${medal} ${nombre}: ${porcentaje}% (${ganancias} veces)</strong>
+           </div>`;
+       });
+
+       html += '</div>';
+    }
+
+    // Mostrar estadísticas de enfrentamientos
+    html += '<div style="background:#0d1117; padding:20px; border-radius:10px; margin:20px 0;">';
+    html += '<h3 style="color:#58a6ff; margin-bottom:20px;">📈 Enfrentamientos Más Comunes</h3>';
+    html += '<div style="max-height:600px; overflow-y:auto;">';
+
+    const matchups = Object.entries(matchHistory);
+    matchups.sort((a, b) => {
+       const totalA = a[1][Object.keys(a[1]).find(k => k !== '_finales')] + a[1][Object.keys(a[1]).find(k => k !== '_finales' && a[1][k] !== undefined)];
+       const totalB = b[1][Object.keys(b[1]).find(k => k !== '_finales')] + b[1][Object.keys(b[1]).find(k => k !== '_finales' && b[1][k] !== undefined)];
+       return totalB - totalA;
+    });
+
+    matchups.slice(0, Math.min(25, matchups.length)).forEach(([key, stats]) => {
+       const jugadores = key.split(' vs ');
+       const j1 = jugadores[0];
+       const j2 = jugadores[1];
+       const wins1 = stats[j1] || 0;
+       const wins2 = stats[j2] || 0;
+       const total = wins1 + wins2;
+        
+       if (total === 0) return;
+        
+       const porcentajeWins1 = ((wins1 / total) * 100).toFixed(1);
+       const porcentajeWins2 = ((wins2 / total) * 100).toFixed(1);
+       const probabilidadEnfrentamiento = ((total / 10000) * 100).toFixed(2);
+
+       html += `<div style="background:#161b22; padding:12px; border-radius:6px; margin:8px 0; border-left:4px solid #58a6ff;">
+           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+               <div style="flex:1; text-align:left; font-weight:bold; color:#58a6ff; font-size:14px;">${j1}</div>
+               <div style="flex:1; text-align:center; font-size:12px; color:#8b949e;">VS</div>
+               <div style="flex:1; text-align:right; font-weight:bold; color:#f85149; font-size:14px;">${j2}</div>
+           </div>
+           <div style="display:flex; height:10px; border-radius:4px; overflow:hidden; background:#30363d; margin-bottom:6px;">
+               <div style="width:${porcentajeWins1}%; background:#58a6ff; position:relative;">
+                   ${porcentajeWins1 > 20 ? `<span style="position:absolute; right:4px; color:white; font-weight:bold; font-size:11px;">${porcentajeWins1}%</span>` : ''}
+               </div>
+               <div style="width:${porcentajeWins2}%; background:#f85149; position:relative;">
+                   ${porcentajeWins2 > 20 ? `<span style="position:absolute; left:4px; color:white; font-weight:bold; font-size:11px;">${porcentajeWins2}%</span>` : ''}
+               </div>
+           </div>
+           <div style="font-size:11px; color:#8b949e;">Ocurrió en ${probabilidadEnfrentamiento}% de las simulaciones (${total} veces) • ${wins1}W-${wins2}L</div>
+       </div>`;
+    });
+
+    html += '</div></div>';
+
+    // Botón para volver a simular
+    html += '<div style="display:flex; justify-content:center; gap:15px; margin:30px 0; flex-wrap:wrap;">';
+    html += '<button onclick="mostrarFormato(); document.getElementById(\'playerSelection\').style.display=\'\'; updateSimularButtonState();" class="re-simular-btn">↩️ Volver a seleccionar</button>';
+    html += '<button onclick="ejecutarSimulacion(false)" class="re-simular-btn">🎲 Simular torneo completo</button>';
+    html += '<button onclick="window.simularTorneoMonteCarlo();" class="re-simular-btn">📊 Analizar de nuevo</button>';
+    html += '</div>';
+
+    resultado.innerHTML = html;
+}
+
+// Botón Monte Carlo event listener
+document.addEventListener('DOMContentLoaded', () => {
+    const mcBtn = document.getElementById('simularMonteCarloBtn');
+    if (mcBtn) {
+       mcBtn.addEventListener('click', () => {
+           window.simularTorneoMonteCarlo();
+       });
+    }
+});
