@@ -1679,12 +1679,14 @@ function ejecutarSimulacionSilenciosa() {
     });
 
     const torneoData = {
-       fase_inicial: [],
+       numJugadores: numJugadores,
+       grupos: [],      // Datos de grupos con rankings y partidos
+       clasificados: [],
        semifinales: [],
        final: null,
        ganador: null,
-       clasificados: [],
-       semifinalistas: []
+       semifinalistas: [],
+       estadisticas: estadisticasJugadores
     };
     
     let clasificados = [];
@@ -1697,14 +1699,27 @@ function ejecutarSimulacionSilenciosa() {
     // Fase inicial (según formato)
     if (numJugadores === 7) {
        const { partidos, rankingGrupo } = simularGrupo(jugadores, 'Liga', 1, estadisticasJugadores);
-       torneoData.fase_inicial = partidos;
+       torneoData.grupos.push({
+           nombre: 'Liga',
+           partidos: partidos,
+           ranking: rankingGrupo
+       });
        clasificados = rankingGrupo.slice(0, 4);
     } else if (numJugadores === 8) {
        const grupoA = jugadores.slice(0, 4);
        const grupoB = jugadores.slice(4, 8);
        const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
        const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
-       torneoData.fase_inicial = [...resultadoA.partidos, ...resultadoB.partidos];
+       torneoData.grupos.push({
+           nombre: 'A',
+           partidos: resultadoA.partidos,
+           ranking: resultadoA.rankingGrupo
+       });
+       torneoData.grupos.push({
+           nombre: 'B',
+           partidos: resultadoB.partidos,
+           ranking: resultadoB.rankingGrupo
+       });
        clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 2)];
     } else if (numJugadores === 9) {
        const grupos = [jugadores.slice(0, 3), jugadores.slice(3, 6), jugadores.slice(6, 9)];
@@ -1713,7 +1728,11 @@ function ejecutarSimulacionSilenciosa() {
         
        ['A', 'B', 'C'].forEach((nombre, idx) => {
            const resultado = simularGrupo(grupos[idx], nombre, matchNum, estadisticasJugadores);
-           torneoData.fase_inicial.push(...resultado.partidos);
+           torneoData.grupos.push({
+               nombre: nombre,
+               partidos: resultado.partidos,
+               ranking: resultado.rankingGrupo
+           });
            resultadosGrupos.push(resultado);
            matchNum = resultado.matchNumber;
        });
@@ -1724,7 +1743,16 @@ function ejecutarSimulacionSilenciosa() {
        const grupoB = jugadores.slice(5, 10);
        const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
        const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
-       torneoData.fase_inicial = [...resultadoA.partidos, ...resultadoB.partidos];
+       torneoData.grupos.push({
+           nombre: 'A',
+           partidos: resultadoA.partidos,
+           ranking: resultadoA.rankingGrupo
+       });
+       torneoData.grupos.push({
+           nombre: 'B',
+           partidos: resultadoB.partidos,
+           ranking: resultadoB.rankingGrupo
+       });
        clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 3)];
     }
 
@@ -1799,105 +1827,121 @@ function registrarTorneoCompleto(torneoCompleto, historialTorneos) {
     historialTorneos[clave].frecuencia++;
 }
 
-// Muestra el torneo más frecuente en formato completo
+// Muestra el torneo más frecuente en formato completo (idéntico a simularTorneo)
 function mostrarTorneoMasPromedio(torneoData, frecuencia) {
     const resultado = document.getElementById('resultado');
-    const numJugadores = parseInt(document.getElementById('numPlayers').value);
+    const numJugadores = torneoData.numJugadores;
     
-    let html = `
-       <div style="text-align:center; margin:20px 0;">
-           <h2 style="color:#58a6ff; margin-bottom:10px;">📊 Torneo Más Probable (10,000 simulaciones)</h2>
-           <p style="color:#8b949e; font-size:14px;">Este torneo ocurrió <strong>${frecuencia}</strong> veces de 10,000 simulaciones (${((frecuencia/10000)*100).toFixed(2)}%)</p>
-       </div>
-    `;
+    let htmlFase = '';
+    
+    // Banner de información
+    htmlFase += `<div style="text-align:center; padding:15px; background:#0d1117; border-radius:10px; margin-bottom:20px; border-left:4px solid #58a6ff;">
+       <h3 style="color:#58a6ff; margin:0 0 5px 0;">📊 Torneo Más Probable</h3>
+       <p style="color:#8b949e; margin:0; font-size:12px;">Este torneo ocurrió <strong>${frecuencia}</strong> veces de 10,000 simulaciones (${((frecuencia/10000)*100).toFixed(2)}%)</p>
+    </div>`;
 
-    // MOSTRAR FASE INICIAL
-    if (torneoData.fase_inicial && torneoData.fase_inicial.length > 0) {
-       if (numJugadores === 7) {
-           html += '<h2 style="margin-top:30px;">🏆 Fase de Liga</h2><br>';
-       } else {
-           html += '<h2 style="margin-top:30px;">🏆 Fase de Grupos</h2><br>';
+    // MOSTRAR GRUPOS/FASE INICIAL según formato
+    if (numJugadores === 7) {
+       htmlFase += '<h2>🏆 Fase de Liga</h2><br>';
+       const grupo = torneoData.grupos[0];
+       if (grupo && grupo.partidos && grupo.ranking) {
+           htmlFase += renderGrupoUIX(grupo.partidos, grupo.ranking, 4);
+       }
+    } else if (numJugadores === 8) {
+       htmlFase += '<h2>🏆 Fase de Grupos</h2><br>';
+        
+       const grupoA = torneoData.grupos[0];
+       const grupoB = torneoData.grupos[1];
+        
+       if (grupoA && grupoA.partidos && grupoA.ranking) {
+           htmlFase += '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔷 GRUPO A</h3>';
+           htmlFase += renderGrupoUIX(grupoA.partidos, grupoA.ranking, 2);
        }
         
-       html += '<div class="table-responsive" style="margin-bottom:30px;"><table class="ranking-table align-center large-table-font">';
-       html += '<thead><tr><th style="text-align: right;">Azul</th><th style="text-align: center;">Resultado</th><th style="text-align: left;">Rojo</th></tr></thead><tbody>';
+       if (grupoB && grupoB.partidos && grupoB.ranking) {
+           htmlFase += '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔶 GRUPO B</h3>';
+           htmlFase += renderGrupoUIX(grupoB.partidos, grupoB.ranking, 2);
+       }
+    } else if (numJugadores === 9) {
+       htmlFase += '<h2>🏆 Fase de Grupos</h2><br>';
         
-       torneoData.fase_inicial.forEach(p => {
-           const w1 = p.ganador === p.azul;
-           const w2 = p.ganador === p.rojo;
-           html += `<tr>
-               <td style="text-align: right; ${w1 ? 'font-weight: bold; color: #58a6ff;' : ''}">${p.azul}</td>
-               <td style="text-align: center; font-weight: bold; letter-spacing: 2px;">${p.golesAzul}-${p.golesRojo}</td>
-               <td style="text-align: left; ${w2 ? 'font-weight: bold; color: #f85149;' : ''}">${p.rojo}</td>
-           </tr>`;
+       ['A', 'B', 'C'].forEach((label, idx) => {
+           const grupo = torneoData.grupos[idx];
+           if (grupo && grupo.partidos && grupo.ranking) {
+               const color = ['#667eea', '#667eea', '#667eea'][idx];
+               const icon = ['🔷', '🔶', '🟦'][idx];
+               htmlFase += `<h3 style="text-align: center; margin: 20px 0; color: ${color};">${icon} GRUPO ${grupo.nombre}</h3>`;
+               htmlFase += renderGrupoUIX(grupo.partidos, grupo.ranking, 1);
+           }
        });
+    } else if (numJugadores === 10) {
+       htmlFase += '<h2>🏆 Fase de Grupos</h2><br>';
         
-       html += '</tbody></table></div>';
+       const grupoA = torneoData.grupos[0];
+       const grupoB = torneoData.grupos[1];
+        
+       if (grupoA && grupoA.partidos && grupoA.ranking) {
+           htmlFase += '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔷 GRUPO A</h3>';
+           htmlFase += renderGrupoUIX(grupoA.partidos, grupoA.ranking, 2);
+       }
+        
+       if (grupoB && grupoB.partidos && grupoB.ranking) {
+           htmlFase += '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔶 GRUPO B</h3>';
+           htmlFase += renderGrupoUIX(grupoB.partidos, grupoB.ranking, 3);
+       }
     }
 
-    // MOSTRAR SEMIFINALES
-    if (torneoData.semifinales && torneoData.semifinales.length > 0) {
-       html += '<h2 style="margin-top:30px;">🎖️ Semifinales</h2>';
-       html += '<div style="display:flex; justify-content:center; gap:30px; flex-wrap:wrap; margin:20px 0;">';
+    // MOSTRAR PLAYOFFS (Semifinales y Final)
+    let htmlPlayoffs = '<h2>👑 Playoffs</h2><br>';
+    
+    if (torneoData.semifinales && torneoData.semifinales.length >= 2) {
+       htmlPlayoffs += `<div id="sim-playoff-wrapper" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">`;
         
-       torneoData.semifinales.forEach((sf, idx) => {
-           const w1 = sf.ganador === sf.azul;
-           const w2 = sf.ganador === sf.rojo;
-           html += `
-               <div class="match-card" style="background:#161b22; padding:20px; border-radius:10px; border:2px solid #58a6ff; min-width:250px;">
-                   <div style="text-align:center; font-weight:bold; color:#58a6ff; margin-bottom:15px;">Semifinal ${idx + 1}</div>
-                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                       <div style="flex:1; text-align:right; font-weight:bold; ${w1 ? 'color:#58a6ff;' : 'color:#8b949e;'}">${sf.azul}</div>
-                       <div style="margin:0 15px; color:#8b949e;">VS</div>
-                       <div style="flex:1; text-align:left; font-weight:bold; ${w2 ? 'color:#f85149;' : 'color:#8b949e;'}">${sf.rojo}</div>
-                   </div>
-                   <div style="text-align:center; font-size:24px; font-weight:bold; color:#c9d1d9; margin:10px 0;">${sf.golesAzul} - ${sf.golesRojo}</div>
-                   <div style="text-align:center; color:#3fb950; font-weight:bold; font-size:14px;">🏆 ${sf.ganador}</div>
-               </div>
-           `;
-       });
+       htmlPlayoffs += `<div id="sim-sf1-wrap" style="flex: 1; min-width: 280px; max-width: 350px;">
+           ${createMatchCardSimulador(torneoData.semifinales[0].ganador, torneoData.semifinales[0].azul, torneoData.semifinales[0].rojo, torneoData.semifinales[0].golesAzul, torneoData.semifinales[0].golesRojo, "🎖️ Semifinal 1")}
+       </div>`;
         
-       html += '</div>';
-    }
-
-    // MOSTRAR FINAL
-    if (torneoData.final) {
-       const f = torneoData.final;
-       const w1 = f.ganador === f.azul;
-       const w2 = f.ganador === f.rojo;
+       htmlPlayoffs += `<div id="sim-sf2-wrap" style="flex: 1; min-width: 280px; max-width: 350px;">
+           ${createMatchCardSimulador(torneoData.semifinales[1].ganador, torneoData.semifinales[1].azul, torneoData.semifinales[1].rojo, torneoData.semifinales[1].golesAzul, torneoData.semifinales[1].golesRojo, "🎖️ Semifinal 2")}
+       </div>`;
         
-       html += '<div style="margin-top:40px; margin-bottom:40px;">';
-       html += '<h2 style="text-align:center; margin-bottom:20px;">👑 FINAL</h2>';
-       html += '<div style="display:flex; justify-content:center;">';
-       html += `
-           <div style="background:linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); padding:30px; border-radius:15px; min-width:350px; box-shadow:0 8px 32px rgba(255,215,0,0.3); text-align:center;">
-               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                   <div style="flex:1; text-align:right;">
-                       <div style="font-weight:bold; font-size:18px; color:#000; ${w1 ? 'text-decoration:underline; text-decoration-thickness:3px;' : ''}">${f.azul}</div>
-                   </div>
-                   <div style="margin:0 20px; font-size:16px; color:#000; font-weight:bold;">VS</div>
-                   <div style="flex:1; text-align:left;">
-                       <div style="font-weight:bold; font-size:18px; color:#000; ${w2 ? 'text-decoration:underline; text-decoration-thickness:3px;' : ''}">${f.rojo}</div>
-                   </div>
-               </div>
-               <div style="font-size:48px; font-weight:bold; color:#000; margin:20px 0;">${f.golesAzul} - ${f.golesRojo}</div>
-               <div style="background:rgba(0,0,0,0.1); padding:15px; border-radius:10px; margin-top:20px;">
-                   <div style="font-size:24px; color:#000; font-weight:bold; margin-bottom:5px;">👑 CAMPEÓN</div>
-                   <div style="font-size:20px; color:#000; font-weight:bold; letter-spacing:1px;">${f.ganador}</div>
+       htmlPlayoffs += `</div>`;
+        
+       // Conectores SVG
+       htmlPlayoffs += `
+           <div style="display: flex; justify-content: center; margin-bottom: 2rem; position: relative;">
+               <div id="sim-bracket-connector-col" style="flex: 1; min-width: 100px; max-width: 200px; position: relative; height: 80px;">
+                   <svg id="sim-bracket-svg" style="position: absolute; top: 0; left: 0;"></svg>
                </div>
            </div>
        `;
-       html += '</div></div>';
+        
+       // Final
+       if (torneoData.final) {
+           const f = torneoData.final;
+           htmlPlayoffs += `<div style="display: flex; justify-content: center;">
+               <div id="sim-final-wrap" style="flex: 1; min-width: 280px; max-width: 350px;">
+                   ${createMatchCardSimulador(f.ganador, f.azul, f.rojo, f.golesAzul, f.golesRojo, "Final")}
+               </div>
+           </div>`;
+       }
     }
+    
+    htmlPlayoffs += '</div>';
 
     // Botones de acción
-    html += '<div style="display:flex; justify-content:center; gap:15px; margin:30px 0; flex-wrap:wrap;">';
-    html += '<button onclick="mostrarFormato(); document.getElementById(\'playerSelection\').style.display=\'\'; updateSimularButtonState();" class="re-simular-btn">↩️ Volver a seleccionar</button>';
-    html += '<button onclick="ejecutarSimulacion(false)" class="re-simular-btn">🎲 Simular torneo único</button>';
-    html += '<button onclick="window.simularTorneoMonteCarlo();" class="re-simular-btn">📊 Analizar de nuevo</button>';
-    html += '</div>';
+    let reSimulateButtons = `<div style="display:flex; justify-content:center; gap:15px; margin-bottom: 25px; margin-top: 10px;">
+       <button onclick="mostrarFormato(); document.getElementById('playerSelection').style.display=''; updateSimularButtonState();" class="re-simular-btn">↩️ Volver a seleccionar</button>
+       <button onclick="ejecutarSimulacion(false)" class="re-simular-btn">🔄 Simular torneo único</button>
+       <button onclick="window.simularTorneoMonteCarlo();" class="re-simular-btn">📊 Analizar de nuevo</button>
+    </div>`;
 
-    resultado.innerHTML = html;
+    document.getElementById('resultado').innerHTML = reSimulateButtons + htmlPlayoffs + htmlFase;
+
+    // Draw SVG lines after injecting HTML
+    setTimeout(() => {
+       drawSimBracketLines();
+    }, 50);
 }
 
 // Botón Monte Carlo event listener
