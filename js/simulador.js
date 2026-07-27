@@ -548,6 +548,11 @@ function simularTorneo(mantenerGrupos = false) {
     // Estructura de grupos para el cálculo de bicampeonato (Monte Carlo)
     let gruposBicampeon = null;
 
+    // Establecer etapa 'grupos' para simulaciones de la fase inicial
+    if (typeof establecerEtapaBicampeon === 'function') {
+        establecerEtapaBicampeon('grupos');
+    }
+
     if (numJugadores === 7) {
         // Formato Liga: Todos contra todos
         // FASE DE LIGA COMPLETA (4, 5 o 6 jugadores)
@@ -836,6 +841,10 @@ function simularTorneo(mantenerGrupos = false) {
     const sf2Jugador1 = jugadores.find(j => j.nombre === semifinalistas[2].nombre);
     const sf2Jugador2 = jugadores.find(j => j.nombre === semifinalistas[3].nombre);
 
+    // Establecer etapa 'semifinal' para aplicar bonus correcto del bicampeonato
+    if (typeof establecerEtapaBicampeon === 'function') {
+        establecerEtapaBicampeon('semifinal');
+    }
     const sf1 = simularPartido(sf1Jugador1, sf1Jugador2);
     const sf2 = simularPartido(sf2Jugador1, sf2Jugador2);
 
@@ -863,6 +872,7 @@ function simularTorneo(mantenerGrupos = false) {
 
     const tercerPuestoJ1 = jugadores.find(j => j.nombre === perdedorSF1);
     const tercerPuestoJ2 = jugadores.find(j => j.nombre === perdedorSF2);
+    // Tercer puesto no recibe bonus (no es campeonable en bicampeonato)
     const tercerPuesto = simularPartido(tercerPuestoJ1, tercerPuestoJ2);
 
     // Actualizar estadísticas de fase final (tercer puesto)
@@ -875,6 +885,10 @@ function simularTorneo(mantenerGrupos = false) {
     estadisticasJugadores[perdedorSF2].partidosJugados++;
     if (tercerPuesto.ganador === perdedorSF2) estadisticasJugadores[perdedorSF2].pg++; else estadisticasJugadores[perdedorSF2].pp++;
 
+    // Establecer etapa 'final' para aplicar máximo bonus del bicampeonato
+    if (typeof establecerEtapaBicampeon === 'function') {
+        establecerEtapaBicampeon('final');
+    }
     const finalistaJ1 = jugadores.find(j => j.nombre === sf1.ganador);
     const finalistaJ2 = jugadores.find(j => j.nombre === sf2.ganador);
     const final = simularPartido(finalistaJ1, finalistaJ2);

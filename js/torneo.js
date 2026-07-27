@@ -266,6 +266,11 @@ function calcularProbabilidades(grupos, numJugadores, n = 10000) {
     const conteoDirecto = {};
     const conteoRepechajeaislado = {};
 
+    // Establecer etapa 'grupos' para todas las simulaciones de esta función
+    if (typeof establecerEtapaBicampeon === 'function') {
+        establecerEtapaBicampeon('grupos');
+    }
+
     // Inicializar contadores para todos los jugadores
     Object.values(grupos).flat().forEach(j => {
         conteo[j.nombre] = 0;
