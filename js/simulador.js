@@ -1058,20 +1058,7 @@ function simularTorneo(mantenerGrupos = false) {
     
     reSimulateButtons += `</div>`;
 
-    // ---- Panel de probabilidad de bicampeonato (campeón defensor) ----
-    let htmlBicampeon = '';
-    if (typeof calcularBicampeonato === 'function' && window.CAMPEON && window.CAMPEON.nombre && gruposBicampeon) {
-        const infoBi = calcularBicampeonato({
-            grupos: gruposBicampeon,
-            numJugadores,
-            campeon: window.CAMPEON.nombre,
-            simPartido: (a, b) => simularPartido(a, b),
-            simGrupo: simGrupoBicampeon
-        });
-        if (infoBi) htmlBicampeon = renderPanelBicampeon(infoBi);
-    }
-
-    document.getElementById('resultado').innerHTML = reSimulateButtons + htmlBicampeon + htmlPlayoffs + htmlFase + htmlStats;
+    document.getElementById('resultado').innerHTML = reSimulateButtons + htmlPlayoffs + htmlFase + htmlStats;
 
     // Draw SVG lines after injecting HTML
     setTimeout(() => {
