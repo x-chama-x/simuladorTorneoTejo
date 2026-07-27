@@ -1644,7 +1644,7 @@ window.simularTorneoMonteCarlo = async function() {
                if (torneosMasFrequentes.length > 0) {
                    const torneoMasPromedio = torneosMasFrequentes[0].torneo;
                    const frecuencia = torneosMasFrequentes[0].frecuencia;
-                   mostrarTorneoMasPromedio(torneoMasPromedio, frecuencia, simularChunk);
+                   mostrarTorneoMasPromedio(torneoMasPromedio, frecuencia);
                }
                 
                // Restaurar jugadoresBase
@@ -1768,6 +1768,11 @@ function ejecutarSimulacionSilenciosa() {
        const sf1 = simularPartido(clasificados[0], clasificados[clasificados.length - 1]);
        const sf2 = simularPartido(clasificados[1], clasificados[clasificados.length - 2] || clasificados[0]);
         
+       // Encontrar objetos jugadores para los ganadores
+       const ganadoresSemifinales = clasificados.filter(j => 
+           j.nombre === sf1.ganador || j.nombre === sf2.ganador
+       );
+         
        torneoData.semifinales.push({
            azul: clasificados[0].nombre,
            rojo: clasificados[clasificados.length - 1].nombre,
@@ -1775,7 +1780,7 @@ function ejecutarSimulacionSilenciosa() {
            golesAzul: sf1.goles1,
            golesRojo: sf1.goles2
        });
-        
+         
        torneoData.semifinales.push({
            azul: clasificados[1].nombre,
            rojo: (clasificados[clasificados.length - 2] || clasificados[0]).nombre,
@@ -1791,8 +1796,11 @@ function ejecutarSimulacionSilenciosa() {
            establecerEtapaBicampeon('final');
        }
 
-       // Final
-       const final = simularPartido({ nombre: sf1.ganador }, { nombre: sf2.ganador });
+       // Final - encontrar los objetos jugadores completos
+       const jugador1Final = ganadoresSemifinales.find(j => j.nombre === sf1.ganador) || { nombre: sf1.ganador, ranking: 0, winRate: 0, promedioGoles: 1 };
+       const jugador2Final = ganadoresSemifinales.find(j => j.nombre === sf2.ganador) || { nombre: sf2.ganador, ranking: 0, winRate: 0, promedioGoles: 1 };
+        
+       const final = simularPartido(jugador1Final, jugador2Final);
        torneoData.final = {
            azul: sf1.ganador,
            rojo: sf2.ganador,
@@ -1800,7 +1808,7 @@ function ejecutarSimulacionSilenciosa() {
            golesAzul: final.goles1,
            golesRojo: final.goles2
        };
-        
+         
        torneoData.ganador = final.ganador;
     }
 
@@ -1936,7 +1944,7 @@ function mostrarTorneoMasPromedio(torneoData, frecuencia) {
        <button onclick="window.simularTorneoMonteCarlo();" class="re-simular-btn">📊 Analizar de nuevo</button>
     </div>`;
 
-    document.getElementById('resultado').innerHTML = reSimulateButtons + htmlPlayoffs + htmlFase;
+    document.getElementById('resultado').innerHTML = htmlFase + htmlPlayoffs + reSimulateButtons;
 
     // Draw SVG lines after injecting HTML
     setTimeout(() => {
