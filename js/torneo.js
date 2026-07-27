@@ -194,7 +194,7 @@ function calcularProbabilidadGana1(jugador1, jugador2) {
         }
     }
 
-    // Peso extra al último campeón (bicampeonato), calibrado con la
+    // Penalidad por ser campeón defensor (bicampeonato), calibrado con la
     // referencia mundialista del ~10%. Ver js/campeon.js
     if (typeof ajustarFuerzaPorCampeon === 'function') {
         fuerza1 = ajustarFuerzaPorCampeon(fuerza1, jugador1.nombre);
@@ -415,18 +415,6 @@ function sortearGrupos() {
 function mostrarResultados(grupos, probs, numJugadores) {
     const resultado = document.getElementById('resultado');
     let html = '';
-
-    // ---- Panel de probabilidad de bicampeonato (campeón defensor) ----
-    if (typeof calcularBicampeonato === 'function' && window.CAMPEON && window.CAMPEON.nombre) {
-        const infoBi = calcularBicampeonato({
-            grupos,
-            numJugadores,
-            campeon: window.CAMPEON.nombre,
-            simPartido: (a, b) => simularPartido(a, b),
-            simGrupo: simularGrupoUnico
-        });
-        if (infoBi) html += renderPanelBicampeon(infoBi);
-    }
 
     if (numJugadores === 7) {
         // Tabla de probabilidades para liga round-robin

@@ -240,8 +240,9 @@ function simularPartido(jugador1, jugador2) {
         }
     }
 
-    // Peso extra al último campeón (bicampeonato). Calibrado con la
-    // referencia mundialista del ~10%, repartido por etapa. Ver js/campeon.js
+    // Penalidad por ser campeón defensor (bicampeonato). Calibrado con la
+    // referencia mundialista del ~10%, donde es MÁS DIFÍCIL repetir título.
+    // Ver js/campeon.js
     if (typeof ajustarFuerzaPorCampeon === 'function') {
         fuerza1 = ajustarFuerzaPorCampeon(fuerza1, jugador1.nombre);
         fuerza2 = ajustarFuerzaPorCampeon(fuerza2, jugador2.nombre);

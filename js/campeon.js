@@ -88,16 +88,19 @@ async function detectarUltimoCampeon() {
     }
 }
 
-// ---- Bonus de fuerza por partido para el campeón defensor (CON DISCRIMINACIÓN POR ETAPA) ----
+// ---- Penalidad de fuerza por partido para el campeón defensor (CON DISCRIMINACIÓN POR ETAPA) ----
+// El campeón defensor sufre una PENALIDAD (reduce su fuerza) por presión/desgaste del bicampeonato.
+// Esta penalidad se escalada según la etapa, asimilando la presión creciente:
+//   - Grupos: -X (factor 1.0x) - presión moderada
+//   - Semifinal: -1.2X (factor 1.2x) - 20% más presión
+//   - Final: -1.5X (factor 1.5x) - 50% más presión (máxima)
+//
 // Repartimos el multiplicador de cuota total M entre las S etapas del torneo
 // mediante probabilidades condicionales independientes: m = M^(1/S).
-// Pero además aplicamos un factor de escalado según la etapa actual:
-//   - Grupos: bonus base (m^1)
-//   - Semifinal: bonus aumentado (m^1.2) - mayor importancia
-//   - Final: bonus máximo (m^1.5) - momento crítico
+// En términos de la sigmoide prob = σ(diff/k), restar k·ln(m) reduce la probabilidad de ganar.
 //
-// Esto refleja que el campeón defensor tiende a tener más ventaja en fases
-// decisivas. El bonus se multiplica dinámicamente según etapa + bonusEtapa.
+// Ejemplo mundialista: Es MÁS DIFÍCIL repetir título (no 10% de probabilidad como bonus,
+// sino como penalidad que reduce las probabilidades generales).
 function bonusFuerzaCampeon(etapa = null) {
     const c = window.CAMPEON;
     if (!c || !c.activo) return 0;
@@ -121,10 +124,11 @@ function bonusFuerzaCampeon(etapa = null) {
 }
 
 // ---- Aplica el bonus a la fuerza de un jugador si es el campeón defensor (CON ETAPA AWARE) ----
+// NOTA: El bonus es NEGATIVO - reduce la fuerza del campeón (presión/desgaste del bicampeonato)
 function ajustarFuerzaPorCampeon(fuerza, nombre, etapa = null) {
     const c = window.CAMPEON;
     if (c && c.activo && c.nombre && nombre === c.nombre) {
-        return fuerza + bonusFuerzaCampeon(etapa);
+        return fuerza - bonusFuerzaCampeon(etapa);  // ⭐ RESTA (negativo) en lugar de sumar
     }
     return fuerza;
 }
