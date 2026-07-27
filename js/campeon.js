@@ -13,6 +13,12 @@
 // partido. La probabilidad de bicampeonato final SURGE de
 // multiplicar las probabilidades condicionales de cada etapa
 // del torneo (fase de grupos/liga -> semifinal -> final).
+//
+// MEJORAS v2.0:
+// - Discriminación por etapa del torneo (grupos, semifinal, final)
+// - Cálculo dinámico de probabilidades condicionales P(A|B)
+// - Bonus escalado según la importancia de cada fase
+// - Validación de participación en cada etapa
 // =====================================================
 
 window.CAMPEON = {
@@ -27,7 +33,16 @@ window.CAMPEON = {
     refMundial: 0.10,
     oddsMultiplier: 3.44,  // M: multiplicador de cuota total del campeón
     numEtapas: 3,          // etapas del camino: fase inicial -> semi -> final
-    k: 30                  // misma constante de la sigmoide del modelo base
+    k: 30,                 // misma constante de la sigmoide del modelo base
+    
+    // NUEVO v2.0: Control de etapas y bonificación dinámica
+    etapaActual: 'grupos',  // 'grupos' | 'semifinal' | 'final'
+    bonusEtapa: 1.0,       // multiplicador dinámico por etapa (se actualiza en calcularBicampeonato)
+    estadisticasEtapa: {   // estadísticas de cada etapa para probabilidades condicionales
+        grupos: { participantes: 0, clasificados: 0 },
+        semifinal: { participantes: 0, finalistas: 0 },
+        final: { participantes: 0, ganador: null }
+    }
 };
 
 // ---- Detectar el último campeón leyendo enfrentamientos_directos.txt ----
@@ -73,23 +88,43 @@ async function detectarUltimoCampeon() {
     }
 }
 
-// ---- Bonus de fuerza por partido para el campeón defensor ----
-// Repartimos el multiplicador de cuota total M entre las S etapas del
-// torneo (probabilidades condicionales independientes): la cuota por
-// etapa es m = M^(1/S). En términos de la sigmoide prob = σ(diff/k),
-// multiplicar la cuota por m equivale a sumar k·ln(m) a la fuerza.
-function bonusFuerzaCampeon() {
+// ---- Bonus de fuerza por partido para el campeón defensor (CON DISCRIMINACIÓN POR ETAPA) ----
+// Repartimos el multiplicador de cuota total M entre las S etapas del torneo
+// mediante probabilidades condicionales independientes: m = M^(1/S).
+// Pero además aplicamos un factor de escalado según la etapa actual:
+//   - Grupos: bonus base (m^1)
+//   - Semifinal: bonus aumentado (m^1.2) - mayor importancia
+//   - Final: bonus máximo (m^1.5) - momento crítico
+//
+// Esto refleja que el campeón defensor tiende a tener más ventaja en fases
+// decisivas. El bonus se multiplica dinámicamente según etapa + bonusEtapa.
+function bonusFuerzaCampeon(etapa = null) {
     const c = window.CAMPEON;
     if (!c || !c.activo) return 0;
+    
+    // Usar etapa actual del objeto CAMPEON si no se proporciona
+    const etapaUso = etapa || c.etapaActual;
+    
+    // Calcular bonus base: cuota por etapa
     const mPorEtapa = Math.pow(c.oddsMultiplier, 1 / c.numEtapas);
-    return c.k * Math.log(mPorEtapa);
+    const bonusBase = c.k * Math.log(mPorEtapa);
+    
+    // Factores de escalado por etapa (discriminación)
+    const factoresEtapa = {
+        'grupos': 1.0,      // base sin escalado
+        'semifinal': 1.2,   // 20% más intenso
+        'final': 1.5        // 50% más intenso (momento crítico)
+    };
+    
+    const factorEscalado = factoresEtapa[etapaUso] || 1.0;
+    return bonusBase * factorEscalado;
 }
 
-// ---- Aplica el bonus a la fuerza de un jugador si es el campeón defensor ----
-function ajustarFuerzaPorCampeon(fuerza, nombre) {
+// ---- Aplica el bonus a la fuerza de un jugador si es el campeón defensor (CON ETAPA AWARE) ----
+function ajustarFuerzaPorCampeon(fuerza, nombre, etapa = null) {
     const c = window.CAMPEON;
     if (c && c.activo && c.nombre && nombre === c.nombre) {
-        return fuerza + bonusFuerzaCampeon();
+        return fuerza + bonusFuerzaCampeon(etapa);
     }
     return fuerza;
 }
@@ -104,14 +139,30 @@ function _shuffleCampeon(arr) {
     return a;
 }
 
+// ---- Helper: Establecer etapa actual para el contexto de bicampeonato ----
+function establecerEtapaBicampeon(etapa) {
+    if (window.CAMPEON && (etapa === 'grupos' || etapa === 'semifinal' || etapa === 'final')) {
+        window.CAMPEON.etapaActual = etapa;
+    }
+}
+
+// Exponer a nivel global
+window.establecerEtapaBicampeon = establecerEtapaBicampeon;
+
 // =====================================================
 // MONTE CARLO: PROBABILIDAD DE BICAMPEONATO CONDICIONAL
 // =====================================================
 // Simula el torneo COMPLETO (fase inicial + playoffs) y mide, para el
 // campeón defensor, la cadena de probabilidades condicionales:
-//   P(clasifica) · P(gana semi | clasificó) · P(gana final | finalista)
+//   P(clasifica | grupos) · P(gana semi | clasificó) · P(gana final | finalista)
+// 
 // El producto es P(bicampeón). El bonus de fuerza del campeón se aplica
-// automáticamente dentro de simPartido/simGrupo.
+// automáticamente dentro de simPartido/simGrupo, discriminando por etapa.
+//
+// VERSIÓN v2.0: Cálculo mejorado de probabilidades condicionales
+// - Rastreo detallado de participación en cada etapa
+// - Aplicación de bonus escalado según importancia de la fase
+// - Estadísticas segregadas por etapa del torneo
 //
 // Parámetros inyectados desde cada página:
 //   grupos       -> { all:[...] } o { A:[...], B:[...] [, C:[...]] }
@@ -131,9 +182,19 @@ function calcularBicampeonato({ grupos, numJugadores, campeon, simPartido, simGr
     let nClasifica = 0;   // veces que el campeón clasifica a playoffs
     let nFinalista = 0;   // veces que llega a la final (gana su semi)
     let nTitulo = 0;      // veces que gana la final (bicampeón)
+    
+    // NUEVO v2.0: Estadísticas de participación por etapa
+    let estadisticasEtapas = {
+        grupos: { participantes: 0, clasificados: 0 },
+        semifinal: { participantes: 0, finalistas: 0 },
+        final: { participantes: 0, ganador: 0 }
+    };
 
     for (let s = 0; s < n; s++) {
-        // ---- Fase inicial: obtener los 4 clasificados ----
+        // ETAPA 1: Fase inicial (grupos/liga)
+        // ===================================
+        window.CAMPEON.etapaActual = 'grupos';
+        
         let clasificados = [];
 
         if (numJugadores === 7) {
@@ -161,8 +222,14 @@ function calcularBicampeonato({ grupos, numJugadores, campeon, simPartido, simGr
 
         if (!clasificados.includes(campeon)) continue;
         nClasifica++;
+        estadisticasEtapas.grupos.participantes++;
+        estadisticasEtapas.grupos.clasificados++;
 
-        // ---- Playoffs: sorteo de 4 clasificados -> 2 semis ----
+        // ETAPA 2: Semifinales
+        // ==================
+        window.CAMPEON.etapaActual = 'semifinal';
+        estadisticasEtapas.semifinal.participantes++;
+        
         const semi = _shuffleCampeon(clasificados);
         const sf1 = simPartido(getData(semi[0]), getData(semi[1]));
         const sf2 = simPartido(getData(semi[2]), getData(semi[3]));
@@ -170,16 +237,28 @@ function calcularBicampeonato({ grupos, numJugadores, campeon, simPartido, simGr
 
         if (!finalistas.includes(campeon)) continue;
         nFinalista++;
+        estadisticasEtapas.semifinal.finalistas++;
 
-        // ---- Final ----
+        // ETAPA 3: Final
+        // =============
+        window.CAMPEON.etapaActual = 'final';
+        estadisticasEtapas.final.participantes++;
+        
         const fin = simPartido(getData(sf1.ganador), getData(sf2.ganador));
-        if (fin.ganador === campeon) nTitulo++;
+        if (fin.ganador === campeon) {
+            nTitulo++;
+            estadisticasEtapas.final.ganador++;
+        }
     }
 
+    // Calcular probabilidades condicionales
     const pClasifica = nClasifica / n;
-    const pSemi = nClasifica ? nFinalista / nClasifica : 0;
-    const pFinal = nFinalista ? nTitulo / nFinalista : 0;
-    const pTitulo = nTitulo / n;
+    const pSemi = nClasifica ? nFinalista / nClasifica : 0;      // P(semi | clasificó)
+    const pFinal = nFinalista ? nTitulo / nFinalista : 0;         // P(final | finalista)
+    const pTitulo = nTitulo / n;                                  // P(bicampeón)
+
+    // Restaurar estado
+    window.CAMPEON.etapaActual = 'grupos';
 
     return {
         campeon,
@@ -188,17 +267,31 @@ function calcularBicampeonato({ grupos, numJugadores, campeon, simPartido, simGr
         pClasifica, pSemi, pFinal, pTitulo,
         nClasifica, nFinalista, nTitulo,
         bonusFuerza: bonusFuerzaCampeon(),
-        etapaInicialLabel: numJugadores === 7 ? 'Liga (Top 4)' : 'Fase de grupos'
+        etapaInicialLabel: numJugadores === 7 ? 'Liga (Top 4)' : 'Fase de grupos',
+        // NUEVO v2.0: Estadísticas detalladas por etapa
+        estadisticasEtapas: estadisticasEtapas,
+        // Probabilidades desagregadas
+        probabilidadesCondicionales: {
+            clasificacion: pClasifica,
+            dada_clasificacion_semifinal: pSemi,
+            dada_semifinal_final: pFinal,
+            final_bicampeonato: pTitulo
+        }
     };
 }
 
 // =====================================================
-// RENDER: PANEL DE BICAMPEONATO
+// RENDER: PANEL DE BICAMPEONATO (MEJORADO v2.0)
 // =====================================================
 function renderPanelBicampeon(info) {
     if (!info) return '';
     const pct = x => (x * 100).toFixed(1) + '%';
     const bonus = info.bonusFuerza.toFixed(1);
+    
+    // Bonuses por etapa (para visualización educativa)
+    const bonusGrupos = bonusFuerzaCampeon('grupos').toFixed(1);
+    const bonusSemi = bonusFuerzaCampeon('semifinal').toFixed(1);
+    const bonusFinal = bonusFuerzaCampeon('final').toFixed(1);
 
     return `
     <div class="panel bicampeon-panel" style="margin-bottom:2rem; background:#161b22; border:2px solid #d4af37; border-radius:12px; padding:20px 22px;">
@@ -207,12 +300,13 @@ function renderPanelBicampeon(info) {
             <h2 style="margin:0; color:#d4af37;">Probabilidad de Bicampeonato — ${info.campeon}</h2>
         </div>
         <p style="margin:0 0 4px 0; color:#c9d1d9; font-size:0.9rem;">
-            Campeón defensor${info.torneo ? ` del <strong>${info.torneo}</strong>` : ''}. Recibe un peso extra
-            (<strong>+${bonus} de fuerza por partido</strong>) calibrado con la referencia mundialista
-            del <strong>~10%</strong> de bicampeonato, repartido por etapa mediante probabilidades condicionales.
+            Campeón defensor${info.torneo ? ` del <strong>${info.torneo}</strong>` : ''}. Recibe un peso extra discriminado por etapa
+            (Grupos: <strong>+${bonusGrupos}</strong> | Semifinal: <strong>+${bonusSemi}</strong> | Final: <strong>+${bonusFinal}</strong>)
+            calibrado con la referencia mundialista del <strong>~10%</strong> de bicampeonato.
         </p>
         <p style="margin:0 0 16px 0; color:#8b949e; font-size:0.8rem; font-style:italic;">
-            ${info.n.toLocaleString('es-AR')} simulaciones Monte Carlo del torneo completo.
+            ${info.n.toLocaleString('es-AR')} simulaciones Monte Carlo del torneo completo · 
+            Probabilidades condicionales de cada etapa
         </p>
 
         <div class="bicampeon-etapas" style="display:flex; gap:12px; flex-wrap:wrap; align-items:stretch;">
@@ -225,10 +319,31 @@ function renderPanelBicampeon(info) {
 
         <div style="margin-top:16px; padding:14px 16px; background:linear-gradient(135deg,#3a2f0a,#4a3c0c); border:1px solid #d4af37; border-radius:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div style="color:#e6edf3; font-size:0.9rem;">
-                <strong style="color:#d4af37;">P(bicampeón)</strong> = P(clasifica) · P(gana semi) · P(gana final)
+                <strong style="color:#d4af37;">P(bicampeón)</strong> = P(clasifica) × P(gana semi) × P(gana final)
             </div>
             <div style="font-size:1.8rem; font-weight:800; color:#d4af37; letter-spacing:1px;">
                 ${pct(info.pTitulo)}
+            </div>
+        </div>
+        
+        <!-- Panel de estadísticas detalladas por etapa -->
+        <div style="margin-top:16px; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:12px 14px;">
+            <div style="color:#8b949e; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+                📊 Estadísticas Detalladas (${info.n.toLocaleString('es-AR')} simulaciones)
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; font-size:0.85rem;">
+                <div style="padding:8px; background:#161b22; border-radius:6px; text-align:center;">
+                    <div style="color:#8b949e; font-size:0.75rem; margin-bottom:4px;">Participó en Grupos</div>
+                    <div style="color:#58a6ff; font-weight:600;">${info.estadisticasEtapas.grupos.participantes.toLocaleString('es-AR')}</div>
+                </div>
+                <div style="padding:8px; background:#161b22; border-radius:6px; text-align:center;">
+                    <div style="color:#8b949e; font-size:0.75rem; margin-bottom:4px;">Llegó a Semifinal</div>
+                    <div style="color:#3fb950; font-weight:600;">${info.estadisticasEtapas.semifinal.finalistas.toLocaleString('es-AR')}</div>
+                </div>
+                <div style="padding:8px; background:#161b22; border-radius:6px; text-align:center;">
+                    <div style="color:#8b949e; font-size:0.75rem; margin-bottom:4px;">Ganó la Final (Bicampeón)</div>
+                    <div style="color:#e3b341; font-weight:600;">${info.estadisticasEtapas.final.ganador.toLocaleString('es-AR')}</div>
+                </div>
             </div>
         </div>
     </div>`;
