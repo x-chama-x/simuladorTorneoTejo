@@ -194,6 +194,13 @@ function calcularProbabilidadGana1(jugador1, jugador2) {
         }
     }
 
+    // Peso extra al último campeón (bicampeonato), calibrado con la
+    // referencia mundialista del ~10%. Ver js/campeon.js
+    if (typeof ajustarFuerzaPorCampeon === 'function') {
+        fuerza1 = ajustarFuerzaPorCampeon(fuerza1, jugador1.nombre);
+        fuerza2 = ajustarFuerzaPorCampeon(fuerza2, jugador2.nombre);
+    }
+
     const k = 30;
     return 1 / (1 + Math.exp(-(fuerza1 - fuerza2) / k));
 }
@@ -404,6 +411,18 @@ function mostrarResultados(grupos, probs, numJugadores) {
     const resultado = document.getElementById('resultado');
     let html = '';
 
+    // ---- Panel de probabilidad de bicampeonato (campeón defensor) ----
+    if (typeof calcularBicampeonato === 'function' && window.CAMPEON && window.CAMPEON.nombre) {
+        const infoBi = calcularBicampeonato({
+            grupos,
+            numJugadores,
+            campeon: window.CAMPEON.nombre,
+            simPartido: (a, b) => simularPartido(a, b),
+            simGrupo: simularGrupoUnico
+        });
+        if (infoBi) html += renderPanelBicampeon(infoBi);
+    }
+
     if (numJugadores === 7) {
         // Tabla de probabilidades para liga round-robin
         const jugadoresOrdenados = grupos.all.slice().sort((a, b) =>
@@ -612,6 +631,9 @@ function updateSortearButtonState() {
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarJugadoresDesdeArchivo();
     await cargarHistorialCompleto();
+    if (typeof detectarUltimoCampeon === 'function') {
+        await detectarUltimoCampeon();
+    }
 
     const numSelect = document.getElementById('numPlayers');
     if (numSelect) {
