@@ -1605,8 +1605,8 @@ window.simularTorneoMonteCarlo = async function() {
        for (let i = jugadoresBase.length; i < seleccionCompleta.length; i++) jugadoresBase.push(seleccionCompleta[i]);
     }
 
-    // Estructura para registrar partidos
-    const matchHistory = {};  // { "jugador1-vs-jugador2": { jugador1: wins, jugador2: wins } }
+    // Estructura para registrar torneos
+    const historialTorneos = {};
     const simulacionesCount = 10000;
     let completadas = 0;
 
@@ -1618,10 +1618,10 @@ window.simularTorneoMonteCarlo = async function() {
 
            for (let sim = completadas; sim < hasta; sim++) {
                // Ejecutar una simulación silenciosa
-               const resultados = ejecutarSimulacionSilenciosa();
+               const torneo = ejecutarSimulacionSilenciosa();
                 
-               // Registrar todos los partidos
-               registrarPartidos(resultados, matchHistory);
+               // Registrar el torneo completo
+               registrarTorneoCompleto(torneo, historialTorneos);
 
                // Actualizar progreso
                completadas++;
@@ -1637,8 +1637,15 @@ window.simularTorneoMonteCarlo = async function() {
                // Continuar con siguiente chunk
                setTimeout(simularChunk, 10);
            } else {
-               // Listo: mostrar resultados
-               mostrarTorneoMasPromedio(matchHistory, seleccionCompleta);
+               // Listo: encontrar el torneo más frecuente y mostrarlo
+               const torneosMasFrequentes = Object.values(historialTorneos)
+                   .sort((a, b) => b.frecuencia - a.frecuencia);
+                
+               if (torneosMasFrequentes.length > 0) {
+                   const torneoMasPromedio = torneosMasFrequentes[0].torneo;
+                   const frecuencia = torneosMasFrequentes[0].frecuencia;
+                   mostrarTorneoMasPromedio(torneoMasPromedio, frecuencia, simularChunk);
+               }
                 
                // Restaurar jugadoresBase
                for (let i = 0; i < originalBase.length; i++) jugadoresBase[i] = originalBase[i];
@@ -1652,7 +1659,7 @@ window.simularTorneoMonteCarlo = async function() {
     });
 };
 
-// Ejecuta una simulación completa y retorna todos los partidos jugados
+// Ejecuta una simulación completa y retorna la estructura del torneo completo
 function ejecutarSimulacionSilenciosa() {
     const numJugadores = parseInt(document.getElementById('numPlayers').value);
     let jugadores = [...jugadoresBase].slice(0, numJugadores);
@@ -1671,7 +1678,15 @@ function ejecutarSimulacionSilenciosa() {
        };
     });
 
-    const resultadosCompletos = [];
+    const torneoData = {
+       fase_inicial: [],
+       semifinales: [],
+       final: null,
+       ganador: null,
+       clasificados: [],
+       semifinalistas: []
+    };
+    
     let clasificados = [];
 
     // Establecer etapa 'grupos'
@@ -1682,15 +1697,14 @@ function ejecutarSimulacionSilenciosa() {
     // Fase inicial (según formato)
     if (numJugadores === 7) {
        const { partidos, rankingGrupo } = simularGrupo(jugadores, 'Liga', 1, estadisticasJugadores);
-       resultadosCompletos.push(...partidos.map(p => ({ fase: 'liga', ...p })));
+       torneoData.fase_inicial = partidos;
        clasificados = rankingGrupo.slice(0, 4);
     } else if (numJugadores === 8) {
        const grupoA = jugadores.slice(0, 4);
        const grupoB = jugadores.slice(4, 8);
        const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
        const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
-       resultadosCompletos.push(...resultadoA.partidos.map(p => ({ fase: 'grupoA', ...p })));
-       resultadosCompletos.push(...resultadoB.partidos.map(p => ({ fase: 'grupoB', ...p })));
+       torneoData.fase_inicial = [...resultadoA.partidos, ...resultadoB.partidos];
        clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 2)];
     } else if (numJugadores === 9) {
        const grupos = [jugadores.slice(0, 3), jugadores.slice(3, 6), jugadores.slice(6, 9)];
@@ -1699,22 +1713,22 @@ function ejecutarSimulacionSilenciosa() {
         
        ['A', 'B', 'C'].forEach((nombre, idx) => {
            const resultado = simularGrupo(grupos[idx], nombre, matchNum, estadisticasJugadores);
-           resultadosCompletos.push(...resultado.partidos.map(p => ({ fase: `grupo${nombre}`, ...p })));
+           torneoData.fase_inicial.push(...resultado.partidos);
            resultadosGrupos.push(resultado);
            matchNum = resultado.matchNumber;
        });
         
-       // Tomar primero de cada grupo para semifinales (simplificado: sin mini-liga de segundos)
        clasificados = resultadosGrupos.map(r => r.rankingGrupo[0]).slice(0, 3);
     } else if (numJugadores === 10) {
        const grupoA = jugadores.slice(0, 5);
        const grupoB = jugadores.slice(5, 10);
        const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
        const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
-       resultadosCompletos.push(...resultadoA.partidos.map(p => ({ fase: 'grupoA', ...p })));
-       resultadosCompletos.push(...resultadoB.partidos.map(p => ({ fase: 'grupoB', ...p })));
+       torneoData.fase_inicial = [...resultadoA.partidos, ...resultadoB.partidos];
        clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 3)];
     }
+
+    torneoData.clasificados = clasificados.map(c => c.nombre);
 
     // Fase semifinal
     if (typeof establecerEtapaBicampeon === 'function') {
@@ -1726,23 +1740,23 @@ function ejecutarSimulacionSilenciosa() {
        const sf1 = simularPartido(clasificados[0], clasificados[clasificados.length - 1]);
        const sf2 = simularPartido(clasificados[1], clasificados[clasificados.length - 2] || clasificados[0]);
         
-       resultadosCompletos.push({ 
-           fase: 'semifinal', 
-           azul: clasificados[0].nombre, 
-           rojo: clasificados[clasificados.length - 1].nombre, 
-           ganador: sf1.ganador, 
-           golesAzul: sf1.goles1, 
-           golesRojo: sf1.goles2 
+       torneoData.semifinales.push({
+           azul: clasificados[0].nombre,
+           rojo: clasificados[clasificados.length - 1].nombre,
+           ganador: sf1.ganador,
+           golesAzul: sf1.goles1,
+           golesRojo: sf1.goles2
        });
         
-       resultadosCompletos.push({ 
-           fase: 'semifinal', 
-           azul: clasificados[1].nombre, 
-           rojo: (clasificados[clasificados.length - 2] || clasificados[0]).nombre, 
-           ganador: sf2.ganador, 
-           golesAzul: sf2.goles1, 
-           golesRojo: sf2.goles2 
+       torneoData.semifinales.push({
+           azul: clasificados[1].nombre,
+           rojo: (clasificados[clasificados.length - 2] || clasificados[0]).nombre,
+           ganador: sf2.ganador,
+           golesAzul: sf2.goles1,
+           golesRojo: sf2.goles2
        });
+
+       torneoData.semifinalistas = [sf1.ganador, sf2.ganador];
 
        // Establecer final
        if (typeof establecerEtapaBicampeon === 'function') {
@@ -1751,127 +1765,135 @@ function ejecutarSimulacionSilenciosa() {
 
        // Final
        const final = simularPartido({ nombre: sf1.ganador }, { nombre: sf2.ganador });
-       resultadosCompletos.push({ 
-           fase: 'final', 
-           azul: sf1.ganador, 
-           rojo: sf2.ganador, 
-           ganador: final.ganador, 
-           golesAzul: final.goles1, 
-           golesRojo: final.goles2 
-       });
+       torneoData.final = {
+           azul: sf1.ganador,
+           rojo: sf2.ganador,
+           ganador: final.ganador,
+           golesAzul: final.goles1,
+           golesRojo: final.goles2
+       };
+        
+       torneoData.ganador = final.ganador;
     }
 
-    return resultadosCompletos;
+    return torneoData;
 }
 
-// Registra los partidos en la estructura matchHistory
-function registrarPartidos(partidos, matchHistory) {
-    partidos.forEach(p => {
-       const j1 = p.azul;
-       const j2 = p.rojo;
-       const key = [j1, j2].sort().join(' vs ');
-
-       if (!matchHistory[key]) {
-           matchHistory[key] = { [j1]: 0, [j2]: 0, _finales: [] };
-       }
-
-       matchHistory[key][p.ganador]++;
-        
-       // Registrar si fue final
-       if (p.fase === 'final') {
-           matchHistory[key]._finales = matchHistory[key]._finales || [];
-           matchHistory[key]._finales.push(p.ganador);
-       }
+// Registra una estructura de torneo completo
+function registrarTorneoCompleto(torneoCompleto, historialTorneos) {
+    // Crear una clave única para este torneo basada en sus características
+    // incluyendo ganador y semifinalistas
+    const clave = JSON.stringify({
+        ganador: torneoCompleto.ganador,
+        semifinalistas: torneoCompleto.semifinalistas || [],
+        clasificados: torneoCompleto.clasificados || []
     });
+    
+    if (!historialTorneos[clave]) {
+        historialTorneos[clave] = {
+            torneo: torneoCompleto,
+            frecuencia: 0
+        };
+    }
+    
+    historialTorneos[clave].frecuencia++;
 }
 
-// Muestra el torneo con los resultados más probables
-function mostrarTorneoMasPromedio(matchHistory, jugadores) {
+// Muestra el torneo más frecuente en formato completo
+function mostrarTorneoMasPromedio(torneoData, frecuencia) {
     const resultado = document.getElementById('resultado');
-    let html = '<div style="text-align:center; margin:30px 0;">';
-    html += '<h2 style="color:#58a6ff; margin-bottom:20px;">📊 Análisis de 10,000 Simulaciones</h2>';
-    html += '<p style="color:#8b949e; margin-bottom:30px; font-size:14px;">Estadísticas de cruces y resultados más probables</p>';
+    const numJugadores = parseInt(document.getElementById('numPlayers').value);
+    
+    let html = `
+       <div style="text-align:center; margin:20px 0;">
+           <h2 style="color:#58a6ff; margin-bottom:10px;">📊 Torneo Más Probable (10,000 simulaciones)</h2>
+           <p style="color:#8b949e; font-size:14px;">Este torneo ocurrió <strong>${frecuencia}</strong> veces de 10,000 simulaciones (${((frecuencia/10000)*100).toFixed(2)}%)</p>
+       </div>
+    `;
 
-    // Calcular estadísticas de campeones (finales)
-    const campeones = {};
-    Object.entries(matchHistory).forEach(([key, stats]) => {
-       if (stats._finales && stats._finales.length > 0) {
-           stats._finales.forEach(ganador => {
-               campeones[ganador] = (campeones[ganador] || 0) + 1;
-           });
+    // MOSTRAR FASE INICIAL
+    if (torneoData.fase_inicial && torneoData.fase_inicial.length > 0) {
+       if (numJugadores === 7) {
+           html += '<h2 style="margin-top:30px;">🏆 Fase de Liga</h2><br>';
+       } else {
+           html += '<h2 style="margin-top:30px;">🏆 Fase de Grupos</h2><br>';
        }
-    });
-
-    // Mostrar top 5 campeones
-    if (Object.keys(campeones).length > 0) {
-       html += '<div style="background:linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); padding:20px; border-radius:10px; margin:20px 0; box-shadow:0 4px 15px rgba(0,0,0,0.1);">';
-       html += '<h3 style="color:#000; margin:0 0 15px 0;">👑 Campeones Más Frecuentes</h3>';
         
-       const campeonesSorted = Object.entries(campeones)
-           .sort((a, b) => b[1] - a[1])
-           .slice(0, 5);
-
-       campeonesSorted.forEach(([nombre, ganancias], idx) => {
-           const porcentaje = ((ganancias / 10000) * 100).toFixed(2);
-           const medal = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][idx];
-           html += `<div style="background:rgba(0,0,0,0.1); padding:10px; border-radius:6px; margin:8px 0;">
-               <strong style="font-size:16px; color:#000;">${medal} ${nombre}: ${porcentaje}% (${ganancias} veces)</strong>
-           </div>`;
+       html += '<div class="table-responsive" style="margin-bottom:30px;"><table class="ranking-table align-center large-table-font">';
+       html += '<thead><tr><th style="text-align: right;">Azul</th><th style="text-align: center;">Resultado</th><th style="text-align: left;">Rojo</th></tr></thead><tbody>';
+        
+       torneoData.fase_inicial.forEach(p => {
+           const w1 = p.ganador === p.azul;
+           const w2 = p.ganador === p.rojo;
+           html += `<tr>
+               <td style="text-align: right; ${w1 ? 'font-weight: bold; color: #58a6ff;' : ''}">${p.azul}</td>
+               <td style="text-align: center; font-weight: bold; letter-spacing: 2px;">${p.golesAzul}-${p.golesRojo}</td>
+               <td style="text-align: left; ${w2 ? 'font-weight: bold; color: #f85149;' : ''}">${p.rojo}</td>
+           </tr>`;
        });
+        
+       html += '</tbody></table></div>';
+    }
 
+    // MOSTRAR SEMIFINALES
+    if (torneoData.semifinales && torneoData.semifinales.length > 0) {
+       html += '<h2 style="margin-top:30px;">🎖️ Semifinales</h2>';
+       html += '<div style="display:flex; justify-content:center; gap:30px; flex-wrap:wrap; margin:20px 0;">';
+        
+       torneoData.semifinales.forEach((sf, idx) => {
+           const w1 = sf.ganador === sf.azul;
+           const w2 = sf.ganador === sf.rojo;
+           html += `
+               <div class="match-card" style="background:#161b22; padding:20px; border-radius:10px; border:2px solid #58a6ff; min-width:250px;">
+                   <div style="text-align:center; font-weight:bold; color:#58a6ff; margin-bottom:15px;">Semifinal ${idx + 1}</div>
+                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                       <div style="flex:1; text-align:right; font-weight:bold; ${w1 ? 'color:#58a6ff;' : 'color:#8b949e;'}">${sf.azul}</div>
+                       <div style="margin:0 15px; color:#8b949e;">VS</div>
+                       <div style="flex:1; text-align:left; font-weight:bold; ${w2 ? 'color:#f85149;' : 'color:#8b949e;'}">${sf.rojo}</div>
+                   </div>
+                   <div style="text-align:center; font-size:24px; font-weight:bold; color:#c9d1d9; margin:10px 0;">${sf.golesAzul} - ${sf.golesRojo}</div>
+                   <div style="text-align:center; color:#3fb950; font-weight:bold; font-size:14px;">🏆 ${sf.ganador}</div>
+               </div>
+           `;
+       });
+        
        html += '</div>';
     }
 
-    // Mostrar estadísticas de enfrentamientos
-    html += '<div style="background:#0d1117; padding:20px; border-radius:10px; margin:20px 0;">';
-    html += '<h3 style="color:#58a6ff; margin-bottom:20px;">📈 Enfrentamientos Más Comunes</h3>';
-    html += '<div style="max-height:600px; overflow-y:auto;">';
-
-    const matchups = Object.entries(matchHistory);
-    matchups.sort((a, b) => {
-       const totalA = a[1][Object.keys(a[1]).find(k => k !== '_finales')] + a[1][Object.keys(a[1]).find(k => k !== '_finales' && a[1][k] !== undefined)];
-       const totalB = b[1][Object.keys(b[1]).find(k => k !== '_finales')] + b[1][Object.keys(b[1]).find(k => k !== '_finales' && b[1][k] !== undefined)];
-       return totalB - totalA;
-    });
-
-    matchups.slice(0, Math.min(25, matchups.length)).forEach(([key, stats]) => {
-       const jugadores = key.split(' vs ');
-       const j1 = jugadores[0];
-       const j2 = jugadores[1];
-       const wins1 = stats[j1] || 0;
-       const wins2 = stats[j2] || 0;
-       const total = wins1 + wins2;
+    // MOSTRAR FINAL
+    if (torneoData.final) {
+       const f = torneoData.final;
+       const w1 = f.ganador === f.azul;
+       const w2 = f.ganador === f.rojo;
         
-       if (total === 0) return;
-        
-       const porcentajeWins1 = ((wins1 / total) * 100).toFixed(1);
-       const porcentajeWins2 = ((wins2 / total) * 100).toFixed(1);
-       const probabilidadEnfrentamiento = ((total / 10000) * 100).toFixed(2);
-
-       html += `<div style="background:#161b22; padding:12px; border-radius:6px; margin:8px 0; border-left:4px solid #58a6ff;">
-           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-               <div style="flex:1; text-align:left; font-weight:bold; color:#58a6ff; font-size:14px;">${j1}</div>
-               <div style="flex:1; text-align:center; font-size:12px; color:#8b949e;">VS</div>
-               <div style="flex:1; text-align:right; font-weight:bold; color:#f85149; font-size:14px;">${j2}</div>
-           </div>
-           <div style="display:flex; height:10px; border-radius:4px; overflow:hidden; background:#30363d; margin-bottom:6px;">
-               <div style="width:${porcentajeWins1}%; background:#58a6ff; position:relative;">
-                   ${porcentajeWins1 > 20 ? `<span style="position:absolute; right:4px; color:white; font-weight:bold; font-size:11px;">${porcentajeWins1}%</span>` : ''}
+       html += '<div style="margin-top:40px; margin-bottom:40px;">';
+       html += '<h2 style="text-align:center; margin-bottom:20px;">👑 FINAL</h2>';
+       html += '<div style="display:flex; justify-content:center;">';
+       html += `
+           <div style="background:linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); padding:30px; border-radius:15px; min-width:350px; box-shadow:0 8px 32px rgba(255,215,0,0.3); text-align:center;">
+               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                   <div style="flex:1; text-align:right;">
+                       <div style="font-weight:bold; font-size:18px; color:#000; ${w1 ? 'text-decoration:underline; text-decoration-thickness:3px;' : ''}">${f.azul}</div>
+                   </div>
+                   <div style="margin:0 20px; font-size:16px; color:#000; font-weight:bold;">VS</div>
+                   <div style="flex:1; text-align:left;">
+                       <div style="font-weight:bold; font-size:18px; color:#000; ${w2 ? 'text-decoration:underline; text-decoration-thickness:3px;' : ''}">${f.rojo}</div>
+                   </div>
                </div>
-               <div style="width:${porcentajeWins2}%; background:#f85149; position:relative;">
-                   ${porcentajeWins2 > 20 ? `<span style="position:absolute; left:4px; color:white; font-weight:bold; font-size:11px;">${porcentajeWins2}%</span>` : ''}
+               <div style="font-size:48px; font-weight:bold; color:#000; margin:20px 0;">${f.golesAzul} - ${f.golesRojo}</div>
+               <div style="background:rgba(0,0,0,0.1); padding:15px; border-radius:10px; margin-top:20px;">
+                   <div style="font-size:24px; color:#000; font-weight:bold; margin-bottom:5px;">👑 CAMPEÓN</div>
+                   <div style="font-size:20px; color:#000; font-weight:bold; letter-spacing:1px;">${f.ganador}</div>
                </div>
            </div>
-           <div style="font-size:11px; color:#8b949e;">Ocurrió en ${probabilidadEnfrentamiento}% de las simulaciones (${total} veces) • ${wins1}W-${wins2}L</div>
-       </div>`;
-    });
+       `;
+       html += '</div></div>';
+    }
 
-    html += '</div></div>';
-
-    // Botón para volver a simular
+    // Botones de acción
     html += '<div style="display:flex; justify-content:center; gap:15px; margin:30px 0; flex-wrap:wrap;">';
     html += '<button onclick="mostrarFormato(); document.getElementById(\'playerSelection\').style.display=\'\'; updateSimularButtonState();" class="re-simular-btn">↩️ Volver a seleccionar</button>';
-    html += '<button onclick="ejecutarSimulacion(false)" class="re-simular-btn">🎲 Simular torneo completo</button>';
+    html += '<button onclick="ejecutarSimulacion(false)" class="re-simular-btn">🎲 Simular torneo único</button>';
     html += '<button onclick="window.simularTorneoMonteCarlo();" class="re-simular-btn">📊 Analizar de nuevo</button>';
     html += '</div>';
 
