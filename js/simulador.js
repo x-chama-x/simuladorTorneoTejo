@@ -240,8 +240,8 @@ function simularPartido(jugador1, jugador2) {
         }
     }
 
-    // Penalidad por ser campeón defensor (bicampeonato). Calibrado con la
-    // referencia mundialista del ~10%, donde es MÁS DIFÍCIL repetir título.
+    // Peso por ser campeón defensor (bicampeonato). Discriminado por etapa del
+    // formato y calibrado con la referencia mundialista del ~10%.
     // Ver js/campeon.js
     if (typeof ajustarFuerzaPorCampeon === 'function') {
         fuerza1 = ajustarFuerzaPorCampeon(fuerza1, jugador1.nombre);
