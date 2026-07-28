@@ -297,8 +297,9 @@ function simularPartido(jugador1, jugador2) {
     };
 }
 
-// --- Helpers ligeros para el Monte Carlo de bicampeonato ---
+// --- Helper para el Monte Carlo de bicampeonato (js/campeon.js) ---
 // Simula un round-robin y devuelve el ranking (1°..n°) sin efectos secundarios.
+// Se inyecta como callback `simGrupo` en calcularBicampeonato().
 function simGrupoBicampeon(jugadoresGrupo) {
     const stats = {};
     jugadoresGrupo.forEach(j => { stats[j.nombre] = { pg: 0, pp: 0, gf: 0, gc: 0, pts: 0 }; });
@@ -716,6 +717,32 @@ function renderEstadisticasHTML(estadisticasJugadores, numJugadores) {
     return htmlStats;
 }
 
+// Construye el panel de bicampeonato para una composición de grupos dada.
+// Devuelve '' si no hay campeón detectado, si no participa, o si el módulo
+// js/campeon.js no está cargado.
+function construirPanelBicampeon(gruposBicampeon, numJugadores) {
+    if (!gruposBicampeon) return '';
+    if (typeof calcularBicampeonato !== 'function' || typeof renderPanelBicampeon !== 'function') return '';
+
+    const campeon = window.CAMPEON && window.CAMPEON.nombre;
+    if (!campeon) return '';
+
+    try {
+        const info = calcularBicampeonato({
+            grupos: gruposBicampeon,
+            numJugadores: numJugadores,
+            campeon: campeon,
+            simPartido: simularPartido,
+            simGrupo: simGrupoBicampeon,
+            n: 4000
+        });
+        return renderPanelBicampeon(info);
+    } catch (e) {
+        console.error('No se pudo calcular el panel de bicampeonato:', e);
+        return '';
+    }
+}
+
 function drawSimBracketLines() {
     const sf1El = document.getElementById("sim-sf1-wrap");
     const sf2El = document.getElementById("sim-sf2-wrap");
@@ -873,9 +900,14 @@ function simularTorneo(mantenerGrupos = false) {
     // Estructura de grupos para el cálculo de bicampeonato (Monte Carlo)
     let gruposBicampeon = null;
 
-    // Establecer etapa 'grupos' para simulaciones de la fase inicial
+    // Contexto del peso de bicampeonato: el formato define la ruta de etapas
+    // y cuánto peso recibe cada una (ver js/campeon.js)
+    if (typeof establecerFormatoBicampeon === 'function') {
+        establecerFormatoBicampeon(numJugadores);
+    }
+    // Establecer etapa inicial (liga para 7 jugadores, grupos para el resto)
     if (typeof establecerEtapaBicampeon === 'function') {
-        establecerEtapaBicampeon('grupos');
+        establecerEtapaBicampeon(numJugadores === 7 ? 'liga' : 'grupos');
     }
 
     if (numJugadores === 7) {
@@ -954,6 +986,12 @@ function simularTorneo(mantenerGrupos = false) {
         const segundos = resultadosGrupos9.map(r => r.rankingGrupo[1]);
         const terceros = resultadosGrupos9.map(r => r.rankingGrupo[2]);
 
+        // A partir de acá empieza la etapa 'repechaje' del peso de bicampeonato:
+        // mini-ligas de 2°/3° + partido eliminatorio (ver js/campeon.js)
+        if (typeof establecerEtapaBicampeon === 'function') {
+            establecerEtapaBicampeon('repechaje');
+        }
+
         // ========== MINI-LIGA ENTRE SEGUNDOS ==========
         const miniSegundos = simularMiniLiga(construirCandidatos(segundos, jugadores), estadisticasJugadores);
 
@@ -1019,6 +1057,9 @@ function simularTorneo(mantenerGrupos = false) {
     // Tabla de estadísticas
     const htmlStats = renderEstadisticasHTML(estadisticasJugadores, numJugadores);
 
+    // Panel de bicampeonato: cadena de probabilidades condicionales por etapa
+    const htmlBicampeon = construirPanelBicampeon(gruposBicampeon, numJugadores);
+
     // Crear el container de acciones sutiles de simulación
     let reSimulateButtons = `<div style="display:flex; justify-content:center; gap:15px; margin-bottom: 25px; margin-top: 10px;">
         <button onclick="ejecutarSimulacion(false)" class="re-simular-btn">🔄 Volver a simular torneo</button>`;
@@ -1030,7 +1071,8 @@ function simularTorneo(mantenerGrupos = false) {
     
     reSimulateButtons += `</div>`;
 
-    document.getElementById('resultado').innerHTML = reSimulateButtons + htmlPlayoffs + htmlFase + htmlStats;
+    document.getElementById('resultado').innerHTML =
+        reSimulateButtons + htmlPlayoffs + htmlFase + htmlBicampeon + htmlStats;
 
     // Draw SVG lines after injecting HTML
     setTimeout(() => {
@@ -1688,7 +1730,9 @@ function ejecutarSimulacionSilenciosa() {
         playoffs: null,
         semifinalistas: [],
         ganador: null,
-        estadisticas: estadisticasJugadores
+        estadisticas: estadisticasJugadores,
+        // Composición de grupos, para alimentar el panel de bicampeonato
+        gruposBicampeon: null
     };
 
     // Devuelve el grupo correspondiente según el modo (manual o por corte de la lista mezclada)
@@ -1701,15 +1745,19 @@ function ejecutarSimulacionSilenciosa() {
         return jugadores.slice(desde, hasta);
     };
 
-    // Establecer etapa 'grupos' para simulaciones de la fase inicial
+    // Contexto del peso de bicampeonato: formato + etapa inicial (ver js/campeon.js)
+    if (typeof establecerFormatoBicampeon === 'function') {
+        establecerFormatoBicampeon(numJugadores);
+    }
     if (typeof establecerEtapaBicampeon === 'function') {
-        establecerEtapaBicampeon('grupos');
+        establecerEtapaBicampeon(numJugadores === 7 ? 'liga' : 'grupos');
     }
 
     let clasificados = [];
 
     if (numJugadores === 7) {
         // Formato Liga: todos contra todos
+        torneoData.gruposBicampeon = { all: jugadores.slice() };
         const { partidos, rankingGrupo } = simularGrupo(jugadores, 'Liga', 1, estadisticasJugadores);
         torneoData.grupos.push({
             titulo: '<h2>🏆 Fase de Liga</h2><br>',
@@ -1723,6 +1771,7 @@ function ejecutarSimulacionSilenciosa() {
         // 2 grupos de 4
         const grupoA = armarGrupo('A', 0, 4);
         const grupoB = armarGrupo('B', 4, 8);
+        torneoData.gruposBicampeon = { A: grupoA.slice(), B: grupoB.slice() };
 
         const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
@@ -1748,6 +1797,7 @@ function ejecutarSimulacionSilenciosa() {
     } else if (numJugadores === 9) {
         // 3 grupos de 3
         const grupos = [armarGrupo('A', 0, 3), armarGrupo('B', 3, 6), armarGrupo('C', 6, 9)];
+        torneoData.gruposBicampeon = { A: grupos[0].slice(), B: grupos[1].slice(), C: grupos[2].slice() };
 
         const resultadosGrupos9 = [];
         for (let i = 0; i < grupos.length; i++) {
@@ -1766,6 +1816,11 @@ function ejecutarSimulacionSilenciosa() {
         const primeros = resultadosGrupos9.map(r => r.rankingGrupo[0]);
         const segundos = resultadosGrupos9.map(r => r.rankingGrupo[1]);
         const terceros = resultadosGrupos9.map(r => r.rankingGrupo[2]);
+
+        // Etapa 'repechaje' del peso de bicampeonato (ver js/campeon.js)
+        if (typeof establecerEtapaBicampeon === 'function') {
+            establecerEtapaBicampeon('repechaje');
+        }
 
         // Mini-liga entre 2° puestos
         const miniSegundos = simularMiniLiga(construirCandidatos(segundos, jugadores), estadisticasJugadores);
@@ -1794,6 +1849,7 @@ function ejecutarSimulacionSilenciosa() {
     } else if (numJugadores === 10) {
         // 2 grupos de 5
         const grupos = [armarGrupo('A', 0, 5), armarGrupo('B', 5, 10)];
+        torneoData.gruposBicampeon = { A: grupos[0].slice(), B: grupos[1].slice() };
 
         const resultadosGrupos = [];
         for (let i = 0; i < grupos.length; i++) {
@@ -1877,6 +1933,9 @@ function mostrarTorneoMasPromedio(torneoData, frecuencia, totalSimulaciones = 10
     // Tabla de estadísticas
     const htmlStats = renderEstadisticasHTML(torneoData.estadisticas, numJugadores);
 
+    // Panel de bicampeonato: cadena de probabilidades condicionales por etapa
+    const htmlBicampeon = construirPanelBicampeon(torneoData.gruposBicampeon, numJugadores);
+
     // Botones de acción
     const reSimulateButtons = `<div style="display:flex; justify-content:center; gap:15px; margin-bottom: 25px; margin-top: 10px;">
        <button onclick="volverASeleccionar()" class="re-simular-btn">↩️ Volver a seleccionar</button>
@@ -1884,7 +1943,8 @@ function mostrarTorneoMasPromedio(torneoData, frecuencia, totalSimulaciones = 10
        <button onclick="window.simularTorneoMonteCarlo();" class="re-simular-btn">📊 Analizar de nuevo</button>
     </div>`;
 
-    document.getElementById('resultado').innerHTML = htmlBanner + reSimulateButtons + htmlPlayoffs + htmlFase + htmlStats;
+    document.getElementById('resultado').innerHTML =
+        htmlBanner + reSimulateButtons + htmlPlayoffs + htmlFase + htmlBicampeon + htmlStats;
 
     // Dibujar los conectores SVG del bracket una vez inyectado el HTML
     requestAnimationFrame(() => drawSimBracketLines());

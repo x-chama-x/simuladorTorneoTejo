@@ -266,9 +266,14 @@ function calcularProbabilidades(grupos, numJugadores, n = 10000) {
     const conteoDirecto = {};
     const conteoRepechajeaislado = {};
 
-    // Establecer etapa 'grupos' para todas las simulaciones de esta función
+    // Contexto del peso de bicampeonato: el formato define la ruta de etapas y
+    // cuánto peso recibe cada una (ver js/campeon.js). Esta función simula sólo
+    // la fase inicial, así que la etapa es 'liga' (7) o 'grupos' (8/9/10).
+    if (typeof establecerFormatoBicampeon === 'function') {
+        establecerFormatoBicampeon(numJugadores);
+    }
     if (typeof establecerEtapaBicampeon === 'function') {
-        establecerEtapaBicampeon('grupos');
+        establecerEtapaBicampeon(numJugadores === 7 ? 'liga' : 'grupos');
     }
 
     // Inicializar contadores para todos los jugadores
@@ -324,6 +329,12 @@ function calcularProbabilidades(grupos, numJugadores, n = 10000) {
         const segundosFijos = [jugadoresAOrdenados[1], jugadoresBOrdenados[1], jugadoresCOrdenados[1]];
         const tercerosFijos = [jugadoresAOrdenados[2], jugadoresBOrdenados[2], jugadoresCOrdenados[2]];
 
+        // Estas simulaciones pertenecen a la etapa 'repechaje' del peso de
+        // bicampeonato, no a la fase de grupos (ver js/campeon.js)
+        if (typeof establecerEtapaBicampeon === 'function') {
+            establecerEtapaBicampeon('repechaje');
+        }
+
         for (let simR = 0; simR < n; simR++) {
             const rSegundos = simularGrupoUnico(segundosFijos);
             const rTerceros = simularGrupoUnico(tercerosFijos);
@@ -333,6 +344,11 @@ function calcularProbabilidades(grupos, numJugadores, n = 10000) {
                 getJugadorData(rTerceros[0].nombre)
             );
             conteoRepechajeaislado[eliminatorio.ganador]++;
+        }
+
+        // Volver a la etapa de grupos para cualquier simulación posterior
+        if (typeof establecerEtapaBicampeon === 'function') {
+            establecerEtapaBicampeon('grupos');
         }
     }
 
