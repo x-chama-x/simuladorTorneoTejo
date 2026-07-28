@@ -392,6 +392,330 @@ function simularGrupo(jugadoresGrupo, nombreGrupo, matchNumberInicial, estadisti
     return { partidos, rankingGrupo, matchNumber };
 }
 
+// ===============================================
+// LÓGICA COMPARTIDA ENTRE LA SIMULACIÓN ÚNICA Y
+// LA SIMULACIÓN MONTE CARLO (10.000 torneos)
+// ===============================================
+
+// Resuelve el objeto jugador completo (ranking/winRate/promedioGoles) a partir de un nombre.
+// Las filas de las tablas de posiciones NO sirven para simular: sin estos campos
+// simularPartido() devuelve NaN.
+function resolverJugador(nombre, jugadores) {
+    return (jugadores && jugadores.find(j => j.nombre === nombre))
+        || jugadoresDisponibles.find(j => j.nombre === nombre)
+        || { nombre: nombre, ranking: 50, winRate: 0.5, promedioGoles: 5 };
+}
+
+// Convierte filas de ranking (2°/3° puestos) en candidatos con su objeto jugador resuelto.
+function construirCandidatos(filasRanking, jugadores) {
+    return filasRanking.map(f => ({
+        nombre: f.nombre,
+        grupo: f.grupo,
+        data: resolverJugador(f.nombre, jugadores)
+    }));
+}
+
+// Mini-liga (todos contra todos) usada en los repechajes de 2° y 3° puestos.
+function simularMiniLiga(candidatos, estadisticasGlobales = null) {
+    const stats = {};
+    candidatos.forEach(c => {
+        stats[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
+    });
+
+    const partidos = [];
+    for (let i = 0; i < candidatos.length; i++) {
+        for (let j = i + 1; j < candidatos.length; j++) {
+            const j1 = candidatos[i].data;
+            const j2 = candidatos[j].data;
+            const resultadoMini = simularPartido(j1, j2);
+
+            partidos.push({
+                azul: j1.nombre,
+                rojo: j2.nombre,
+                golesAzul: resultadoMini.goles1,
+                golesRojo: resultadoMini.goles2,
+                ganador: resultadoMini.ganador
+            });
+
+            stats[j1.nombre].pj++;
+            stats[j2.nombre].pj++;
+            stats[j1.nombre].gf += resultadoMini.goles1;
+            stats[j1.nombre].gc += resultadoMini.goles2;
+            stats[j2.nombre].gf += resultadoMini.goles2;
+            stats[j2.nombre].gc += resultadoMini.goles1;
+
+            if (estadisticasGlobales) {
+                if (estadisticasGlobales[j1.nombre]) {
+                    estadisticasGlobales[j1.nombre].golesLiga += resultadoMini.goles1;
+                    estadisticasGlobales[j1.nombre].gc += resultadoMini.goles2;
+                    estadisticasGlobales[j1.nombre].partidosJugados++;
+                    if (resultadoMini.ganador === j1.nombre) estadisticasGlobales[j1.nombre].pg++;
+                    else estadisticasGlobales[j1.nombre].pp++;
+                }
+                if (estadisticasGlobales[j2.nombre]) {
+                    estadisticasGlobales[j2.nombre].golesLiga += resultadoMini.goles2;
+                    estadisticasGlobales[j2.nombre].gc += resultadoMini.goles1;
+                    estadisticasGlobales[j2.nombre].partidosJugados++;
+                    if (resultadoMini.ganador === j2.nombre) estadisticasGlobales[j2.nombre].pg++;
+                    else estadisticasGlobales[j2.nombre].pp++;
+                }
+            }
+
+            if (resultadoMini.ganador === j1.nombre) {
+                stats[j1.nombre].pg++;
+                stats[j2.nombre].pp++;
+                stats[j1.nombre].pts += resultadoMini.goles1;
+                stats[j2.nombre].pts += resultadoMini.goles2;
+            } else {
+                stats[j2.nombre].pg++;
+                stats[j1.nombre].pp++;
+                stats[j2.nombre].pts += resultadoMini.goles2;
+                stats[j1.nombre].pts += resultadoMini.goles1;
+            }
+        }
+    }
+
+    const ranking = Object.entries(stats)
+        .map(entry => ({ nombre: entry[0], ...entry[1] }))
+        .sort((a, b) => b.pts - a.pts || b.pg - a.pg || (b.gf - b.gc) - (a.gf - a.gc));
+
+    return { partidos, ranking };
+}
+
+// Resuelve el 4° clasificado del formato de 9 jugadores: 1° del repechaje de 2°
+// contra 1° del repechaje de 3°.
+function simularPrePlayoff(primeroSegundos, primeroTerceros, jugadores, estadisticasJugadores) {
+    const dataSegundos = resolverJugador(primeroSegundos.nombre, jugadores);
+    const dataTerceros = resolverJugador(primeroTerceros.nombre, jugadores);
+
+    const repechajePre = simularPartido(dataSegundos, dataTerceros);
+
+    if (estadisticasJugadores[primeroSegundos.nombre]) {
+        estadisticasJugadores[primeroSegundos.nombre].golesFaseFinal += repechajePre.goles1;
+        estadisticasJugadores[primeroSegundos.nombre].gc += repechajePre.goles2;
+        estadisticasJugadores[primeroSegundos.nombre].partidosJugados++;
+        if (repechajePre.ganador === primeroSegundos.nombre) estadisticasJugadores[primeroSegundos.nombre].pg++;
+        else estadisticasJugadores[primeroSegundos.nombre].pp++;
+    }
+    if (estadisticasJugadores[primeroTerceros.nombre]) {
+        estadisticasJugadores[primeroTerceros.nombre].golesFaseFinal += repechajePre.goles2;
+        estadisticasJugadores[primeroTerceros.nombre].gc += repechajePre.goles1;
+        estadisticasJugadores[primeroTerceros.nombre].partidosJugados++;
+        if (repechajePre.ganador === primeroTerceros.nombre) estadisticasJugadores[primeroTerceros.nombre].pg++;
+        else estadisticasJugadores[primeroTerceros.nombre].pp++;
+    }
+
+    const cuartoClasificado = repechajePre.ganador === dataSegundos.nombre ? primeroSegundos : primeroTerceros;
+
+    return {
+        match: { data: repechajePre, j1: primeroSegundos.nombre, j2: primeroTerceros.nombre },
+        cuartoClasificado
+    };
+}
+
+// Simula la fase final completa (semifinales, tercer puesto y final) a partir de
+// los 4 clasificados. Devuelve todo lo necesario para renderizar el bracket.
+function simularPlayoffs(clasificados, jugadores, estadisticasJugadores) {
+    // Semifinales (sorteo aleatorio de clasificados)
+    const semifinalistas = [...clasificados].sort(() => Math.random() - 0.5);
+
+    const sf1Jugador1 = resolverJugador(semifinalistas[0].nombre, jugadores);
+    const sf1Jugador2 = resolverJugador(semifinalistas[1].nombre, jugadores);
+    const sf2Jugador1 = resolverJugador(semifinalistas[2].nombre, jugadores);
+    const sf2Jugador2 = resolverJugador(semifinalistas[3].nombre, jugadores);
+
+    // Establecer etapa 'semifinal' para aplicar bonus correcto del bicampeonato
+    if (typeof establecerEtapaBicampeon === 'function') {
+        establecerEtapaBicampeon('semifinal');
+    }
+    const sf1 = simularPartido(sf1Jugador1, sf1Jugador2);
+    const sf2 = simularPartido(sf2Jugador1, sf2Jugador2);
+
+    // Helper local para acumular estadísticas de fase final
+    const acumular = (nombre, gf, gc, ganador) => {
+        const st = estadisticasJugadores[nombre];
+        if (!st) return;
+        st.golesFaseFinal += gf;
+        st.gc += gc;
+        st.partidosJugados++;
+        if (ganador === nombre) st.pg++; else st.pp++;
+    };
+
+    acumular(semifinalistas[0].nombre, sf1.goles1, sf1.goles2, sf1.ganador);
+    acumular(semifinalistas[1].nombre, sf1.goles2, sf1.goles1, sf1.ganador);
+    acumular(semifinalistas[2].nombre, sf2.goles1, sf2.goles2, sf2.ganador);
+    acumular(semifinalistas[3].nombre, sf2.goles2, sf2.goles1, sf2.ganador);
+
+    // Tercer Puesto
+    const perdedorSF1 = sf1.ganador === semifinalistas[0].nombre ? semifinalistas[1].nombre : semifinalistas[0].nombre;
+    const perdedorSF2 = sf2.ganador === semifinalistas[2].nombre ? semifinalistas[3].nombre : semifinalistas[2].nombre;
+
+    // Tercer puesto no recibe bonus (no es campeonable en bicampeonato)
+    const tercerPuesto = simularPartido(resolverJugador(perdedorSF1, jugadores), resolverJugador(perdedorSF2, jugadores));
+
+    acumular(perdedorSF1, tercerPuesto.goles1, tercerPuesto.goles2, tercerPuesto.ganador);
+    acumular(perdedorSF2, tercerPuesto.goles2, tercerPuesto.goles1, tercerPuesto.ganador);
+
+    // Establecer etapa 'final' para aplicar máximo bonus del bicampeonato
+    if (typeof establecerEtapaBicampeon === 'function') {
+        establecerEtapaBicampeon('final');
+    }
+    const final = simularPartido(resolverJugador(sf1.ganador, jugadores), resolverJugador(sf2.ganador, jugadores));
+
+    acumular(sf1.ganador, final.goles1, final.goles2, final.ganador);
+    acumular(sf2.ganador, final.goles2, final.goles1, final.ganador);
+
+    return { semifinalistas, sf1, sf2, tercerPuesto, perdedorSF1, perdedorSF2, final };
+}
+
+// Genera el HTML del bracket de playoffs (idéntico para simulación única y Monte Carlo)
+function renderPlayoffsHTML(playoffs, numJugadores, repechajePreMatch) {
+    const { semifinalistas, sf1, sf2, tercerPuesto, perdedorSF1, perdedorSF2, final } = playoffs;
+
+    let html = `
+        <div class="panel playoffs-section" style="margin-bottom: 2rem;">
+            <h2>👑 Playoffs</h2><br>
+            <div class="playoff-bracket" id="sim-playoff-bracket">
+                <div class="bracket-fixture">
+                    <div class="bracket-col-semis">
+                        <h3 class="round-title">⚔️ Semifinales</h3>
+                        <div id="sim-sf1-wrap">
+                            ${createMatchCardSimulador(sf1.ganador, semifinalistas[0].nombre, semifinalistas[1].nombre, sf1.goles1, sf1.goles2, "Semifinal 1")}
+                        </div>
+                        <div id="sim-sf2-wrap">
+                            ${createMatchCardSimulador(sf2.ganador, semifinalistas[2].nombre, semifinalistas[3].nombre, sf2.goles1, sf2.goles2, "Semifinal 2")}
+                        </div>
+                    </div>
+                    <div class="bracket-connector-col" id="sim-bracket-connector-col">
+                        <svg id="sim-bracket-svg" style="width:100%; height:100%; display:block; overflow:visible;"></svg>
+                    </div>
+                    <div class="bracket-col-final">
+                        <h3 class="round-title">👑 Final</h3>
+                        <div id="sim-final-wrap">
+                            ${createMatchCardSimulador(final.ganador, sf1.ganador, sf2.ganador, final.goles1, final.goles2, "Gran Final")}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+    if (numJugadores === 9 && repechajePreMatch) {
+        html += `<div class="extra-matches-container" style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">`;
+        // Pre-Playoffs
+        html += `<div id="pre-playoff-container" style="text-align: center; flex: 1; min-width: 0; box-sizing: border-box;">
+                <h3 style="margin-bottom: 1rem; color:#e67e22; text-align: center;">⚔️ Pre-Playoffs</h3>
+                <div style="display: flex; justify-content: center;">
+                ${createMatchCardSimulador(repechajePreMatch.data.ganador, repechajePreMatch.j1, repechajePreMatch.j2, repechajePreMatch.data.goles1, repechajePreMatch.data.goles2, "Repechaje")}
+                </div>
+            </div>`;
+        // Tercer Puesto
+        html += `<div id="tercer-puesto-container" style="text-align: center; flex: 1; min-width: 0; box-sizing: border-box;">
+                <h3 style="margin-bottom: 1rem; color:#f39c12; text-align: center;">🥉 Tercer Puesto</h3>
+                <div style="display: flex; justify-content: center;">
+                ${createMatchCardSimulador(tercerPuesto.ganador, perdedorSF1, perdedorSF2, tercerPuesto.goles1, tercerPuesto.goles2, "Tercer Puesto")}
+                </div>
+            </div>`;
+        html += `</div>`;
+    } else if (tercerPuesto) {
+        // Mostrar sección de tercer puesto normal
+        html += `<div id="tercer-puesto-container" style="margin-top: 1rem; text-align: center;">
+                <h3 style="margin-bottom: 1rem; color:#f39c12; text-align: center;">🥉 Tercer Puesto</h3>
+                <div style="display: flex; justify-content: center;">
+                    ${createMatchCardSimulador(tercerPuesto.ganador, perdedorSF1, perdedorSF2, tercerPuesto.goles1, tercerPuesto.goles2, "Tercer Puesto")}
+                </div>
+            </div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// Genera el HTML de la tabla de estadísticas del torneo
+function renderEstadisticasHTML(estadisticasJugadores, numJugadores) {
+    let htmlStats = '<h2>📊 ESTADÍSTICAS DEL TORNEO</h2><br>';
+    htmlStats += '<div class="table-responsive"><table class="ranking-table">';
+    const groupLabel = numJugadores === 7 ? "G(FL)" : "G(FG)";
+    htmlStats += `
+        <thead>
+            <tr>
+                <th>Jugador</th>
+                <th>${groupLabel}</th>
+                <th>G(PO)</th>
+                <th>TG</th>
+                <th>GC</th>
+                <th>DIF</th>
+                <th>PJ</th>
+                <th>PG</th>
+                <th>PP</th>
+                <th>Prom TG/PJ</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    // Convertir estadísticas a array y ordenar por promedio TG/PJ (descendente)
+    const statsArray = Object.entries(estadisticasJugadores).map(([nombre, stats]) => {
+        const totalGoles = stats.golesLiga + stats.golesFaseFinal;
+        return {
+            nombre,
+            golesLiga: stats.golesLiga,
+            golesFaseFinal: stats.golesFaseFinal,
+            totalGoles: totalGoles,
+            gc: stats.gc,
+            dif: totalGoles - stats.gc,
+            partidosJugados: stats.partidosJugados,
+            pg: stats.pg,
+            pp: stats.pp,
+            promedio: stats.partidosJugados > 0 ? (totalGoles / stats.partidosJugados) : 0,
+            promedioStr: stats.partidosJugados > 0 ? (totalGoles / stats.partidosJugados).toFixed(2) : '0.00'
+        };
+    }).sort((a, b) => b.promedio - a.promedio || b.totalGoles - a.totalGoles || b.dif - a.dif);
+
+    statsArray.forEach(stat => {
+        htmlStats += `
+            <tr>
+                <td><strong>${stat.nombre}</strong></td>
+                <td>${stat.golesLiga}</td>
+                <td>${stat.golesFaseFinal}</td>
+                <td><strong>${stat.totalGoles}</strong></td>
+                <td>${stat.gc}</td>
+                <td>${stat.dif > 0 ? '+' : ''}${stat.dif}</td>
+                <td>${stat.partidosJugados}</td>
+                <td>${stat.pg}</td>
+                <td>${stat.pp}</td>
+                <td><strong>${stat.promedioStr}</strong></td>
+            </tr>`;
+    });
+
+    htmlStats += '</tbody></table></div>';
+
+    if (statsArray.length === 0) return htmlStats;
+
+    // Texto informativo sobre el goleador (maneja empates)
+    const mejorPromedio = statsArray[0].promedio;
+    const goleadores = statsArray.filter(stat => stat.promedio === mejorPromedio);
+
+    htmlStats += `<div style="text-align: center; margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">`;
+
+    if (goleadores.length === 1) {
+        // Un solo goleador
+        htmlStats += `<p style="margin: 0; font-size: 18px; font-weight: bold; color: #000;">
+            <strong style="color: #1a56db;">${goleadores[0].nombre}</strong> es el goleador del torneo con un promedio de <strong style="color: #1a56db;">${goleadores[0].promedioStr}</strong> goles por partido
+        </p>`;
+    } else {
+        // Empate: múltiples goleadores
+        const nombresGoleadores = goleadores.map(g => `<strong style="color: #1a56db;">${g.nombre}</strong>`).join(', ').replace(/,([^,]*)$/, ' y$1');
+        htmlStats += `<p style="margin: 0; font-size: 18px; font-weight: bold; color: #000;">
+            ⚽ ${nombresGoleadores} son los goleadores del torneo con un promedio de <strong style="color: #1a56db;">${goleadores[0].promedioStr}</strong> goles por partido
+        </p>`;
+    }
+
+    htmlStats += `<p style="margin: 5px 0 0 0; font-size: 14px; color: #333; font-style: italic;">
+            El goleador del torneo es el jugador con el mejor promedio de goles
+        </p>
+    </div>`;
+
+    return htmlStats;
+}
+
 function drawSimBracketLines() {
     const sf1El = document.getElementById("sim-sf1-wrap");
     const sf2El = document.getElementById("sim-sf2-wrap");
@@ -631,175 +955,24 @@ function simularTorneo(mantenerGrupos = false) {
         const terceros = resultadosGrupos9.map(r => r.rankingGrupo[2]);
 
         // ========== MINI-LIGA ENTRE SEGUNDOS ==========
-        const candidatosSegundos = segundos.map(s => ({
-            nombre: s.nombre,
-            grupo: s.grupo,
-            data: jugadores.find(j => j.nombre === s.nombre) || jugadoresDisponibles.find(j => j.nombre === s.nombre) || { nombre: s.nombre, ranking: 50, winRate: 0.5, promedioGoles: 5 }
-        }));
-
-        const miniStatsSegundos = {};
-        candidatosSegundos.forEach(c => {
-            miniStatsSegundos[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
-        });
-
-        const miniPartidosSegundos = [];
-        for (let i = 0; i < candidatosSegundos.length; i++) {
-            for (let j = i + 1; j < candidatosSegundos.length; j++) {
-                const j1 = candidatosSegundos[i].data;
-                const j2 = candidatosSegundos[j].data;
-                const resultadoMini = simularPartido(j1, j2);
-
-                miniPartidosSegundos.push({
-                    azul: j1.nombre,
-                    rojo: j2.nombre,
-                    golesAzul: resultadoMini.goles1,
-                    golesRojo: resultadoMini.goles2,
-                    ganador: resultadoMini.ganador
-                });
-
-                miniStatsSegundos[j1.nombre].pj++;
-                miniStatsSegundos[j2.nombre].pj++;
-                miniStatsSegundos[j1.nombre].gf += resultadoMini.goles1;
-                miniStatsSegundos[j1.nombre].gc += resultadoMini.goles2;
-                miniStatsSegundos[j2.nombre].gf += resultadoMini.goles2;
-                miniStatsSegundos[j2.nombre].gc += resultadoMini.goles1;
-
-                if (estadisticasJugadores[j1.nombre]) {
-                    estadisticasJugadores[j1.nombre].golesLiga += resultadoMini.goles1;
-                    estadisticasJugadores[j1.nombre].gc += resultadoMini.goles2;
-                    estadisticasJugadores[j1.nombre].partidosJugados++;
-                    if (resultadoMini.ganador === j1.nombre) estadisticasJugadores[j1.nombre].pg++;
-                    else estadisticasJugadores[j1.nombre].pp++;
-                }
-                if (estadisticasJugadores[j2.nombre]) {
-                    estadisticasJugadores[j2.nombre].golesLiga += resultadoMini.goles2;
-                    estadisticasJugadores[j2.nombre].gc += resultadoMini.goles1;
-                    estadisticasJugadores[j2.nombre].partidosJugados++;
-                    if (resultadoMini.ganador === j2.nombre) estadisticasJugadores[j2.nombre].pg++;
-                    else estadisticasJugadores[j2.nombre].pp++;
-                }
-
-                if (resultadoMini.ganador === j1.nombre) {
-                    miniStatsSegundos[j1.nombre].pg++;
-                    miniStatsSegundos[j2.nombre].pp++;
-                    miniStatsSegundos[j1.nombre].pts += resultadoMini.goles1;
-                    miniStatsSegundos[j2.nombre].pts += resultadoMini.goles2;
-                } else {
-                    miniStatsSegundos[j2.nombre].pg++;
-                    miniStatsSegundos[j1.nombre].pp++;
-                    miniStatsSegundos[j2.nombre].pts += resultadoMini.goles2;
-                    miniStatsSegundos[j1.nombre].pts += resultadoMini.goles1;
-                }
-            }
-        }
-
-        const rankingSegundos = Object.entries(miniStatsSegundos)
-            .map(entry => ({ nombre: entry[0], ...entry[1] }))
-            .sort((a, b) => b.pts - a.pts || b.pg - a.pg || (b.gf - b.gc) - (a.gf - a.gc));
+        const miniSegundos = simularMiniLiga(construirCandidatos(segundos, jugadores), estadisticasJugadores);
 
         htmlFase += '<h2>⚖️ REPECHAJE 2° PUESTOS - MINI-LIGA (3 PARTIDOS)</h2><br>';
-        htmlFase += renderGrupoUIX(miniPartidosSegundos, rankingSegundos, 1);
+        htmlFase += renderGrupoUIX(miniSegundos.partidos, miniSegundos.ranking, 1);
 
         // ========== REPECHAJE ENTRE TERCEROS ==========
-        const candidatosTerceros = terceros.map(t => ({
-            nombre: t.nombre,
-            grupo: t.grupo,
-            data: jugadores.find(j => j.nombre === t.nombre) || jugadoresDisponibles.find(j => j.nombre === t.nombre) || { nombre: t.nombre, ranking: 50, winRate: 0.5, promedioGoles: 5 }
-        }));
-
-        const miniStatsTerceros = {};
-        candidatosTerceros.forEach(c => {
-            miniStatsTerceros[c.nombre] = { pj: 0, pg: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: c.grupo };
-        });
-
-        const miniPartidosTerceros = [];
-        for (let i = 0; i < candidatosTerceros.length; i++) {
-            for (let j = i + 1; j < candidatosTerceros.length; j++) {
-                const j1 = candidatosTerceros[i].data;
-                const j2 = candidatosTerceros[j].data;
-                const resultadoMini = simularPartido(j1, j2);
-
-                miniPartidosTerceros.push({
-                    azul: j1.nombre,
-                    rojo: j2.nombre,
-                    golesAzul: resultadoMini.goles1,
-                    golesRojo: resultadoMini.goles2,
-                    ganador: resultadoMini.ganador
-                });
-
-                miniStatsTerceros[j1.nombre].pj++;
-                miniStatsTerceros[j2.nombre].pj++;
-                miniStatsTerceros[j1.nombre].gf += resultadoMini.goles1;
-                miniStatsTerceros[j1.nombre].gc += resultadoMini.goles2;
-                miniStatsTerceros[j2.nombre].gf += resultadoMini.goles2;
-                miniStatsTerceros[j2.nombre].gc += resultadoMini.goles1;
-
-                if (estadisticasJugadores[j1.nombre]) {
-                    estadisticasJugadores[j1.nombre].golesLiga += resultadoMini.goles1;
-                    estadisticasJugadores[j1.nombre].gc += resultadoMini.goles2;
-                    estadisticasJugadores[j1.nombre].partidosJugados++;
-                    if (resultadoMini.ganador === j1.nombre) estadisticasJugadores[j1.nombre].pg++;
-                    else estadisticasJugadores[j1.nombre].pp++;
-                }
-                if (estadisticasJugadores[j2.nombre]) {
-                    estadisticasJugadores[j2.nombre].golesLiga += resultadoMini.goles2;
-                    estadisticasJugadores[j2.nombre].gc += resultadoMini.goles1;
-                    estadisticasJugadores[j2.nombre].partidosJugados++;
-                    if (resultadoMini.ganador === j2.nombre) estadisticasJugadores[j2.nombre].pg++;
-                    else estadisticasJugadores[j2.nombre].pp++;
-                }
-
-                if (resultadoMini.ganador === j1.nombre) {
-                    miniStatsTerceros[j1.nombre].pg++;
-                    miniStatsTerceros[j2.nombre].pp++;
-                    miniStatsTerceros[j1.nombre].pts += resultadoMini.goles1;
-                    miniStatsTerceros[j2.nombre].pts += resultadoMini.goles2;
-                } else {
-                    miniStatsTerceros[j2.nombre].pg++;
-                    miniStatsTerceros[j1.nombre].pp++;
-                    miniStatsTerceros[j2.nombre].pts += resultadoMini.goles2;
-                    miniStatsTerceros[j1.nombre].pts += resultadoMini.goles1;
-                }
-            }
-        }
-
-        const rankingTerceros = Object.entries(miniStatsTerceros)
-            .map(entry => ({ nombre: entry[0], ...entry[1] }))
-            .sort((a, b) => b.pts - a.pts || b.pg - a.pg || (b.gf - b.gc) - (a.gf - a.gc));
+        const miniTerceros = simularMiniLiga(construirCandidatos(terceros, jugadores), estadisticasJugadores);
 
         htmlFase += '<h2>⚖️ REPECHAJE 3° PUESTOS - MINI-LIGA (3 PARTIDOS)</h2><br>';
-        htmlFase += renderGrupoUIX(miniPartidosTerceros, rankingTerceros, 1);
+        htmlFase += renderGrupoUIX(miniTerceros.partidos, miniTerceros.ranking, 1);
 
         // ========== PARTIDO ELIMINATORIO PRE-PLAYOFFS ==========
         // 1° de repechaje segundos vs 1° de repechaje terceros
-        const primeroSegundos = rankingSegundos[0];
-        const primeroTerceros = rankingTerceros[0];
-
-        const dataPrimeroSegundos = jugadores.find(j => j.nombre === primeroSegundos.nombre) || jugadoresDisponibles.find(j => j.nombre === primeroSegundos.nombre);
-        const dataPrimeroTerceros = jugadores.find(j => j.nombre === primeroTerceros.nombre) || jugadoresDisponibles.find(j => j.nombre === primeroTerceros.nombre);
-
-        const repechajePre = simularPartido(dataPrimeroSegundos, dataPrimeroTerceros);
-        repechajePreMatch = { data: repechajePre, j1: primeroSegundos.nombre, j2: primeroTerceros.nombre };
-
-        if (estadisticasJugadores[primeroSegundos.nombre]) {
-            estadisticasJugadores[primeroSegundos.nombre].golesFaseFinal += repechajePre.goles1;
-            estadisticasJugadores[primeroSegundos.nombre].gc += repechajePre.goles2;
-            estadisticasJugadores[primeroSegundos.nombre].partidosJugados++;
-            if (repechajePre.ganador === primeroSegundos.nombre) estadisticasJugadores[primeroSegundos.nombre].pg++;
-            else estadisticasJugadores[primeroSegundos.nombre].pp++;
-        }
-        if (estadisticasJugadores[primeroTerceros.nombre]) {
-            estadisticasJugadores[primeroTerceros.nombre].golesFaseFinal += repechajePre.goles2;
-            estadisticasJugadores[primeroTerceros.nombre].gc += repechajePre.goles1;
-            estadisticasJugadores[primeroTerceros.nombre].partidosJugados++;
-            if (repechajePre.ganador === primeroTerceros.nombre) estadisticasJugadores[primeroTerceros.nombre].pg++;
-            else estadisticasJugadores[primeroTerceros.nombre].pp++;
-        }
+        const prePlayoff = simularPrePlayoff(miniSegundos.ranking[0], miniTerceros.ranking[0], jugadores, estadisticasJugadores);
+        repechajePreMatch = prePlayoff.match;
 
         // El ganador del partido eliminatorio es el 4° clasificado
-        const cuartoClasificado = repechajePre.ganador === dataPrimeroSegundos.nombre ? primeroSegundos : primeroTerceros;
-
-        clasificados = [...primeros, cuartoClasificado];
+        clasificados = [...primeros, prePlayoff.cuartoClasificado];
 
     } else if (numJugadores === 10) {
         // 2 grupos de 5
@@ -832,104 +1005,10 @@ function simularTorneo(mantenerGrupos = false) {
     }
 
     // Fase Final (Playoffs) - común para todos los formatos
-    let htmlPlayoffs = '';
-
-    // Semifinales (sorteo aleatorio de clasificados)
-    const semifinalistas = [...clasificados].sort(() => Math.random() - 0.5);
-
-    const sf1Jugador1 = jugadores.find(j => j.nombre === semifinalistas[0].nombre);
-    const sf1Jugador2 = jugadores.find(j => j.nombre === semifinalistas[1].nombre);
-    const sf2Jugador1 = jugadores.find(j => j.nombre === semifinalistas[2].nombre);
-    const sf2Jugador2 = jugadores.find(j => j.nombre === semifinalistas[3].nombre);
-
-    // Establecer etapa 'semifinal' para aplicar bonus correcto del bicampeonato
-    if (typeof establecerEtapaBicampeon === 'function') {
-        establecerEtapaBicampeon('semifinal');
-    }
-    const sf1 = simularPartido(sf1Jugador1, sf1Jugador2);
-    const sf2 = simularPartido(sf2Jugador1, sf2Jugador2);
-
-    // Actualizar estadísticas de fase final (semifinales)
-    estadisticasJugadores[semifinalistas[0].nombre].golesFaseFinal += sf1.goles1;
-    estadisticasJugadores[semifinalistas[0].nombre].gc += sf1.goles2;
-    estadisticasJugadores[semifinalistas[0].nombre].partidosJugados++;
-    if (sf1.ganador === semifinalistas[0].nombre) estadisticasJugadores[semifinalistas[0].nombre].pg++; else estadisticasJugadores[semifinalistas[0].nombre].pp++;
-    estadisticasJugadores[semifinalistas[1].nombre].golesFaseFinal += sf1.goles2;
-    estadisticasJugadores[semifinalistas[1].nombre].gc += sf1.goles1;
-    estadisticasJugadores[semifinalistas[1].nombre].partidosJugados++;
-    if (sf1.ganador === semifinalistas[1].nombre) estadisticasJugadores[semifinalistas[1].nombre].pg++; else estadisticasJugadores[semifinalistas[1].nombre].pp++;
-    estadisticasJugadores[semifinalistas[2].nombre].golesFaseFinal += sf2.goles1;
-    estadisticasJugadores[semifinalistas[2].nombre].gc += sf2.goles2;
-    estadisticasJugadores[semifinalistas[2].nombre].partidosJugados++;
-    if (sf2.ganador === semifinalistas[2].nombre) estadisticasJugadores[semifinalistas[2].nombre].pg++; else estadisticasJugadores[semifinalistas[2].nombre].pp++;
-    estadisticasJugadores[semifinalistas[3].nombre].golesFaseFinal += sf2.goles2;
-    estadisticasJugadores[semifinalistas[3].nombre].gc += sf2.goles1;
-    estadisticasJugadores[semifinalistas[3].nombre].partidosJugados++;
-    if (sf2.ganador === semifinalistas[3].nombre) estadisticasJugadores[semifinalistas[3].nombre].pg++; else estadisticasJugadores[semifinalistas[3].nombre].pp++;
-
-    // Tercer Puesto y Final
-    const perdedorSF1 = sf1.ganador === semifinalistas[0].nombre ? semifinalistas[1].nombre : semifinalistas[0].nombre;
-    const perdedorSF2 = sf2.ganador === semifinalistas[2].nombre ? semifinalistas[3].nombre : semifinalistas[2].nombre;
-
-    const tercerPuestoJ1 = jugadores.find(j => j.nombre === perdedorSF1);
-    const tercerPuestoJ2 = jugadores.find(j => j.nombre === perdedorSF2);
-    // Tercer puesto no recibe bonus (no es campeonable en bicampeonato)
-    const tercerPuesto = simularPartido(tercerPuestoJ1, tercerPuestoJ2);
-
-    // Actualizar estadísticas de fase final (tercer puesto)
-    estadisticasJugadores[perdedorSF1].golesFaseFinal += tercerPuesto.goles1;
-    estadisticasJugadores[perdedorSF1].gc += tercerPuesto.goles2;
-    estadisticasJugadores[perdedorSF1].partidosJugados++;
-    if (tercerPuesto.ganador === perdedorSF1) estadisticasJugadores[perdedorSF1].pg++; else estadisticasJugadores[perdedorSF1].pp++;
-    estadisticasJugadores[perdedorSF2].golesFaseFinal += tercerPuesto.goles2;
-    estadisticasJugadores[perdedorSF2].gc += tercerPuesto.goles1;
-    estadisticasJugadores[perdedorSF2].partidosJugados++;
-    if (tercerPuesto.ganador === perdedorSF2) estadisticasJugadores[perdedorSF2].pg++; else estadisticasJugadores[perdedorSF2].pp++;
-
-    // Establecer etapa 'final' para aplicar máximo bonus del bicampeonato
-    if (typeof establecerEtapaBicampeon === 'function') {
-        establecerEtapaBicampeon('final');
-    }
-    const finalistaJ1 = jugadores.find(j => j.nombre === sf1.ganador);
-    const finalistaJ2 = jugadores.find(j => j.nombre === sf2.ganador);
-    const final = simularPartido(finalistaJ1, finalistaJ2);
-
-    // Actualizar estadísticas de fase final (final)
-    estadisticasJugadores[sf1.ganador].golesFaseFinal += final.goles1;
-    estadisticasJugadores[sf1.ganador].gc += final.goles2;
-    estadisticasJugadores[sf1.ganador].partidosJugados++;
-    if (final.ganador === sf1.ganador) estadisticasJugadores[sf1.ganador].pg++; else estadisticasJugadores[sf1.ganador].pp++;
-    estadisticasJugadores[sf2.ganador].golesFaseFinal += final.goles2;
-    estadisticasJugadores[sf2.ganador].gc += final.goles1;
-    estadisticasJugadores[sf2.ganador].partidosJugados++;
-    if (final.ganador === sf2.ganador) estadisticasJugadores[sf2.ganador].pg++; else estadisticasJugadores[sf2.ganador].pp++;
+    const playoffs = simularPlayoffs(clasificados, jugadores, estadisticasJugadores);
 
     // Generar html para playoffs con formato bracket y conector de SVG
-    htmlPlayoffs += `
-        <div class="panel playoffs-section" style="margin-bottom: 2rem;">
-            <h2>👑 Playoffs</h2><br>
-            <div class="playoff-bracket" id="sim-playoff-bracket">
-                <div class="bracket-fixture">
-                    <div class="bracket-col-semis">
-                        <h3 class="round-title">⚔️ Semifinales</h3>
-                        <div id="sim-sf1-wrap">
-                            ${createMatchCardSimulador(sf1.ganador, semifinalistas[0].nombre, semifinalistas[1].nombre, sf1.goles1, sf1.goles2, "Semifinal 1")}
-                        </div>
-                        <div id="sim-sf2-wrap">
-                            ${createMatchCardSimulador(sf2.ganador, semifinalistas[2].nombre, semifinalistas[3].nombre, sf2.goles1, sf2.goles2, "Semifinal 2")}
-                        </div>
-                    </div>
-                    <div class="bracket-connector-col" id="sim-bracket-connector-col">
-                        <svg id="sim-bracket-svg" style="width:100%; height:100%; display:block; overflow:visible;"></svg>
-                    </div>
-                    <div class="bracket-col-final">
-                        <h3 class="round-title">👑 Final</h3>
-                        <div id="sim-final-wrap">
-                            ${createMatchCardSimulador(final.ganador, sf1.ganador, sf2.ganador, final.goles1, final.goles2, "Gran Final")}
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+    const htmlPlayoffs = renderPlayoffsHTML(playoffs, numJugadores, repechajePreMatch);
 
     requestAnimationFrame(() => drawSimBracketLines());
     if (!window._simResizeListenerAdded) {
@@ -937,116 +1016,8 @@ function simularTorneo(mantenerGrupos = false) {
         window._simResizeListenerAdded = true;
     }
 
-    if (numJugadores === 9 && repechajePreMatch) {
-        htmlPlayoffs += `<div class="extra-matches-container" style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">`;
-        // Pre-Playoffs
-        htmlPlayoffs += `<div id="pre-playoff-container" style="text-align: center; flex: 1; min-width: 0; box-sizing: border-box;">
-                <h3 style="margin-bottom: 1rem; color:#e67e22; text-align: center;">⚔️ Pre-Playoffs</h3>
-                <div style="display: flex; justify-content: center;">
-                ${createMatchCardSimulador(repechajePreMatch.data.ganador, repechajePreMatch.j1, repechajePreMatch.j2, repechajePreMatch.data.goles1, repechajePreMatch.data.goles2, "Repechaje")}
-                </div>
-            </div>`;
-        // Tercer Puesto
-        htmlPlayoffs += `<div id="tercer-puesto-container" style="text-align: center; flex: 1; min-width: 0; box-sizing: border-box;">
-                <h3 style="margin-bottom: 1rem; color:#f39c12; text-align: center;">🥉 Tercer Puesto</h3>
-                <div style="display: flex; justify-content: center;">
-                ${createMatchCardSimulador(tercerPuesto.ganador, perdedorSF1, perdedorSF2, tercerPuesto.goles1, tercerPuesto.goles2, "Tercer Puesto")}
-                </div>
-            </div>`;
-        htmlPlayoffs += `</div>`;
-    } else if (tercerPuesto) {
-        // Mostrar sección de tercer puesto normal
-        htmlPlayoffs += `<div id="tercer-puesto-container" style="margin-top: 1rem; text-align: center;">
-                <h3 style="margin-bottom: 1rem; color:#f39c12; text-align: center;">🥉 Tercer Puesto</h3>
-                <div style="display: flex; justify-content: center;">
-                    ${createMatchCardSimulador(tercerPuesto.ganador, perdedorSF1, perdedorSF2, tercerPuesto.goles1, tercerPuesto.goles2, "Tercer Puesto")}
-                </div>
-            </div>`;
-    }
-
-    htmlPlayoffs += `</div>`;
-
-
     // Tabla de estadísticas
-    let htmlStats = '<h2>📊 ESTADÍSTICAS DEL TORNEO</h2><br>';
-    htmlStats += '<div class="table-responsive"><table class="ranking-table">';
-    const groupLabel = numJugadores === 7 ? "G(FL)" : "G(FG)";
-    htmlStats += `
-        <thead>
-            <tr>
-                <th>Jugador</th>
-                <th>${groupLabel}</th>
-                <th>G(PO)</th>
-                <th>TG</th>
-                <th>GC</th>
-                <th>DIF</th>
-                <th>PJ</th>
-                <th>PG</th>
-                <th>PP</th>
-                <th>Prom TG/PJ</th>
-            </tr>
-        </thead>
-        <tbody>`;
-
-    // Convertir estadísticas a array y ordenar por promedio TG/PJ (descendente)
-    const statsArray = Object.entries(estadisticasJugadores).map(([nombre, stats]) => {
-        const totalGoles = stats.golesLiga + stats.golesFaseFinal;
-        return {
-            nombre,
-            golesLiga: stats.golesLiga,
-            golesFaseFinal: stats.golesFaseFinal,
-            totalGoles: totalGoles,
-            gc: stats.gc,
-            dif: totalGoles - stats.gc,
-            partidosJugados: stats.partidosJugados,
-            pg: stats.pg,
-            pp: stats.pp,
-            promedio: stats.partidosJugados > 0 ? (totalGoles / stats.partidosJugados) : 0,
-            promedioStr: stats.partidosJugados > 0 ? (totalGoles / stats.partidosJugados).toFixed(2) : '0.00'
-        };
-    }).sort((a, b) => b.promedio - a.promedio || b.totalGoles - a.totalGoles || b.dif - a.dif);
-
-    statsArray.forEach(stat => {
-        htmlStats += `
-            <tr>
-                <td><strong>${stat.nombre}</strong></td>
-                <td>${stat.golesLiga}</td>
-                <td>${stat.golesFaseFinal}</td>
-                <td><strong>${stat.totalGoles}</strong></td>
-                <td>${stat.gc}</td>
-                <td>${stat.dif > 0 ? '+' : ''}${stat.dif}</td>
-                <td>${stat.partidosJugados}</td>
-                <td>${stat.pg}</td>
-                <td>${stat.pp}</td>
-                <td><strong>${stat.promedioStr}</strong></td>
-            </tr>`;
-    });
-
-    htmlStats += '</tbody></table></div>';
-
-    // Texto informativo sobre el goleador (maneja empates)
-    const mejorPromedio = statsArray[0].promedio;
-    const goleadores = statsArray.filter(stat => stat.promedio === mejorPromedio);
-
-    htmlStats += `<div style="text-align: center; margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">`;
-
-    if (goleadores.length === 1) {
-        // Un solo goleador
-        htmlStats += `<p style="margin: 0; font-size: 18px; font-weight: bold; color: #000;">
-            <strong style="color: #1a56db;">${goleadores[0].nombre}</strong> es el goleador del torneo con un promedio de <strong style="color: #1a56db;">${goleadores[0].promedioStr}</strong> goles por partido
-        </p>`;
-    } else {
-        // Empate: múltiples goleadores
-        const nombresGoleadores = goleadores.map(g => `<strong style="color: #1a56db;">${g.nombre}</strong>`).join(', ').replace(/,([^,]*)$/, ' y$1');
-        htmlStats += `<p style="margin: 0; font-size: 18px; font-weight: bold; color: #000;">
-            ⚽ ${nombresGoleadores} son los goleadores del torneo con un promedio de <strong style="color: #1a56db;">${goleadores[0].promedioStr}</strong> goles por partido
-        </p>`;
-    }
-
-    htmlStats += `<p style="margin: 5px 0 0 0; font-size: 14px; color: #333; font-style: italic;">
-            El goleador del torneo es el jugador con el mejor promedio de goles
-        </p>
-    </div>`;
+    const htmlStats = renderEstadisticasHTML(estadisticasJugadores, numJugadores);
 
     // Crear el container de acciones sutiles de simulación
     let reSimulateButtons = `<div style="display:flex; justify-content:center; gap:15px; margin-bottom: 25px; margin-top: 10px;">
@@ -1564,6 +1535,15 @@ window.simularTorneoMonteCarlo = async function() {
        return;
     }
 
+    // Verificar si hay grupos manuales configurados cuando el modo es manual
+    const modoGruposEl = document.getElementById('modoGrupos');
+    const modoGrupos = modoGruposEl ? modoGruposEl.value : 'aleatorio';
+
+    if (modoGrupos === 'manual' && num >= 8 && !window.gruposManualConfig) {
+       alert('Por favor configurá y confirmá los grupos manualmente antes de simular.');
+       return;
+    }
+
     // Ocultar controles
     const controls = document.querySelector('.controls');
     if (controls) {
@@ -1574,6 +1554,8 @@ window.simularTorneoMonteCarlo = async function() {
        });
     }
     document.getElementById('playerSelection').style.display = 'none';
+    const gruposManualContainer = document.getElementById('gruposManualContainer');
+    if (gruposManualContainer) gruposManualContainer.style.display = 'none';
 
     // Mostrar banner de progreso
     const resultado = document.getElementById('resultado');
@@ -1644,7 +1626,7 @@ window.simularTorneoMonteCarlo = async function() {
                if (torneosMasFrequentes.length > 0) {
                    const torneoMasPromedio = torneosMasFrequentes[0].torneo;
                    const frecuencia = torneosMasFrequentes[0].frecuencia;
-                   mostrarTorneoMasPromedio(torneoMasPromedio, frecuencia);
+                   mostrarTorneoMasPromedio(torneoMasPromedio, frecuencia, simulacionesCount);
                }
                 
                // Restaurar jugadoresBase
@@ -1659,157 +1641,192 @@ window.simularTorneoMonteCarlo = async function() {
     });
 };
 
-// Ejecuta una simulación completa y retorna la estructura del torneo completo
+// Ejecuta una simulación completa (sin renderizar) y retorna la estructura del torneo.
+// Sigue exactamente el mismo formato que simularTorneo() para que el resultado se pueda
+// mostrar con el mismo diseño.
 function ejecutarSimulacionSilenciosa() {
     const numJugadores = parseInt(document.getElementById('numPlayers').value);
-    let jugadores = [...jugadoresBase].slice(0, numJugadores);
-    if (jugadores.length < numJugadores) {
-       for (let i = 0; i < numJugadores - jugadores.length; i++) {
-           jugadores.push(nuevosJugadores[i]);
-       }
+
+    let jugadores = [...jugadoresBase];
+    const jugadoresNecesarios = numJugadores - jugadoresBase.length;
+    if (jugadoresNecesarios > 0) {
+        for (let i = 0; i < jugadoresNecesarios; i++) {
+            jugadores.push(nuevosJugadores[i]);
+        }
+    } else if (jugadoresNecesarios < 0) {
+        jugadores = jugadores.slice(0, numJugadores);
     }
 
-    jugadores = jugadores.sort(() => Math.random() - 0.5);
+    // Respetar el modo de armado de grupos elegido por el usuario
+    const modoGruposEl = document.getElementById('modoGrupos');
+    const modoGrupos = modoGruposEl ? modoGruposEl.value : 'aleatorio';
+    const usarGruposManuales = modoGrupos === 'manual' && !!window.gruposManualConfig;
+
+    if (!usarGruposManuales) {
+        jugadores = jugadores.sort(() => Math.random() - 0.5);
+    }
+
+    // Inicializar estadísticas de jugadores para la tabla final
     const estadisticasJugadores = {};
     jugadores.forEach(j => {
-       estadisticasJugadores[j.nombre] = {
-           golesLiga: 0, golesFaseFinal: 0, gc: 0, 
-           partidosJugados: 0, pg: 0, pp: 0
-       };
+        estadisticasJugadores[j.nombre] = {
+            golesLiga: 0,
+            golesFaseFinal: 0,
+            gc: 0,
+            partidosJugados: 0,
+            pg: 0,
+            pp: 0
+        };
     });
 
     const torneoData = {
-       numJugadores: numJugadores,
-       grupos: [],      // Datos de grupos con rankings y partidos
-       clasificados: [],
-       semifinales: [],
-       final: null,
-       ganador: null,
-       semifinalistas: [],
-       estadisticas: estadisticasJugadores
+        numJugadores: numJugadores,
+        grupos: [],              // [{ titulo, partidos, ranking, clasifCount }]
+        repechajes: [],          // [{ titulo, partidos, ranking, clasifCount }]
+        repechajePreMatch: null, // Partido eliminatorio de 9 jugadores
+        clasificados: [],
+        playoffs: null,
+        semifinalistas: [],
+        ganador: null,
+        estadisticas: estadisticasJugadores
     };
-    
-    let clasificados = [];
 
-    // Establecer etapa 'grupos'
+    // Devuelve el grupo correspondiente según el modo (manual o por corte de la lista mezclada)
+    const armarGrupo = (letra, desde, hasta) => {
+        if (usarGruposManuales) {
+            const nombres = window.gruposManualConfig['grupo' + letra] || [];
+            const grupo = nombres.map(n => jugadores.find(j => j.nombre === n)).filter(Boolean);
+            if (grupo.length) return grupo;
+        }
+        return jugadores.slice(desde, hasta);
+    };
+
+    // Establecer etapa 'grupos' para simulaciones de la fase inicial
     if (typeof establecerEtapaBicampeon === 'function') {
-       establecerEtapaBicampeon('grupos');
+        establecerEtapaBicampeon('grupos');
     }
 
-    // Fase inicial (según formato)
+    let clasificados = [];
+
     if (numJugadores === 7) {
-       const { partidos, rankingGrupo } = simularGrupo(jugadores, 'Liga', 1, estadisticasJugadores);
-       torneoData.grupos.push({
-           nombre: 'Liga',
-           partidos: partidos,
-           ranking: rankingGrupo
-       });
-       clasificados = rankingGrupo.slice(0, 4);
+        // Formato Liga: todos contra todos
+        const { partidos, rankingGrupo } = simularGrupo(jugadores, 'Liga', 1, estadisticasJugadores);
+        torneoData.grupos.push({
+            titulo: '<h2>🏆 Fase de Liga</h2><br>',
+            partidos: partidos,
+            ranking: rankingGrupo,
+            clasifCount: 4
+        });
+        clasificados = rankingGrupo.slice(0, 4);
+
     } else if (numJugadores === 8) {
-       const grupoA = jugadores.slice(0, 4);
-       const grupoB = jugadores.slice(4, 8);
-       const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
-       const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
-       torneoData.grupos.push({
-           nombre: 'A',
-           partidos: resultadoA.partidos,
-           ranking: resultadoA.rankingGrupo
-       });
-       torneoData.grupos.push({
-           nombre: 'B',
-           partidos: resultadoB.partidos,
-           ranking: resultadoB.rankingGrupo
-       });
-       clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 2)];
+        // 2 grupos de 4
+        const grupoA = armarGrupo('A', 0, 4);
+        const grupoB = armarGrupo('B', 4, 8);
+
+        const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
+        const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
+
+        torneoData.grupos.push({
+            titulo: '<h2>🏆 Fase de Grupos</h2><br><h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔷 GRUPO A</h3>',
+            partidos: resultadoA.partidos,
+            ranking: resultadoA.rankingGrupo,
+            clasifCount: 2
+        });
+        torneoData.grupos.push({
+            titulo: '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔶 GRUPO B</h3>',
+            partidos: resultadoB.partidos,
+            ranking: resultadoB.rankingGrupo,
+            clasifCount: 2
+        });
+
+        clasificados = [
+            ...resultadoA.rankingGrupo.slice(0, 2),
+            ...resultadoB.rankingGrupo.slice(0, 2)
+        ];
+
     } else if (numJugadores === 9) {
-       const grupos = [jugadores.slice(0, 3), jugadores.slice(3, 6), jugadores.slice(6, 9)];
-       let matchNum = 1;
-       const resultadosGrupos = [];
-        
-       ['A', 'B', 'C'].forEach((nombre, idx) => {
-           const resultado = simularGrupo(grupos[idx], nombre, matchNum, estadisticasJugadores);
-           torneoData.grupos.push({
-               nombre: nombre,
-               partidos: resultado.partidos,
-               ranking: resultado.rankingGrupo
-           });
-           resultadosGrupos.push(resultado);
-           matchNum = resultado.matchNumber;
-       });
-        
-       clasificados = resultadosGrupos.map(r => r.rankingGrupo[0]).slice(0, 3);
+        // 3 grupos de 3
+        const grupos = [armarGrupo('A', 0, 3), armarGrupo('B', 3, 6), armarGrupo('C', 6, 9)];
+
+        const resultadosGrupos9 = [];
+        for (let i = 0; i < grupos.length; i++) {
+            const letra = String.fromCharCode(65 + i);
+            const resultadoGrupo = simularGrupo(grupos[i], letra, 1, estadisticasJugadores);
+            resultadosGrupos9.push(resultadoGrupo);
+            torneoData.grupos.push({
+                titulo: (i === 0 ? '<h2>🏆 Fase de Grupos</h2><br>' : '') +
+                    `<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔷 GRUPO ${letra}</h3>`,
+                partidos: resultadoGrupo.partidos,
+                ranking: resultadoGrupo.rankingGrupo,
+                clasifCount: 1
+            });
+        }
+
+        const primeros = resultadosGrupos9.map(r => r.rankingGrupo[0]);
+        const segundos = resultadosGrupos9.map(r => r.rankingGrupo[1]);
+        const terceros = resultadosGrupos9.map(r => r.rankingGrupo[2]);
+
+        // Mini-liga entre 2° puestos
+        const miniSegundos = simularMiniLiga(construirCandidatos(segundos, jugadores), estadisticasJugadores);
+        torneoData.repechajes.push({
+            titulo: '<h2>⚖️ REPECHAJE 2° PUESTOS - MINI-LIGA (3 PARTIDOS)</h2><br>',
+            partidos: miniSegundos.partidos,
+            ranking: miniSegundos.ranking,
+            clasifCount: 1
+        });
+
+        // Mini-liga entre 3° puestos
+        const miniTerceros = simularMiniLiga(construirCandidatos(terceros, jugadores), estadisticasJugadores);
+        torneoData.repechajes.push({
+            titulo: '<h2>⚖️ REPECHAJE 3° PUESTOS - MINI-LIGA (3 PARTIDOS)</h2><br>',
+            partidos: miniTerceros.partidos,
+            ranking: miniTerceros.ranking,
+            clasifCount: 1
+        });
+
+        // Partido eliminatorio pre-playoffs: define el 4° clasificado
+        const prePlayoff = simularPrePlayoff(miniSegundos.ranking[0], miniTerceros.ranking[0], jugadores, estadisticasJugadores);
+        torneoData.repechajePreMatch = prePlayoff.match;
+
+        clasificados = [...primeros, prePlayoff.cuartoClasificado];
+
     } else if (numJugadores === 10) {
-       const grupoA = jugadores.slice(0, 5);
-       const grupoB = jugadores.slice(5, 10);
-       const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
-       const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
-       torneoData.grupos.push({
-           nombre: 'A',
-           partidos: resultadoA.partidos,
-           ranking: resultadoA.rankingGrupo
-       });
-       torneoData.grupos.push({
-           nombre: 'B',
-           partidos: resultadoB.partidos,
-           ranking: resultadoB.rankingGrupo
-       });
-       clasificados = [...resultadoA.rankingGrupo.slice(0, 2), ...resultadoB.rankingGrupo.slice(0, 3)];
+        // 2 grupos de 5
+        const grupos = [armarGrupo('A', 0, 5), armarGrupo('B', 5, 10)];
+
+        const resultadosGrupos = [];
+        for (let i = 0; i < grupos.length; i++) {
+            const letra = String.fromCharCode(65 + i);
+            const resultadoGrupo = simularGrupo(grupos[i], letra, 1, estadisticasJugadores);
+            resultadosGrupos.push(resultadoGrupo);
+            torneoData.grupos.push({
+                titulo: (i === 0 ? '<h2>🏆 Fase de Grupos</h2><br>' : '') +
+                    `<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔷 GRUPO ${letra}</h3>`,
+                partidos: resultadoGrupo.partidos,
+                ranking: resultadoGrupo.rankingGrupo,
+                clasifCount: 2
+            });
+        }
+
+        // Los 2 primeros de cada grupo clasifican
+        clasificados = [
+            ...resultadosGrupos[0].rankingGrupo.slice(0, 2),
+            ...resultadosGrupos[1].rankingGrupo.slice(0, 2)
+        ];
     }
 
     torneoData.clasificados = clasificados.map(c => c.nombre);
 
-    // Fase semifinal
-    if (typeof establecerEtapaBicampeon === 'function') {
-       establecerEtapaBicampeon('semifinal');
-    }
-
-    if (clasificados.length >= 2) {
-       // Semifinales
-       const sf1 = simularPartido(clasificados[0], clasificados[clasificados.length - 1]);
-       const sf2 = simularPartido(clasificados[1], clasificados[clasificados.length - 2] || clasificados[0]);
-        
-       // Encontrar objetos jugadores para los ganadores
-       const ganadoresSemifinales = clasificados.filter(j => 
-           j.nombre === sf1.ganador || j.nombre === sf2.ganador
-       );
-         
-       torneoData.semifinales.push({
-           azul: clasificados[0].nombre,
-           rojo: clasificados[clasificados.length - 1].nombre,
-           ganador: sf1.ganador,
-           golesAzul: sf1.goles1,
-           golesRojo: sf1.goles2
-       });
-         
-       torneoData.semifinales.push({
-           azul: clasificados[1].nombre,
-           rojo: (clasificados[clasificados.length - 2] || clasificados[0]).nombre,
-           ganador: sf2.ganador,
-           golesAzul: sf2.goles1,
-           golesRojo: sf2.goles2
-       });
-
-       torneoData.semifinalistas = [sf1.ganador, sf2.ganador];
-
-       // Establecer final
-       if (typeof establecerEtapaBicampeon === 'function') {
-           establecerEtapaBicampeon('final');
-       }
-
-       // Final - encontrar los objetos jugadores completos
-       const jugador1Final = ganadoresSemifinales.find(j => j.nombre === sf1.ganador) || { nombre: sf1.ganador, ranking: 0, winRate: 0, promedioGoles: 1 };
-       const jugador2Final = ganadoresSemifinales.find(j => j.nombre === sf2.ganador) || { nombre: sf2.ganador, ranking: 0, winRate: 0, promedioGoles: 1 };
-        
-       const final = simularPartido(jugador1Final, jugador2Final);
-       torneoData.final = {
-           azul: sf1.ganador,
-           rojo: sf2.ganador,
-           ganador: final.ganador,
-           golesAzul: final.goles1,
-           golesRojo: final.goles2
-       };
-         
-       torneoData.ganador = final.ganador;
+    // Fase final: usa exactamente la misma lógica que la simulación única.
+    // Importante: simularPlayoffs() resuelve los objetos jugador completos
+    // (ranking/winRate/promedioGoles); pasarle filas de la tabla de posiciones
+    // produciría resultados NaN.
+    if (clasificados.length >= 4) {
+        const playoffs = simularPlayoffs(clasificados, jugadores, estadisticasJugadores);
+        torneoData.playoffs = playoffs;
+        torneoData.semifinalistas = [playoffs.sf1.ganador, playoffs.sf2.ganador];
+        torneoData.ganador = playoffs.final.ganador;
     }
 
     return torneoData;
@@ -1824,133 +1841,74 @@ function registrarTorneoCompleto(torneoCompleto, historialTorneos) {
         semifinalistas: torneoCompleto.semifinalistas || [],
         clasificados: torneoCompleto.clasificados || []
     });
-    
+
     if (!historialTorneos[clave]) {
         historialTorneos[clave] = {
             torneo: torneoCompleto,
             frecuencia: 0
         };
     }
-    
+
     historialTorneos[clave].frecuencia++;
 }
 
-// Muestra el torneo más frecuente en formato completo (idéntico a simularTorneo)
-function mostrarTorneoMasPromedio(torneoData, frecuencia) {
-    const resultado = document.getElementById('resultado');
+// Muestra el torneo más frecuente con el mismo diseño que la simulación única
+function mostrarTorneoMasPromedio(torneoData, frecuencia, totalSimulaciones = 10000) {
     const numJugadores = torneoData.numJugadores;
-    
-    let htmlFase = '';
-    
+
     // Banner de información
-    htmlFase += `<div style="text-align:center; padding:15px; background:#0d1117; border-radius:10px; margin-bottom:20px; border-left:4px solid #58a6ff;">
+    const htmlBanner = `<div style="text-align:center; padding:15px; background:#0d1117; border-radius:10px; margin-bottom:20px; border-left:4px solid #58a6ff;">
        <h3 style="color:#58a6ff; margin:0 0 5px 0;">📊 Torneo Más Probable</h3>
-       <p style="color:#8b949e; margin:0; font-size:12px;">Este torneo ocurrió <strong>${frecuencia}</strong> veces de 10,000 simulaciones (${((frecuencia/10000)*100).toFixed(2)}%)</p>
+       <p style="color:#8b949e; margin:0; font-size:12px;">Este torneo ocurrió <strong>${frecuencia}</strong> veces de ${totalSimulaciones.toLocaleString('es-AR')} simulaciones (${((frecuencia / totalSimulaciones) * 100).toFixed(2)}%)</p>
     </div>`;
 
-    // MOSTRAR GRUPOS/FASE INICIAL según formato
-    if (numJugadores === 7) {
-       htmlFase += '<h2>🏆 Fase de Liga</h2><br>';
-       const grupo = torneoData.grupos[0];
-       if (grupo && grupo.partidos && grupo.ranking) {
-           htmlFase += renderGrupoUIX(grupo.partidos, grupo.ranking, 4);
-       }
-    } else if (numJugadores === 8) {
-       htmlFase += '<h2>🏆 Fase de Grupos</h2><br>';
-        
-       const grupoA = torneoData.grupos[0];
-       const grupoB = torneoData.grupos[1];
-        
-       if (grupoA && grupoA.partidos && grupoA.ranking) {
-           htmlFase += '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔷 GRUPO A</h3>';
-           htmlFase += renderGrupoUIX(grupoA.partidos, grupoA.ranking, 2);
-       }
-        
-       if (grupoB && grupoB.partidos && grupoB.ranking) {
-           htmlFase += '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔶 GRUPO B</h3>';
-           htmlFase += renderGrupoUIX(grupoB.partidos, grupoB.ranking, 2);
-       }
-    } else if (numJugadores === 9) {
-       htmlFase += '<h2>🏆 Fase de Grupos</h2><br>';
-        
-       ['A', 'B', 'C'].forEach((label, idx) => {
-           const grupo = torneoData.grupos[idx];
-           if (grupo && grupo.partidos && grupo.ranking) {
-               const color = ['#667eea', '#667eea', '#667eea'][idx];
-               const icon = ['🔷', '🔶', '🟦'][idx];
-               htmlFase += `<h3 style="text-align: center; margin: 20px 0; color: ${color};">${icon} GRUPO ${grupo.nombre}</h3>`;
-               htmlFase += renderGrupoUIX(grupo.partidos, grupo.ranking, 1);
-           }
-       });
-    } else if (numJugadores === 10) {
-       htmlFase += '<h2>🏆 Fase de Grupos</h2><br>';
-        
-       const grupoA = torneoData.grupos[0];
-       const grupoB = torneoData.grupos[1];
-        
-       if (grupoA && grupoA.partidos && grupoA.ranking) {
-           htmlFase += '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔷 GRUPO A</h3>';
-           htmlFase += renderGrupoUIX(grupoA.partidos, grupoA.ranking, 2);
-       }
-        
-       if (grupoB && grupoB.partidos && grupoB.ranking) {
-           htmlFase += '<h3 style="text-align: center; margin: 20px 0; color: #667eea;">🔶 GRUPO B</h3>';
-           htmlFase += renderGrupoUIX(grupoB.partidos, grupoB.ranking, 3);
-       }
-    }
+    // Fase de grupos y repechajes
+    let htmlFase = '';
+    [...torneoData.grupos, ...torneoData.repechajes].forEach(seccion => {
+        htmlFase += seccion.titulo;
+        htmlFase += renderGrupoUIX(seccion.partidos, seccion.ranking, seccion.clasifCount);
+    });
 
-    // MOSTRAR PLAYOFFS (Semifinales y Final)
-    let htmlPlayoffs = '<h2>👑 Playoffs</h2><br>';
-    
-    if (torneoData.semifinales && torneoData.semifinales.length >= 2) {
-       htmlPlayoffs += `<div id="sim-playoff-wrapper" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">`;
-        
-       htmlPlayoffs += `<div id="sim-sf1-wrap" style="flex: 1; min-width: 280px; max-width: 350px;">
-           ${createMatchCardSimulador(torneoData.semifinales[0].ganador, torneoData.semifinales[0].azul, torneoData.semifinales[0].rojo, torneoData.semifinales[0].golesAzul, torneoData.semifinales[0].golesRojo, "🎖️ Semifinal 1")}
-       </div>`;
-        
-       htmlPlayoffs += `<div id="sim-sf2-wrap" style="flex: 1; min-width: 280px; max-width: 350px;">
-           ${createMatchCardSimulador(torneoData.semifinales[1].ganador, torneoData.semifinales[1].azul, torneoData.semifinales[1].rojo, torneoData.semifinales[1].golesAzul, torneoData.semifinales[1].golesRojo, "🎖️ Semifinal 2")}
-       </div>`;
-        
-       htmlPlayoffs += `</div>`;
-        
-       // Conectores SVG
-       htmlPlayoffs += `
-           <div style="display: flex; justify-content: center; margin-bottom: 2rem; position: relative;">
-               <div id="sim-bracket-connector-col" style="flex: 1; min-width: 100px; max-width: 200px; position: relative; height: 80px;">
-                   <svg id="sim-bracket-svg" style="position: absolute; top: 0; left: 0;"></svg>
-               </div>
-           </div>
-       `;
-        
-       // Final
-       if (torneoData.final) {
-           const f = torneoData.final;
-           htmlPlayoffs += `<div style="display: flex; justify-content: center;">
-               <div id="sim-final-wrap" style="flex: 1; min-width: 280px; max-width: 350px;">
-                   ${createMatchCardSimulador(f.ganador, f.azul, f.rojo, f.golesAzul, f.golesRojo, "Final")}
-               </div>
-           </div>`;
-       }
-    }
-    
-    htmlPlayoffs += '</div>';
+    // Playoffs: mismo bracket que la simulación única
+    const htmlPlayoffs = torneoData.playoffs
+        ? renderPlayoffsHTML(torneoData.playoffs, numJugadores, torneoData.repechajePreMatch)
+        : '';
+
+    // Tabla de estadísticas
+    const htmlStats = renderEstadisticasHTML(torneoData.estadisticas, numJugadores);
 
     // Botones de acción
-    let reSimulateButtons = `<div style="display:flex; justify-content:center; gap:15px; margin-bottom: 25px; margin-top: 10px;">
-       <button onclick="mostrarFormato(); document.getElementById('playerSelection').style.display=''; updateSimularButtonState();" class="re-simular-btn">↩️ Volver a seleccionar</button>
+    const reSimulateButtons = `<div style="display:flex; justify-content:center; gap:15px; margin-bottom: 25px; margin-top: 10px;">
+       <button onclick="volverASeleccionar()" class="re-simular-btn">↩️ Volver a seleccionar</button>
        <button onclick="ejecutarSimulacion(false)" class="re-simular-btn">🔄 Simular torneo único</button>
        <button onclick="window.simularTorneoMonteCarlo();" class="re-simular-btn">📊 Analizar de nuevo</button>
     </div>`;
 
-    document.getElementById('resultado').innerHTML = htmlFase + htmlPlayoffs + reSimulateButtons;
+    document.getElementById('resultado').innerHTML = htmlBanner + reSimulateButtons + htmlPlayoffs + htmlFase + htmlStats;
 
-    // Draw SVG lines after injecting HTML
+    // Dibujar los conectores SVG del bracket una vez inyectado el HTML
+    requestAnimationFrame(() => drawSimBracketLines());
+    if (!window._simResizeListenerAdded) {
+        window.addEventListener('resize', drawSimBracketLines);
+        window._simResizeListenerAdded = true;
+    }
     setTimeout(() => {
-       drawSimBracketLines();
+        drawSimBracketLines();
     }, 50);
 }
+
+// Vuelve a la pantalla de selección restaurando los controles ocultados al simular
+window.volverASeleccionar = function() {
+    const controls = document.querySelector('.controls');
+    if (controls) {
+        Array.from(controls.children).forEach(child => {
+            child.style.display = '';
+        });
+    }
+    // mostrarFormato() re-renderiza la selección y vuelve a ocultar el selector de
+    // armado manual si el formato elegido no tiene grupos
+    mostrarFormato();
+};
 
 // Botón Monte Carlo event listener
 document.addEventListener('DOMContentLoaded', () => {
