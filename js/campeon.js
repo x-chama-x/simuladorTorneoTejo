@@ -42,15 +42,21 @@
 //
 // MODO
 // ----
-//   'pedigri'   (default) el campeón SUMA fuerza  → repetir es más probable (×M)
-//   'maldicion'           el campeón RESTA fuerza → repetir es más difícil (×1/M)
+//   'maldicion' (default) el campeón RESTA fuerza → repetir es más difícil (×1/M)
+//   'pedigri'             el campeón SUMA fuerza  → repetir es más probable (×M)
+//
+// El default es la MALDICIÓN DEL CAMPEÓN: sólo ~10% de los campeones mundialistas
+// repiten título, y varios se van en fase de grupos (Francia 2002, Italia 2010,
+// España 2014, Alemania 2018). La presión y el desgaste le juegan en contra, y esa
+// presión crece etapa a etapa (ver pesosEtapa). El signo lo aplica
+// bonusFuerzaCampeon(); el resto del cálculo es idéntico en los dos modos.
 //
 // Cambios v3.0 respecto de v2.0:
-//   - Corregido el signo: v2 derivaba un premio (M>1) y lo aplicaba como castigo.
+//   - Corregida la magnitud del castigo: v2 realizaba ×0,54 en vez del ×1/3,44 buscado.
 //   - Corregida la normalización: los factores {1.0,1.2,1.5} realizaban M^1,233.
-//   - Corregido el conteo de partidos por etapa (antes el bonus se aplicaba N veces).
+//   - Corregido el conteo de partidos por etapa (antes el peso se aplicaba N veces).
 //   - Rutas de etapas por formato (7/8/9/10), incluida la etapa 'repechaje' de 9.
-//   - Refinamiento numérico opcional del λ, cacheado por (formato+roster+campeón).
+//   - Refinamiento numérico del λ, cacheado por (formato+roster+campeón).
 // =====================================================
 
 window.CAMPEON = {
@@ -64,8 +70,8 @@ window.CAMPEON = {
     oddsMultiplier: 3.44,  // M: multiplicador de cuota sobre TODO el torneo
     k: 30,                 // misma constante de la sigmoide del modelo base
 
-    // 'pedigri' → el peso favorece al campeón | 'maldicion' → lo perjudica
-    modo: 'pedigri',
+    // 'maldicion' → el peso PERJUDICA al campeón (default) | 'pedigri' → lo favorece
+    modo: 'maldicion',
 
     // --- Contexto de la simulación en curso ---
     formato: 8,            // 7 | 8 | 9 | 10
