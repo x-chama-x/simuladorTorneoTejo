@@ -194,8 +194,8 @@ function calcularProbabilidadGana1(jugador1, jugador2) {
         }
     }
 
-    // Penalidad por ser campeón defensor (bicampeonato), calibrado con la
-    // referencia mundialista del ~10%. Ver js/campeon.js
+    // Peso por ser campeón defensor (bicampeonato), discriminado por etapa del
+    // formato y calibrado con la referencia mundialista del ~10%. Ver js/campeon.js
     if (typeof ajustarFuerzaPorCampeon === 'function') {
         fuerza1 = ajustarFuerzaPorCampeon(fuerza1, jugador1.nombre);
         fuerza2 = ajustarFuerzaPorCampeon(fuerza2, jugador2.nombre);
@@ -611,8 +611,36 @@ function mostrarResultados(grupos, probs, numJugadores) {
         html += '</div>';
     });
 
+    // Panel de bicampeonato: cadena de probabilidades condicionales por etapa
+    html += construirPanelBicampeon(grupos, numJugadores);
 
     resultado.innerHTML = html;
+}
+
+// Construye el panel de bicampeonato para los grupos sorteados.
+// Devuelve '' si no hay campeón detectado, si no participa del torneo, o si
+// js/campeon.js no está cargado.
+function construirPanelBicampeon(grupos, numJugadores) {
+    if (!grupos) return '';
+    if (typeof calcularBicampeonato !== 'function' || typeof renderPanelBicampeon !== 'function') return '';
+
+    const campeon = window.CAMPEON && window.CAMPEON.nombre;
+    if (!campeon) return '';
+
+    try {
+        const info = calcularBicampeonato({
+            grupos: grupos,
+            numJugadores: numJugadores,
+            campeon: campeon,
+            simPartido: simularPartido,
+            simGrupo: simularGrupoUnico,
+            n: 4000
+        });
+        return renderPanelBicampeon(info);
+    } catch (e) {
+        console.error('No se pudo calcular el panel de bicampeonato:', e);
+        return '';
+    }
 }
 
 // ---- Selección de jugadores ----
