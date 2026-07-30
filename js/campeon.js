@@ -67,7 +67,12 @@ window.CAMPEON = {
     // --- Calibración ---
     refMundial: 0.10,      // el campeón defensor repite ~10% de las veces
     campoMundial: 32,      // frente a un reparto justo de 1/32
-    oddsMultiplier: 3.44,  // M: multiplicador de cuota sobre TODO el torneo
+    // M: multiplicador de cuota sobre TODO el torneo. 3.44 es la cifra real
+    // mundialista, pero para un roster donde el campeón domina claramente al
+    // resto (ranking/winRate muy por delante) ese castigo no alcanza a
+    // quitarle el favoritismo. Se sube a 8 a pedido: maldición más dramática
+    // que la real, ya no una réplica fiel de las estadísticas de Mundiales.
+    oddsMultiplier: 8,
     k: 30,                 // misma constante de la sigmoide del modelo base
 
     // 'maldicion' → el peso PERJUDICA al campeón (default) | 'pedigri' → lo favorece
@@ -81,13 +86,16 @@ window.CAMPEON = {
     // 1 = usar la forma cerrada tal cual. La ajusta calibrarPesoCampeon().
     factorCalibracion: 1,
 
-    // Peso de importancia de cada etapa (la presión crece hacia la final)
+    // Peso de importancia de cada etapa. Concentrado en semifinal/final para
+    // que el campeón defensor llegue lejos con normalidad (grupos/liga/
+    // repechaje casi sin castigo) y sea ahí, en el tramo final, donde la
+    // maldición le pega más fuerte.
     pesosEtapa: {
-        liga: 1.00,
-        grupos: 1.00,
-        repechaje: 1.15,
-        semifinal: 1.30,
-        final: 1.60
+        liga: 0.3,
+        grupos: 0.3,
+        repechaje: 0.5,
+        semifinal: 2.2,
+        final: 3.0
     }
 };
 
