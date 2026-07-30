@@ -423,10 +423,9 @@ function sortearGrupos() {
         grupos = { A: jugadores.slice(0, 5), B: jugadores.slice(5, 10) };
     }
 
-    // Calibrar el peso de bicampeonato ANTES del Monte Carlo de probabilidades:
-    // construirPanelBicampeon() también calibra, pero recién se llama después
-    // (para el panel informativo), cuando calcularProbabilidades() ya corrió
-    // sus 10.000 simulaciones con el factor sin calibrar. Ver js/campeon.js
+    // Calibrar el peso de bicampeonato ANTES del Monte Carlo de probabilidades,
+    // para que calcularProbabilidades() corra sus 10.000 simulaciones ya con
+    // el factor ajustado a la cuota objetivo. Ver js/campeon.js
     if (typeof calibrarSiCorresponde === 'function') {
         if (typeof establecerFormatoBicampeon === 'function') {
             establecerFormatoBicampeon(numJugadores);
@@ -622,36 +621,7 @@ function mostrarResultados(grupos, probs, numJugadores) {
         html += '</div>';
     });
 
-    // Panel de bicampeonato: cadena de probabilidades condicionales por etapa
-    html += construirPanelBicampeon(grupos, numJugadores);
-
     resultado.innerHTML = html;
-}
-
-// Construye el panel de bicampeonato para los grupos sorteados.
-// Devuelve '' si no hay campeón detectado, si no participa del torneo, o si
-// js/campeon.js no está cargado.
-function construirPanelBicampeon(grupos, numJugadores) {
-    if (!grupos) return '';
-    if (typeof calcularBicampeonato !== 'function' || typeof renderPanelBicampeon !== 'function') return '';
-
-    const campeon = window.CAMPEON && window.CAMPEON.nombre;
-    if (!campeon) return '';
-
-    try {
-        const info = calcularBicampeonato({
-            grupos: grupos,
-            numJugadores: numJugadores,
-            campeon: campeon,
-            simPartido: simularPartido,
-            simGrupo: simularGrupoUnico,
-            n: 4000
-        });
-        return renderPanelBicampeon(info);
-    } catch (e) {
-        console.error('No se pudo calcular el panel de bicampeonato:', e);
-        return '';
-    }
 }
 
 // ---- Selección de jugadores ----
