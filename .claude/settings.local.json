@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(wc -l /c/Users/Francisco/Desktop/simuladorTorneoTejo/js/*.js /c/Users/Francisco/Desktop/simuladorTorneoTejo/css/*.css)"
+      "Bash(wc -l /c/Users/Francisco/Desktop/simuladorTorneoTejo/js/*.js /c/Users/Francisco/Desktop/simuladorTorneoTejo/css/*.css)",
+      "Bash(node -e ' *)",
+      "Bash(rm js/_campeon_debug4.js)"
     ]
   }
 }

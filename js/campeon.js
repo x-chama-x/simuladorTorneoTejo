@@ -225,7 +225,9 @@ function _shuffleCampeon(arr) {
 
 // ---- Helper: Establecer etapa actual para el contexto de bicampeonato ----
 function establecerEtapaBicampeon(etapa) {
-    const validas = ['grupos', 'liga', 'repechaje', 'semifinal', 'final'];
+    // 'ninguna' es una etapa neutral: no pertenece a ningún formato, por lo
+    // que bonusFuerzaCampeon() devuelve 0 (partidos no campeonables, ej. 3er puesto).
+    const validas = ['grupos', 'liga', 'repechaje', 'semifinal', 'final', 'ninguna'];
     if (window.CAMPEON && validas.includes(etapa)) {
         window.CAMPEON.etapaActual = etapa;
     }
@@ -400,6 +402,19 @@ function calibrarPesoCampeon({ grupos, numJugadores, campeon, simPartido, simGru
     console.log(`👑 Peso de bicampeonato calibrado (formato ${numJugadores}, modo ${c.modo}): factor ×${mejorF.toFixed(3)} · P base ${(pBase * 100).toFixed(1)}%`);
 
     return { factor: mejorF, pBase, desdeCache: false };
+}
+
+// ---- Calibrar ANTES de simular ----
+// calcularBicampeonato() calibra, pero solo se usa para el panel informativo
+// DESPUÉS de que el torneo (o los 10K Monte Carlo) ya se jugaron, por lo que
+// esas simulaciones corren con factorCalibracion sin calibrar (=1, la
+// estimación de forma cerrada) en vez del valor ajustado a la cuota objetivo.
+// Esta función se llama desde el propio flujo de simulación, antes del
+// primer partido, para que el peso ya esté calibrado cuando importa.
+function calibrarSiCorresponde(grupos, numJugadores, simPartido, simGrupo) {
+    const c = window.CAMPEON;
+    if (!c || !c.activo || !c.nombre || !grupos) return null;
+    return calibrarPesoCampeon({ grupos, numJugadores, campeon: c.nombre, simPartido, simGrupo });
 }
 
 // ---- Caché de calibración (por sesión) ----
@@ -634,5 +649,6 @@ window.ajustarFuerzaPorCampeon = ajustarFuerzaPorCampeon;
 window.establecerEtapaBicampeon = establecerEtapaBicampeon;
 window.establecerFormatoBicampeon = establecerFormatoBicampeon;
 window.calibrarPesoCampeon = calibrarPesoCampeon;
+window.calibrarSiCorresponde = calibrarSiCorresponde;
 window.calcularBicampeonato = calcularBicampeonato;
 window.renderPanelBicampeon = renderPanelBicampeon;
