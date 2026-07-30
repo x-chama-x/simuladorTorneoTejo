@@ -552,6 +552,9 @@ function simularPlayoffs(clasificados, jugadores, estadisticasJugadores) {
     const perdedorSF2 = sf2.ganador === semifinalistas[2].nombre ? semifinalistas[3].nombre : semifinalistas[2].nombre;
 
     // Tercer puesto no recibe bonus (no es campeonable en bicampeonato)
+    if (typeof establecerEtapaBicampeon === 'function') {
+        establecerEtapaBicampeon('ninguna');
+    }
     const tercerPuesto = simularPartido(resolverJugador(perdedorSF1, jugadores), resolverJugador(perdedorSF2, jugadores));
 
     acumular(perdedorSF1, tercerPuesto.goles1, tercerPuesto.goles2, tercerPuesto.ganador);
@@ -915,12 +918,16 @@ function simularTorneo(mantenerGrupos = false) {
         // FASE DE LIGA COMPLETA (4, 5 o 6 jugadores)
         htmlFase += '<h2>🏆 Fase de Liga</h2><br>';
 
+        gruposBicampeon = { all: jugadores.slice() };
+        if (typeof calibrarSiCorresponde === 'function') {
+            calibrarSiCorresponde(gruposBicampeon, numJugadores, simularPartido, simGrupoBicampeon);
+        }
+
         const { partidos, rankingGrupo } = simularGrupo(jugadores, 'Liga', 1, estadisticasJugadores);
 
         htmlFase += renderGrupoUIX(partidos, rankingGrupo, 4);
 
         clasificados = rankingGrupo.slice(0, 4);
-        gruposBicampeon = { all: jugadores.slice() };
 
     } else if (numJugadores === 8) {
         // 2 grupos de 4
@@ -938,6 +945,11 @@ function simularTorneo(mantenerGrupos = false) {
             grupoB = jugadores.slice(4, 8);
         }
 
+        gruposBicampeon = { A: grupoA.slice(), B: grupoB.slice() };
+        if (typeof calibrarSiCorresponde === 'function') {
+            calibrarSiCorresponde(gruposBicampeon, numJugadores, simularPartido, simGrupoBicampeon);
+        }
+
         const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
 
@@ -953,7 +965,6 @@ function simularTorneo(mantenerGrupos = false) {
             ...resultadoA.rankingGrupo.slice(0, 2),
             ...resultadoB.rankingGrupo.slice(0, 2)
         ];
-        gruposBicampeon = { A: grupoA.slice(), B: grupoB.slice() };
 
     } else if (numJugadores === 9) {
         // 3 grupos de 3
@@ -971,6 +982,9 @@ function simularTorneo(mantenerGrupos = false) {
             grupos[2] = jugadores.slice(6, 9);
         }
         gruposBicampeon = { A: grupos[0].slice(), B: grupos[1].slice(), C: grupos[2].slice() };
+        if (typeof calibrarSiCorresponde === 'function') {
+            calibrarSiCorresponde(gruposBicampeon, numJugadores, simularPartido, simGrupoBicampeon);
+        }
 
         let resultadosGrupos9 = [];
         // Simular y mostrar cada grupo
@@ -1025,6 +1039,9 @@ function simularTorneo(mantenerGrupos = false) {
             grupos[1] = jugadores.slice(5, 10);
         }
         gruposBicampeon = { A: grupos[0].slice(), B: grupos[1].slice() };
+        if (typeof calibrarSiCorresponde === 'function') {
+            calibrarSiCorresponde(gruposBicampeon, numJugadores, simularPartido, simGrupoBicampeon);
+        }
 
         let resultadosGrupos = [];
         // Simular y mostrar cada grupo
@@ -1758,6 +1775,9 @@ function ejecutarSimulacionSilenciosa() {
     if (numJugadores === 7) {
         // Formato Liga: todos contra todos
         torneoData.gruposBicampeon = { all: jugadores.slice() };
+        if (typeof calibrarSiCorresponde === 'function') {
+            calibrarSiCorresponde(torneoData.gruposBicampeon, numJugadores, simularPartido, simGrupoBicampeon);
+        }
         const { partidos, rankingGrupo } = simularGrupo(jugadores, 'Liga', 1, estadisticasJugadores);
         torneoData.grupos.push({
             titulo: '<h2>🏆 Fase de Liga</h2><br>',
@@ -1772,6 +1792,9 @@ function ejecutarSimulacionSilenciosa() {
         const grupoA = armarGrupo('A', 0, 4);
         const grupoB = armarGrupo('B', 4, 8);
         torneoData.gruposBicampeon = { A: grupoA.slice(), B: grupoB.slice() };
+        if (typeof calibrarSiCorresponde === 'function') {
+            calibrarSiCorresponde(torneoData.gruposBicampeon, numJugadores, simularPartido, simGrupoBicampeon);
+        }
 
         const resultadoA = simularGrupo(grupoA, 'A', 1, estadisticasJugadores);
         const resultadoB = simularGrupo(grupoB, 'B', resultadoA.matchNumber, estadisticasJugadores);
@@ -1798,6 +1821,9 @@ function ejecutarSimulacionSilenciosa() {
         // 3 grupos de 3
         const grupos = [armarGrupo('A', 0, 3), armarGrupo('B', 3, 6), armarGrupo('C', 6, 9)];
         torneoData.gruposBicampeon = { A: grupos[0].slice(), B: grupos[1].slice(), C: grupos[2].slice() };
+        if (typeof calibrarSiCorresponde === 'function') {
+            calibrarSiCorresponde(torneoData.gruposBicampeon, numJugadores, simularPartido, simGrupoBicampeon);
+        }
 
         const resultadosGrupos9 = [];
         for (let i = 0; i < grupos.length; i++) {
@@ -1850,6 +1876,9 @@ function ejecutarSimulacionSilenciosa() {
         // 2 grupos de 5
         const grupos = [armarGrupo('A', 0, 5), armarGrupo('B', 5, 10)];
         torneoData.gruposBicampeon = { A: grupos[0].slice(), B: grupos[1].slice() };
+        if (typeof calibrarSiCorresponde === 'function') {
+            calibrarSiCorresponde(torneoData.gruposBicampeon, numJugadores, simularPartido, simGrupoBicampeon);
+        }
 
         const resultadosGrupos = [];
         for (let i = 0; i < grupos.length; i++) {

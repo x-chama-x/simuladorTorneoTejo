@@ -423,6 +423,17 @@ function sortearGrupos() {
         grupos = { A: jugadores.slice(0, 5), B: jugadores.slice(5, 10) };
     }
 
+    // Calibrar el peso de bicampeonato ANTES del Monte Carlo de probabilidades:
+    // construirPanelBicampeon() también calibra, pero recién se llama después
+    // (para el panel informativo), cuando calcularProbabilidades() ya corrió
+    // sus 10.000 simulaciones con el factor sin calibrar. Ver js/campeon.js
+    if (typeof calibrarSiCorresponde === 'function') {
+        if (typeof establecerFormatoBicampeon === 'function') {
+            establecerFormatoBicampeon(numJugadores);
+        }
+        calibrarSiCorresponde(grupos, numJugadores, simularPartido, simularGrupoUnico);
+    }
+
     const probs = calcularProbabilidades(grupos, numJugadores);
     mostrarResultados(grupos, probs, numJugadores);
 }
