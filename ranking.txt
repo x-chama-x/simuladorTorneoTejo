@@ -3,14 +3,14 @@
 # Una línea por jugador
 # Las líneas que empiezan con # son comentarios
 
-Chama,224
-Facu,126
-Tomy,118
-Marco,80
-Rafa,55
-Lucas,50
-Pedro,21
-Mateo,17
-Kovic,8
-Hector,5
-Santi,5
+Chama,329.0
+Facu,126.0
+Tomy,121.2
+Marco,80.0
+Kovic,75.4
+Lucas,54.4
+Pedro,21.0
+Mateo,17.0
+Rafa,5.0
+Hector,5.0
+Santi,5.0
