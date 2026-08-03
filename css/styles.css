@@ -855,6 +855,7 @@ select:hover {
 .sidebar a[href="torneo2.html"] { background: #ff5722; }
 .sidebar a[href="torneo3.html"] { background: #118e36; }
 .sidebar a[href="airhockeygame.html"] { background: #00bcd4; }
+.sidebar a[href="sabermas.html"] { background: #a2843d; }
 .sidebar a.active { outline: 2px solid rgba(255,255,255,0.4); }
 
 .sidebar-footer {
