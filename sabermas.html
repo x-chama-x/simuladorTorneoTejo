@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saber Más - Tejo Hockey</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1><img src="img/favicon.png" alt="logo" style="width: 1em; height: 1em; vertical-align: middle; margin-right: 5px;"> Saber Más</h1>
+        <p class="page-subtitle">Todo sobre los formatos de torneo y cómo funciona el Ranking FIFA</p>
+
+        <!-- Formatos de Torneo -->
+        <div class="panel" id="formatos-panel">
+            <h2>Formatos de Torneo</h2>
+            <br>
+            <div class="format-section" style="margin-bottom: 1.5rem;">
+                <h3>¿De qué se trata el juego?</h3>
+                <p style="margin-top: 0.5rem; line-height: 1.5; color: #c9d1d9;">El <strong>"tejo hockey sobre mesa"</strong>, o "air hockey" en otras regiones, es un juego de mesa en el que dos jugadores utilizan mazos para golpear un disco sobre una superficie con aire, simulando un hockey sobre hielo en miniatura. El objetivo es anotar 7 goles en la portería contraria.</p>
+            </div>
+            <div class="format-section">
+                <h3>1. Liga (Round Robin) - 7 Jugadores</h3>
+                <ul>
+                    <li><strong>Estructura:</strong> Todos contra todos. 21 partidos en total.</li>
+                    <li><strong>Clasificación:</strong> Los mejores 4 clasifican a playoffs (semis + final).</li>
+                    <li><strong>Costo estimado:</strong> $30,000 en total ($4,300 por jugador aprox).</li>
+                </ul>
+            </div>
+            <div class="format-section" style="margin-bottom: 1rem;">
+                <h3>2. Grupos (Dos grupos) - 8 Jugadores</h3>
+                <ul>
+                    <li><strong>Estructura:</strong> 2 grupos de 4 jugadores. Todos contra todos en el grupo. 12 partidos (fase de grupos).</li>
+                    <li><strong>Clasificación:</strong> Los 2 primeros de cada grupo avanzan a playoffs.</li>
+                    <li><strong>Costo estimado:</strong> $19,200 en total ($2,400 por jugador aprox).</li>
+                </ul>
+            </div>
+            <div class="format-section" style="margin-bottom: 1rem;">
+                <h3>3. Grupos (Tres grupos) - 9 Jugadores</h3>
+                <ul>
+                    <li><strong>Estructura:</strong> 3 grupos de 3 jugadores. 9 partidos (fase de grupos).</li>
+                    <li><strong>Repechajes:</strong>
+                        <ul>
+                            <li><strong>Mini-Liga de Segundos:</strong> Juegan todos contra todos, el 1° avanza al eliminatorio.</li>
+                            <li><strong>Mini-Liga de Terceros:</strong> Juegan todos contra todos, el 1° avanza al eliminatorio.</li>
+                            <li><strong>Partido Eliminatorio:</strong> 1° repechaje segundos vs 1° repechaje terceros. Ganador clasifica como 4° a playoffs.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Clasificación Directa:</strong> 3 primeros de cada grupo.</li>
+                    <li><strong>Costo estimado:</strong> $24,000 en total ($2,667 por jugador aprox).</li>
+                </ul>
+            </div>
+            <div class="format-section" style="margin-bottom: 1rem;">
+                <h3>4. Grupos (Dos grupos grandes) - 10 Jugadores</h3>
+                <ul>
+                    <li><strong>Estructura:</strong> 2 grupos de 5 jugadores. 20 partidos (fase de grupos).</li>
+                    <li><strong>Clasificación:</strong> Los 2 primeros de cada grupo avanzan a playoffs.</li>
+                    <li><strong>Costo estimado:</strong> $28,800 en total ($2,880 por jugador aprox).</li>
+                </ul>
+            </div>
+            <div class="format-section">
+                <h3>Notas Generales</h3>
+                <ul>
+                    <li>Playoffs incluyen semifinales, partido por el tercer puesto y final.</li>
+                    <li>Precio por partido: $1,200 fijo.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Ranking FIFA Explicado -->
+        <div class="panel" id="ranking-explicado-panel" style="margin-top: 1.5rem;">
+            <h2>🧮 Ranking FIFA Explicado (Sistema Anti-Inflación)</h2>
+            <br>
+            <div class="format-section" style="margin-bottom: 1.5rem;">
+                <p style="line-height: 1.5; color: #c9d1d9;">Esta es la metodología de cálculo del <strong>Ranking FIFA Oficial</strong> de la comunidad de Air Hockey (Tejo) "La Resistencia". Esta versión (V2) introduce un sistema de <strong>Suma Cero</strong> y un <strong>Multiplicador Dinámico por Diferencia de Puntos (tipo ELO)</strong> diseñado para controlar la inflación de puntos, evitar que el líder se vuelva inalcanzable de manera artificial y mantener la competitividad del ranking al rojo vivo.</p>
+            </div>
+
+            <div class="format-section">
+                <h3>1. Ranking Inicial y Puntos Base (Tras el Primer Torneo)</h3>
+                <p style="color: #c9d1d9; margin-bottom: 0.75rem;">Se utiliza el resultado final del primer torneo oficial como el punto de partida (base histórica):</p>
+                <div class="table-responsive">
+                    <table class="ranking-table">
+                        <thead>
+                            <tr><th>Posición</th><th>Jugador</th><th>Puntos Base</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1° Lugar (Campeón)</td><td>Chama</td><td>100.0</td></tr>
+                            <tr><td>2° Lugar (Subcampeón)</td><td>Rafa</td><td>80.0</td></tr>
+                            <tr><td>3° Lugar (Tercer Puesto)</td><td>Tomy</td><td>60.0</td></tr>
+                            <tr><td>4° Lugar (Cuarto Puesto)</td><td>Marco</td><td>50.0</td></tr>
+                            <tr><td>5° Lugar (5° en Fase de Liga)</td><td>Facu</td><td>40.0</td></tr>
+                            <tr><td>6° Lugar (6° en Fase de Liga)</td><td>Santi</td><td>30.0</td></tr>
+                            <tr><td>7° Lugar (7° en Fase de Liga)</td><td>Hector</td><td>20.0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="format-section">
+                <h3>2. Puntos Obtenidos por Partido: Sistema de Suma Cero (Zero-Sum)</h3>
+                <p style="color: #c9d1d9; margin-bottom: 0.5rem;">Para evitar la inflación artificial donde se creaban más puntos de los que se perdían, el sistema se rige bajo el principio de <strong>Suma Cero</strong>:</p>
+                <ul>
+                    <li><strong>Puntos Perdidos por el Perdedor = Puntos Ganados por el Ganador.</strong> Toda ganancia de un jugador proviene directamente del puntaje de su rival. Si le ganas a alguien, le "robas" sus puntos.</li>
+                    <li><strong>Excepción de Seguridad:</strong> Si la resta de puntos lleva al perdedor por debajo del límite de 5.0 puntos, el perdedor se queda en 5.0 (no puede tener menos), pero el ganador sí suma la totalidad de los puntos calculados.</li>
+                </ul>
+            </div>
+
+            <div class="format-section">
+                <h3>3. Puntos Base por Tipo de Partido</h3>
+                <p style="color: #c9d1d9; margin-bottom: 0.75rem;">La importancia del torneo determina la base de puntos que se disputan en el encuentro:</p>
+                <div class="table-responsive">
+                    <table class="ranking-table">
+                        <thead>
+                            <tr><th>Tipo de Partido</th><th>Puntos Base</th><th>Descripción</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Partido Amistoso</td><td>2.0</td><td>Reducido drásticamente para evitar la acumulación excesiva en retos informales</td></tr>
+                            <tr><td>Fase de Liga o Grupos</td><td>20.0</td><td>Partidos correspondientes a la fase regular de torneos oficiales</td></tr>
+                            <tr><td>Fase Final / Playoffs</td><td>30.0</td><td>Partidos decisivos (Semifinal, Tercer Puesto y Final)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="format-section">
+                <h3>4. Multiplicador por Diferencia de Puntos (Tipo ELO)</h3>
+                <p style="color: #c9d1d9; margin-bottom: 0.5rem;">Para reflejar con precisión el desafío de cada partido, se descartan los multiplicadores estáticos por rango y se introduce un <strong>Multiplicador Dinámico por Diferencia de Puntos</strong>.</p>
+                <p style="color: #c9d1d9; margin-bottom: 0.5rem;">Se calcula la diferencia absoluta de puntos reales al momento de jugar: <strong>Diferencia (D) = Puntos del Jugador Fuerte − Puntos del Jugador Débil</strong>. Luego se aplica el multiplicador correspondiente al ganador:</p>
+                <ul>
+                    <li><strong>Caso A: El jugador más fuerte gana (Resultado Esperado).</strong> Se aplica un atenuador: a mayor brecha de puntos, menor será la recompensa para el líder, evitando que se dispare en la tabla frente a rivales fáciles.<br>
+                        <code>Multiplicador = máx(0.1, 1.0 − D / 200)</code> — el multiplicador mínimo garantizado es x0.1.
+                    </li>
+                    <li><strong>Caso B: El jugador más débil gana (Batacazo / Upset).</strong> Se aplica un amplificador: derrotar a un gigante otorga un premio masivo y castiga severamente al líder, inyectando un riesgo real y dinamismo en la cima.<br>
+                        <code>Multiplicador = 1.0 + D / 100</code>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="format-section">
+                <h3>5. Protección contra Puntos Negativos (Efecto Suelo)</h3>
+                <ul>
+                    <li>El puntaje mínimo para cualquier jugador es de <strong>5.0 puntos</strong>.</li>
+                    <li>Bajo ninguna circunstancia un jugador puede descender de este piso, asegurando que todos tengan siempre un piso competitivo y motivacional.</li>
+                </ul>
+            </div>
+
+            <div class="format-section">
+                <h3>6. Manejo de Nuevos Jugadores</h3>
+                <ul>
+                    <li>Los jugadores debutantes ingresan al sistema con <strong>15.0 puntos iniciales</strong>, posicionándose al final de la tabla de clasificación de forma neutral hasta disputar sus primeros partidos.</li>
+                </ul>
+            </div>
+
+            <div class="format-section">
+                <h3>7. Actualización del Ranking</h3>
+                <p style="color: #c9d1d9; margin-bottom: 0.5rem;">Tras finalizar cada partido, el algoritmo realiza las siguientes operaciones:</p>
+                <ul>
+                    <li>Busca los puntos actuales de ambos jugadores en el ranking.</li>
+                    <li>Determina la diferencia de puntos (D) e identifica quién es el favorito y quién es el menos favorecido.</li>
+                    <li>Calcula los puntos disputados multiplicando los Puntos Base de la fase por el Multiplicador correspondiente según quién ganó.</li>
+                    <li>Suma los puntos al ganador y se los resta al perdedor (aplicando el piso de 5.0 puntos).</li>
+                    <li>Reordena automáticamente la tabla general de posiciones de mayor a menor.</li>
+                </ul>
+            </div>
+
+            <div class="format-section">
+                <h3>8. Ejemplos de Cálculo Prácticos</h3>
+                <p style="color: #c9d1d9; margin-bottom: 0.5rem;"><strong>💡 Ejemplo 1: Partido Amistoso (Base = 2.0 pts)</strong><br>Rafa (80.0 pts - Favorito) vs Tomy (60.0 pts) | Diferencia (D) = 20.0</p>
+                <ul style="margin-bottom: 1rem;">
+                    <li><strong>Si gana Rafa (Favorito):</strong> Multiplicador = 1.0 − (20/200) = 0.90 → Puntos en juego = 2.0 × 0.90 = 1.8 pts. Rafa sube a 81.8 pts y Tomy baja a 58.2 pts.</li>
+                    <li><strong>Si gana Tomy (Upset / Batacazo):</strong> Multiplicador = 1.0 + (20/100) = 1.20 → Puntos en juego = 2.0 × 1.20 = 2.4 pts. Tomy sube a 62.4 pts y Rafa baja a 77.6 pts.</li>
+                </ul>
+                <p style="color: #c9d1d9; margin-bottom: 0.5rem;"><strong>💡 Ejemplo 2: Partido de Fase de Liga (Base = 20.0 pts)</strong><br>Marco (50.0 pts) vs Chama (100.0 pts - Favorito) | Diferencia (D) = 50.0</p>
+                <ul>
+                    <li><strong>Si gana Chama (Favorito):</strong> Multiplicador = 1.0 − (50/200) = 0.75 → Puntos en juego = 20.0 × 0.75 = 15.0 pts. Chama sube a 115.0 pts y Marco baja a 35.0 pts.</li>
+                    <li><strong>Si gana Marco (Upset / Batacazo):</strong> Multiplicador = 1.0 + (50/100) = 1.50 → Puntos en juego = 20.0 × 1.50 = 30.0 pts. Marco sube a 80.0 pts y Chama baja a 70.0 pts.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- Scripts -->
+    <script src="js/menu.js"></script>
+</body>
+</html>
