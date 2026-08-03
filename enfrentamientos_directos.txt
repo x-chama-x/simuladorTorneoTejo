@@ -50,6 +50,24 @@ Chama,Facu,G,7-6,Segundo torneo de hockey de mesa,11/01/2026,Semifinal
 Facu,Santi,G,7-6,Segundo torneo de hockey de mesa,11/01/2026,Tercer Puesto
 Tomy,Chama,P,6-7,Segundo torneo de hockey de mesa,11/01/2026,Final
 
+
+# Torneo 3 - Tercer torneo de hockey de mesa (2/8/2026)
+Marco,Rafa,G,7-5,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Lucas,Chama,P,1-7,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Kovic,Tomy,G,7-5,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Marco,Chama,P,3-7,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Lucas,Rafa,G,7-6,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Tomy,Rafa,G,7-5,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Chama,Kovic,G,7-2,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Marco,Lucas,G,7-1,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Chama,Rafa,G,7-5,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Kovic,Lucas,G,7-5,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Marco,Kovic,P,2-7,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Chama,Tomy,G,7-6,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Rafa,Kovic,P,2-7,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Lucas,Tomy,G,7-3,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Tomy,Marco,G,7-4,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+
 # Amistosos
 Chama,Facu,P,5-7,Amistoso,7/5/2025,Amistoso
 Chama,Mateo,G,7-3,Amistoso,7/5/2025,Amistoso
