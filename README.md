@@ -35,6 +35,7 @@ La aplicacion utiliza un sistema de probabilidades basado en una **funcion sigmo
 | `playoffs.html` | **Playoffs** - Configuracion de brackets para semifinales y final |
 | `torneo1.html` | **Primer Torneo** - Historial del primer torneo oficial (Liga) |
 | `torneo2.html` | **Segundo Torneo** - Historial del segundo torneo oficial (Grupos) |
+| `torneo3.html` | **Tercer Torneo** - Historial del tercer torneo oficial (Liga 6 jugadores) |
 
 ---
 

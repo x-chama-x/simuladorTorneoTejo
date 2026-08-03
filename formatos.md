@@ -85,7 +85,28 @@ Precio por jugador: $2,667 aprox.
 
 
 
-4. Grupos (Dos grupos grandes)
+4. Liga (6 jugadores)
+
+Participantes: 6 jugadores.
+Estructura:
+
+Todos contra todos.
+Cada jugador enfrenta a los demás una vez.
+
+
+Partidos: 15.
+Clasificación:
+
+Posiciones del 1 al 4 clasifican a playoffs.
+
+
+Playoffs: Semifinales + Tercer Puesto + Final.
+Costo estimado: $22,800 (precio por partido $1,200).
+Precio por jugador: $3,800 aprox.
+
+
+
+5. Grupos (Dos grupos grandes)
 
 Participantes: 10 jugadores.
 Estructura:

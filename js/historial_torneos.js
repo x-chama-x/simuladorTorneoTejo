@@ -47,9 +47,10 @@ function processStandings(matches) {
 }
 
 function renderGroupMatchesAndStandings(matches, nombreTorneo) {
-    // Si tenemos un contenedor global de resultados (Torneo 1)
+    const isLiga = matches.some(m => m.fase === "Fase de Liga");
+    // Si tenemos un contenedor global de resultados (formato Liga)
     const resultadosContainer = document.getElementById("resultados-fase");
-    if (resultadosContainer && nombreTorneo.includes("Primer")) {
+    if (resultadosContainer && isLiga) {
         resultadosContainer.innerHTML = "";
         const divResp = document.createElement("div");
         divResp.className = "table-responsive";
@@ -84,7 +85,7 @@ function renderGroupMatchesAndStandings(matches, nombreTorneo) {
         resultadosContainer.appendChild(divResp);
     }
 
-    if (nombreTorneo.includes("Primer")) {
+    if (isLiga) {
         // Liga
         const stdgs = processStandings(matches);
         const tbody = document.getElementById("tabla-body");
@@ -314,7 +315,7 @@ function renderTournamentStats(allMatches, nombreTorneo) {
     const statsContainer = document.getElementById("stats-container");
     if (!statsContainer) return;
 
-    const isLiga = nombreTorneo.includes("Primer");
+    const isLiga = allMatches.some(m => m.fase === "Fase de Liga");
     const groupLabel = isLiga ? "G(FL)" : "G(FG)";
 
     const groupMatches = allMatches.filter(m => m.fase.includes("Fase"));
