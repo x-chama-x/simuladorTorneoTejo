@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="torneo2.html" title="Segundo Torneo">Segundo Torneo</a>
         <a href="torneo3.html" title="Tercer Torneo">Tercer Torneo</a>
         <a href="airhockeygame.html" title="Air Hockey">🎮 Air Hockey</a>
+        <a href="sabermas.html" title="Saber Más">📖 Saber Más</a>
         <div class="sidebar-footer">
             <img src="img/favicon2.png" alt="Logo">
             <br>
