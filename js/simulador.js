@@ -637,7 +637,7 @@ function renderPlayoffsHTML(playoffs, numJugadores, repechajePreMatch) {
 function renderEstadisticasHTML(estadisticasJugadores, numJugadores) {
     let htmlStats = '<h2>📊 ESTADÍSTICAS DEL TORNEO</h2><br>';
     htmlStats += '<div class="table-responsive"><table class="ranking-table">';
-    const groupLabel = numJugadores === 7 ? "G(FL)" : "G(FG)";
+    const groupLabel = (numJugadores === 7 || numJugadores === 6) ? "G(FL)" : "G(FG)";
     htmlStats += `
         <thead>
             <tr>
@@ -884,10 +884,10 @@ function simularTorneo(mantenerGrupos = false) {
     }
     // Establecer etapa inicial (liga para 7 jugadores, grupos para el resto)
     if (typeof establecerEtapaBicampeon === 'function') {
-        establecerEtapaBicampeon(numJugadores === 7 ? 'liga' : 'grupos');
+        establecerEtapaBicampeon((numJugadores === 7 || numJugadores === 6) ? 'liga' : 'grupos');
     }
 
-    if (numJugadores === 7) {
+    if (numJugadores === 7 || numJugadores === 6) {
         // Formato Liga: Todos contra todos
         // FASE DE LIGA COMPLETA (4, 5 o 6 jugadores)
         htmlFase += '<h2>🏆 Fase de Liga</h2><br>';
@@ -1738,12 +1738,12 @@ function ejecutarSimulacionSilenciosa() {
         establecerFormatoBicampeon(numJugadores);
     }
     if (typeof establecerEtapaBicampeon === 'function') {
-        establecerEtapaBicampeon(numJugadores === 7 ? 'liga' : 'grupos');
+        establecerEtapaBicampeon((numJugadores === 7 || numJugadores === 6) ? 'liga' : 'grupos');
     }
 
     let clasificados = [];
 
-    if (numJugadores === 7) {
+    if (numJugadores === 7 || numJugadores === 6) {
         // Formato Liga: todos contra todos
         torneoData.gruposBicampeon = { all: jugadores.slice() };
         if (typeof calibrarSiCorresponde === 'function') {

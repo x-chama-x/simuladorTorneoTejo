@@ -273,7 +273,7 @@ function calcularProbabilidades(grupos, numJugadores, n = 10000) {
         establecerFormatoBicampeon(numJugadores);
     }
     if (typeof establecerEtapaBicampeon === 'function') {
-        establecerEtapaBicampeon(numJugadores === 7 ? 'liga' : 'grupos');
+        establecerEtapaBicampeon((numJugadores === 7 || numJugadores === 6) ? 'liga' : 'grupos');
     }
 
     // Inicializar contadores para todos los jugadores
@@ -285,7 +285,7 @@ function calcularProbabilidades(grupos, numJugadores, n = 10000) {
 
     for (let sim = 0; sim < n; sim++) {
 
-        if (numJugadores === 7) {
+        if (numJugadores === 7 || numJugadores === 6) {
             // Liga round-robin: ganador de la liga
             simularGrupoUnico(grupos.all).slice(0, 1).forEach(p => conteo[p.nombre]++);
 
@@ -413,7 +413,7 @@ function sortearGrupos() {
     const jugadores = shuffleArray(nombres.map(n => jugadoresDisponibles.find(j => j.nombre === n)));
 
     let grupos;
-    if (numJugadores === 7) {
+    if (numJugadores === 7 || numJugadores === 6) {
         grupos = { all: jugadores };
     } else if (numJugadores === 8) {
         grupos = { A: jugadores.slice(0, 4), B: jugadores.slice(4, 8) };
@@ -442,7 +442,7 @@ function mostrarResultados(grupos, probs, numJugadores) {
     const resultado = document.getElementById('resultado');
     let html = '';
 
-    if (numJugadores === 7) {
+    if (numJugadores === 7 || numJugadores === 6) {
         // Tabla de probabilidades para liga round-robin
         const jugadoresOrdenados = grupos.all.slice().sort((a, b) =>
             parseFloat(probs[b.nombre].total) - parseFloat(probs[a.nombre].total)

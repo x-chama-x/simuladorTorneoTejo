@@ -101,11 +101,16 @@ window.CAMPEON = {
 
 // ---- Ruta de etapas de cada formato ----
 // n = partidos que juega el campeón en esa etapa.
+//   6  liga de 6 → 5 partidos de round-robin
 //   7  liga de 7 → 6 partidos de round-robin
 //   8  grupo de 4 → 3 partidos
 //   9  grupo de 3 → 2 partidos; repechaje = mini-liga (2) + pre-playoff (1) = 3
 //  10  grupo de 5 → 4 partidos
 window.CAMPEON.rutaFormato = {
+    6:  [{ etapa: 'liga',   n: 5, label: 'Liga (Top 4)' },
+         { etapa: 'semifinal', n: 1, label: 'Semifinal' },
+         { etapa: 'final',     n: 1, label: 'Final' }],
+
     7:  [{ etapa: 'liga',   n: 6, label: 'Liga (Top 4)' },
          { etapa: 'semifinal', n: 1, label: 'Semifinal' },
          { etapa: 'final',     n: 1, label: 'Final' }],
@@ -259,13 +264,13 @@ function _simularCaminoCampeon({ grupos, numJugadores, campeon, simPartido, simG
     const c = window.CAMPEON;
 
     // ETAPA 1: fase inicial
-    c.etapaActual = numJugadores === 7 ? 'liga' : 'grupos';
+    c.etapaActual = (numJugadores === 7 || numJugadores === 6) ? 'liga' : 'grupos';
 
     let clasificados = [];
     let pasoPorRepechaje = false;
     let superoRepechaje = null; // true/false sólo si transitó el repechaje
 
-    if (numJugadores === 7) {
+    if (numJugadores === 7 || numJugadores === 6) {
         const r = simGrupo(grupos.all);
         clasificados = r.slice(0, 4).map(x => x.nombre);
 
