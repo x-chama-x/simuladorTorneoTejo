@@ -14,14 +14,12 @@ import sys
 # =====================================================================
 # CONFIGURACIÓN DE ARCHIVOS
 # =====================================================================
-# El script buscará automáticamente estos nombres comunes para tus archivos
-PARTIDOS_FILES = ['partidos_jugados.txt', 'enfrentamientos_directos.txt']
-RANKING_FILES = ['ranking_fifa.txt', 'ranking.txt']
+PARTIDOS_FILES = ['enfrentamientos_directos.txt'] # Cambiado para buscar solo este por defecto
+RANKING_FILES = ['ranking.txt', 'ranking_fifa.txt']
 
 # =====================================================================
 # BASE METODOLÓGICA (Tras el Torneo 1)
 # =====================================================================
-# Base establecida tras el primer torneo oficial (Punto de partida)
 POST_TORNEO_1_BASE = {
 'Chama': 100.0,
 'Rafa': 80.0,
@@ -40,7 +38,7 @@ def parse_date(date_str):
 try:
 parts = list(map(int, date_str.split('/')))
 if len(parts) == 3:
-return (parts[5], parts[6], parts)  # (Año, Mes, Día)
+return (parts[2], parts[1], parts[0])  # (Año, Mes, Día) para ordenar bien
 except:
 pass
 return (0, 0, 0)
@@ -57,7 +55,7 @@ ranking_path = encontrar_archivo(RANKING_FILES, "ranking")
 
     if not partidos_path:
         print("❌ Error: No se encontró ningún archivo de partidos.")
-        print(f"   Asegúrate de tener alguno de estos en el mismo directorio: {', '.join(PARTIDOS_FILES)}")
+        print(f"   Asegúrate de tener el archivo '{PARTIDOS_FILES[0]}' en el mismo directorio.")
         sys.exit(1)
         
     print(f"📖 Leyendo partidos desde: '{partidos_path}'")
@@ -154,13 +152,13 @@ ranking_path = encontrar_archivo(RANKING_FILES, "ranking")
         ranking[winner] = new_winner_pts
         ranking[loser] = new_loser_pts
 
-    # Ordenar ranking por puntos descendente
-    sorted_ranking = sorted(ranking.items(), key=lambda x: x[6], reverse=True)
+    # Ordenar ranking por puntos descendente (Corregido key=lambda x: x[1])
+    sorted_ranking = sorted(ranking.items(), key=lambda x: x[1], reverse=True)
     
     # Determinar ruta de salida
-    salida_path = ranking_path if ranking_path else 'ranking_fifa.txt'
+    salida_path = ranking_path if ranking_path else 'ranking.txt'
     
-    # Escribir el nuevo ranking preservando comentarios
+    # Escribir el nuevo ranking
     print(f"💾 Guardando nuevo ranking en: '{salida_path}'")
     with open(salida_path, 'w', encoding='utf-8') as f:
         f.write("### RANKING FIFA - Simulador Torneo Tejo (SISTEMA ANTI-INFLACIÓN)\n")
@@ -168,7 +166,6 @@ ranking_path = encontrar_archivo(RANKING_FILES, "ranking")
         f.write("### Una línea por jugador ordenado de mayor a menor\n")
         f.write("### Las líneas que empiezan con # son comentarios\n")
         for player, score in sorted_ranking:
-            # Redondeado a 1 decimal para mantener compatibilidad de lectura
             f.write(f"{player},{round(score, 1)}\n")
             
     print("\n🏆 NUEVO RANKING CALCULADO:")
