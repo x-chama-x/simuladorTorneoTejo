@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+NOTA: esta es la version historica en Python de este calculo. Desde que se
+agrego js/rankingCalculator.js, el mismo algoritmo corre automaticamente en
+el navegador a partir de enfrentamientos_directos.txt — ya no hace falta
+correr este script ni mantener un ranking.txt generado a mano.
+
 Script para actualizar el Ranking FIFA de Tejo / Air Hockey
 Implementa la Metodología Anti-Inflación:
 1. Sistema de Suma Cero (Puntos Ganados = Puntos Perdidos).

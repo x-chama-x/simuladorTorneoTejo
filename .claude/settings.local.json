@@ -3,7 +3,9 @@
     "allow": [
       "Bash(wc -l /c/Users/Francisco/Desktop/simuladorTorneoTejo/js/*.js /c/Users/Francisco/Desktop/simuladorTorneoTejo/css/*.css)",
       "Bash(node -e ' *)",
-      "Bash(rm js/_campeon_debug4.js)"
+      "Bash(rm js/_campeon_debug4.js)",
+      "Bash(git rm *)",
+      "Bash(pkill -f \"http.server 8123\")"
     ]
   }
 }

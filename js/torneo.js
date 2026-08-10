@@ -15,36 +15,26 @@ let enfrentamientosDirectos = {};
 let partidosDetallados = [];
 let maxEnfrentamientosGlobal = 1; // Máximo de partidos entre cualquier par de jugadores
 
-// ---- Carga de jugadores desde ranking.txt ----
+// ---- Cálculo de jugadores y ranking FIFA desde enfrentamientos_directos.txt ----
 async function cargarJugadoresDesdeArchivo() {
     try {
-        const response = await fetch('ranking.txt');
-        if (!response.ok) throw new Error('No se pudo cargar ranking.txt');
-        const texto = await response.text();
-        const lineas = texto.split('\n');
-        const jugadores = [];
-        for (const linea of lineas) {
-            const lineaTrimmed = linea.trim();
-            if (!lineaTrimmed || lineaTrimmed.startsWith('#')) continue;
-            const partes = lineaTrimmed.split(',');
-            if (partes.length >= 2) {
-                jugadores.push({
-                    nombre: partes[0].trim(),
-                    ranking: parseInt(partes[1].trim()),
-                    winRate: 0,
-                    promedioGoles: 0
-                });
-            }
-        }
-        if (!jugadores.length) throw new Error('No hay jugadores válidos en ranking.txt');
-        jugadores.sort((a, b) => b.ranking - a.ranking);
+        const rankingCalculado = await cargarRankingCalculado();
+        if (!rankingCalculado.length) throw new Error('No hay partidos en enfrentamientos_directos.txt para calcular el ranking');
+
+        const jugadores = rankingCalculado.map(r => ({
+            nombre: r.nombre,
+            ranking: r.ranking,
+            winRate: 0,
+            promedioGoles: 0
+        }));
+
         jugadoresBase = jugadores.slice(0, 8);
         nuevosJugadores = jugadores.slice(8);
         jugadoresDisponibles = [...jugadores];
         return true;
     } catch (error) {
-        console.error('Error cargando jugadores:', error);
-        alert('Error: No se pudo cargar ranking.txt. Verificá que el archivo exista.');
+        console.error('Error calculando el ranking FIFA:', error);
+        alert('Error: No se pudo calcular el ranking FIFA desde enfrentamientos_directos.txt. Verificá que el archivo exista.');
         return false;
     }
 }

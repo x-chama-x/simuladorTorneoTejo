@@ -156,8 +156,7 @@ torneoTejoResistencia/
 ├── playoffs.html                 # Configurador de playoffs
 ├── torneo1.html                  # Historial del primer torneo
 ├── torneo2.html                  # Historial del segundo torneo
-├── ranking.txt                   # Archivo con el ranking FIFA (editable)
-├── enfrentamientos_directos.txt  # Historial de partidos entre jugadores
+├── enfrentamientos_directos.txt  # Historial de partidos entre jugadores (fuente del ranking FIFA)
 ├── formatos.md                   # Documentacion de formatos
 ├── README.md                     # Este archivo
 ├── api/
@@ -177,6 +176,7 @@ torneoTejoResistencia/
 │   ├── partido.js                # Logica de partido 1vs1
 │   ├── torneo.js                 # Logica del creador de torneo
 │   ├── playoffs.js               # Logica de playoffs
+│   ├── rankingCalculator.js      # Calcula el ranking FIFA desde enfrentamientos_directos.txt
 │   └── historial_torneos.js      # Carga y renderiza torneos historicos
 └── img/
     └── favicon.png               # Icono de la aplicacion
@@ -186,17 +186,8 @@ torneoTejoResistencia/
 
 ## Archivos de Configuracion
 
-### ranking.txt
-Contiene el ranking de jugadores en formato CSV:
-```
-# Comentarios empiezan con #
-nombre,ranking,winRate,promedioGoles
-Chama,198,0.7368,6.47
-Facu,126,0.6154,5.92
-```
-
 ### enfrentamientos_directos.txt
-Historial de partidos jugados:
+Historial de partidos jugados. Es la unica fuente de datos: a partir de este archivo, `js/rankingCalculator.js` calcula el ranking FIFA de cada jugador en el navegador (sistema anti-inflacion, ver `Ranking_FIFA_EXPLICADO.md`). Ya no existe un `ranking.txt` separado para editar a mano.
 ```
 jugador1,jugador2,resultado_j1,marcador,torneo,fecha,fase
 Chama,Rafa,G,7-2,Primer torneo de hockey de mesa,3/5/2025,Final
@@ -233,8 +224,8 @@ npx serve
 Luego abrir `http://localhost:8000` en el navegador.
 
 ### Para actualizar el ranking:
-1. Editar el archivo `ranking.txt` con los nuevos datos
-2. Recargar la pagina del simulador
+1. Agregar el partido jugado como una nueva linea en `enfrentamientos_directos.txt`
+2. Recargar la pagina: el ranking FIFA se recalcula automaticamente
 
 ---
 
