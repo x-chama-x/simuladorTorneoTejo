@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             top5Invictos.forEach((item, index) => {
                 const periodo = item.activa
                     ? item.fechaInicio
-                    : (item.fechaInicio === item.fechaFin ? item.fechaInicio : `${item.fechaInicio} → ${item.fechaFin}`);
+                    : `${item.fechaInicio} → ${item.fechaFin}`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td>${index + 1}</td><td><strong>${item.nombre}</strong></td><td>${item.npi}</td><td>${periodo}</td>`;
                 tbodyInvictos.appendChild(tr);
