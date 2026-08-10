@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const gmap = {}; // Goles globales (sin amistosos, para el ranking histrico)
         const statsGeneral = {}; // Estadsticas web generales
         const matchHistory = {}; // Para la racha
+        const matchHistoryDetailed = {}; // Para calcular período (fechas) de cada racha invicta
 
         // Función para parsear fecha en formato d/m/yyyy a objeto Date
         const parseFecha = (fechaStr) => {
@@ -107,21 +108,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Procesar partidos ya ordenados
         for (const partido of partidos) {
-            const { j1, j2, res, marcador, torneo } = partido;
+            const { j1, j2, res, marcador, torneo, fechaStr } = partido;
 
             // Historial para racha
             if (!matchHistory[j1]) matchHistory[j1] = [];
             if (!matchHistory[j2]) matchHistory[j2] = [];
+            if (!matchHistoryDetailed[j1]) matchHistoryDetailed[j1] = [];
+            if (!matchHistoryDetailed[j2]) matchHistoryDetailed[j2] = [];
 
-            if (res === 'G') {
-                matchHistory[j1].push('G');
-                matchHistory[j2].push('P');
-            } else if (res === 'P') {
-                matchHistory[j1].push('P');
-                matchHistory[j2].push('G');
-            } else if (res === 'E') {
-                matchHistory[j1].push('E');
-                matchHistory[j2].push('E');
+            let resJ1 = null, resJ2 = null;
+            if (res === 'G') { resJ1 = 'G'; resJ2 = 'P'; }
+            else if (res === 'P') { resJ1 = 'P'; resJ2 = 'G'; }
+            else if (res === 'E') { resJ1 = 'E'; resJ2 = 'E'; }
+
+            if (resJ1) {
+                matchHistory[j1].push(resJ1);
+                matchHistory[j2].push(resJ2);
+                matchHistoryDetailed[j1].push({ res: resJ1, fechaStr });
+                matchHistoryDetailed[j2].push({ res: resJ2, fechaStr });
             }
 
             // Stats para ranking de goles (omitiendo amistosos)
@@ -196,44 +200,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- Calcular y pintar Top 5 Mayores Invictos ---
-        const invictosMap = {};
-        for (const nombre in matchHistory) {
-            let maxNPI = 0;
-            let currentNPI = 0;
-            for (const res of matchHistory[nombre]) {
-                if (res === 'G' || res === 'E') {
-                    currentNPI++;
-                    if (currentNPI > maxNPI) maxNPI = currentNPI;
-                } else {
-                    currentNPI = 0;
+        // Se listan rachas individuales (no agrupadas por jugador): si alguien
+        // tuvo más de un invicto, cada uno entra por separado en el top 5.
+        const todasLasRachas = [];
+        for (const nombre in matchHistoryDetailed) {
+            const historial = matchHistoryDetailed[nombre];
+            let inicioIdx = null;
+
+            for (let i = 0; i < historial.length; i++) {
+                if (historial[i].res === 'G' || historial[i].res === 'E') {
+                    if (inicioIdx === null) inicioIdx = i;
+                } else if (inicioIdx !== null) {
+                    todasLasRachas.push({
+                        nombre,
+                        npi: i - inicioIdx,
+                        fechaInicio: historial[inicioIdx].fechaStr,
+                        fechaFin: historial[i - 1].fechaStr,
+                        activa: false
+                    });
+                    inicioIdx = null;
                 }
             }
-            if (maxNPI > 0) {
-                if (!invictosMap[maxNPI]) {
-                    invictosMap[maxNPI] = [];
-                }
-                invictosMap[maxNPI].push(nombre);
+
+            // Racha que llega hasta el último partido registrado: todavía no
+            // se cortó con una derrota, así que sigue activa.
+            if (inicioIdx !== null) {
+                todasLasRachas.push({
+                    nombre,
+                    npi: historial.length - inicioIdx,
+                    fechaInicio: historial[inicioIdx].fechaStr,
+                    fechaFin: historial[historial.length - 1].fechaStr,
+                    activa: true
+                });
             }
         }
 
-        const agrupadosNPI = Object.keys(invictosMap).map(npi => ({
-            npi: parseInt(npi, 10),
-            nombres: invictosMap[npi].sort()
-        }));
-
-        agrupadosNPI.sort((a, b) => b.npi - a.npi);
-        const top5Invictos = agrupadosNPI.slice(0, 5);
+        todasLasRachas.sort((a, b) => {
+            if (b.npi !== a.npi) return b.npi - a.npi;
+            return parseFecha(b.fechaFin) - parseFecha(a.fechaFin);
+        });
+        const top5Invictos = todasLasRachas.slice(0, 5);
 
         const tbodyInvictos = document.querySelector('#invictos-table tbody');
         if (tbodyInvictos) {
             top5Invictos.forEach((item, index) => {
+                const periodo = item.activa
+                    ? item.fechaInicio
+                    : (item.fechaInicio === item.fechaFin ? item.fechaInicio : `${item.fechaInicio} → ${item.fechaFin}`);
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${index + 1}</td><td><strong>${item.nombres.join(', ')}</strong></td><td>${item.npi}</td>`;
+                tr.innerHTML = `<td>${index + 1}</td><td><strong>${item.nombre}</strong></td><td>${item.npi}</td><td>${periodo}</td>`;
                 tbodyInvictos.appendChild(tr);
             });
             if (top5Invictos.length === 0) {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="3" style="text-align:center; color:#8b949e;">Aún no hay datos</td>`;
+                tr.innerHTML = `<td colspan="4" style="text-align:center; color:#8b949e;">Aún no hay datos</td>`;
                 tbodyInvictos.appendChild(tr);
             }
         }

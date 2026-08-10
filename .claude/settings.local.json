@@ -5,7 +5,8 @@
       "Bash(node -e ' *)",
       "Bash(rm js/_campeon_debug4.js)",
       "Bash(git rm *)",
-      "Bash(pkill -f \"http.server 8123\")"
+      "Bash(pkill -f \"http.server 8123\")",
+      "Bash(node --check js/index.js)"
     ]
   }
 }
