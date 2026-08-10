@@ -1,32 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     Promise.all([
-        fetch('ranking.txt').then(r => r.text()),
         fetch('enfrentamientos_directos.txt').then(r => r.text())
-    ]).then(([rankingData, matchesData]) => {
-        // --- Procesar Ranking ---
-        const lineasRanking = rankingData.split('\n');
+    ]).then(([matchesData]) => {
+        // --- Procesar Ranking (calculado desde el historial de partidos) ---
         const mapRanking = {};
-        const jugadoresRanking = [];
-        for (const linea of lineasRanking) {
-            const l = linea.trim();
-            if (l && !l.startsWith('#')) {
-                const partes = l.split(',');
-                if (partes.length >= 2) {
-                    const nombre = partes[0].trim();
-                    const ranking = parseInt(partes[1].trim() || 0, 10);
-                    mapRanking[nombre] = ranking;
-                    jugadoresRanking.push({
-                        nombre: nombre,
-                        ranking: ranking,
-                        winRate: 0,
-                        promedioGoles: 0
-                    });
-                }
-            }
-        }
-
-        // Ordenar por ranking
-        jugadoresRanking.sort((a, b) => b.ranking - a.ranking);
+        const jugadoresRanking = calcularRankingDesdeTexto(matchesData).map(r => {
+            mapRanking[r.nombre] = r.ranking;
+            return {
+                nombre: r.nombre,
+                ranking: r.ranking,
+                winRate: 0,
+                promedioGoles: 0
+            };
+        });
 
         // --- Procesar Partidos ---
         const lineasMatches = matchesData.split('\n');

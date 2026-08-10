@@ -350,7 +350,7 @@ function actualizarBotones() {
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', async () => {
-    // Cargar jugadores desde ranking.txt
+    // Cargar jugadores y ranking FIFA (calculado desde enfrentamientos_directos.txt)
     await cargarJugadoresDesdeArchivo();
 
     // Cargar enfrentamientos directos

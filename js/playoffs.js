@@ -11,35 +11,26 @@ let jugadoresDisponibles = [];
 let enfrentamientosDirectos = {};
 let maxEnfrentamientosGlobal = 1;
 
-// ---- Carga de jugadores ----
+// ---- Carga de jugadores (ranking FIFA calculado desde enfrentamientos_directos.txt) ----
 async function cargarJugadoresDesdeArchivo() {
     try {
-        const response = await fetch('ranking.txt');
-        if (!response.ok) throw new Error('No se pudo cargar ranking.txt');
-        const texto = await response.text();
-        const lineas = texto.split('\n');
-        const jugadores = [];
-        for (const linea of lineas) {
-            const t = linea.trim();
-            if (!t || t.startsWith('#')) continue;
-            const p = t.split(',');
-            if (p.length >= 2) {
-                jugadores.push({
-                    nombre: p[0].trim(),
-                    ranking: parseInt(p[1].trim()),
-                    winRate: 0,
-                    promedioGoles: 0
-                });
-            }
-        }
-        if (!jugadores.length) throw new Error('No hay jugadores válidos');
-        jugadores.sort((a, b) => b.ranking - a.ranking);
+        const respMatches = await fetch('enfrentamientos_directos.txt');
+        if (!respMatches.ok) throw new Error('No se pudo cargar enfrentamientos_directos.txt');
+        const matchesText = await respMatches.text();
+
+        const rankingCalculado = calcularRankingDesdeTexto(matchesText);
+        if (!rankingCalculado.length) throw new Error('No hay partidos para calcular el ranking');
+
+        const jugadores = rankingCalculado.map(r => ({
+            nombre: r.nombre,
+            ranking: r.ranking,
+            winRate: 0,
+            promedioGoles: 0
+        }));
         jugadoresDisponibles = [...jugadores];
 
         // ---- Calcular stats desde enfrentamientos_directos.txt ----
-        const respMatches = await fetch('enfrentamientos_directos.txt');
-        if (respMatches.ok) {
-            const matchesText = await respMatches.text();
+        {
             const matchesLines = matchesText.split('\n');
             const stats = {};
             enfrentamientosDirectos = {};
@@ -101,7 +92,7 @@ async function cargarJugadoresDesdeArchivo() {
         return true;
     } catch (error) {
         console.error('Error cargando jugadores:', error);
-        alert('Error: No se pudo cargar ranking.txt.');
+        alert('Error: No se pudo calcular el ranking FIFA desde enfrentamientos_directos.txt.');
         return false;
     }
 }

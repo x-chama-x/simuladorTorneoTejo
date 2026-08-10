@@ -2,6 +2,8 @@
 
 Este documento detalla la metodología de cálculo del **Ranking FIFA Oficial** de la comunidad de Air Hockey (Tejo) "La Resistencia". Esta versión (V2) introduce un sistema de **Suma Cero** y un **Multiplicador Dinámico por Diferencia de Puntos (tipo ELO)** diseñado para controlar la inflación de puntos, evitar que el líder se vuelva inalcanzable de manera artificial y mantener la competitividad del ranking al rojo vivo.
 
+> El cálculo ya no es manual: `js/rankingCalculator.js` implementa esta misma metodología y recalcula el ranking automáticamente en el navegador a partir de `enfrentamientos_directos.txt` cada vez que se carga una página.
+
 ---
 
 #### 1. Ranking Inicial y Puntos Base (Tras el Primer Torneo)

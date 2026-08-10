@@ -1,4 +1,4 @@
-// Variables globales para los jugadores (se cargan desde ranking.txt)
+// Variables globales para los jugadores (ranking calculado desde enfrentamientos_directos.txt)
 let jugadoresBase = [];
 let nuevosJugadores = [];
 let jugadoresDisponibles = [];
@@ -11,53 +11,33 @@ let maxEnfrentamientosGlobal = 1; // Máximo de partidos entre cualquier par de 
 // Variable global para la configuración manual de grupos
 window.gruposManualConfig = null; // { grupoA: [...], grupoB: [...], grupoC: [...] }
 
-// Función para cargar jugadores desde el archivo ranking.txt
+// Función para calcular los jugadores y su ranking FIFA a partir del historial de partidos
 async function cargarJugadoresDesdeArchivo() {
     try {
-        const response = await fetch('ranking.txt');
-        if (!response.ok) {
-            throw new Error('No se pudo cargar el archivo ranking.txt');
-        }
-        const texto = await response.text();
-        const lineas = texto.split('\n');
+        const rankingCalculado = await cargarRankingCalculado();
 
-        const jugadores = [];
-        for (const linea of lineas) {
-            const lineaTrimmed = linea.trim();
-            // Ignorar líneas vacías y comentarios
-            if (lineaTrimmed === '' || lineaTrimmed.startsWith('#')) {
-                continue;
-            }
-
-            const partes = lineaTrimmed.split(',');
-            if (partes.length >= 2) {
-                jugadores.push({
-                    nombre: partes[0].trim(),
-                    ranking: parseInt(partes[1].trim()),
-                    winRate: 0,
-                    promedioGoles: 0
-                });
-            }
+        // Validar que se hayan calculado jugadores
+        if (rankingCalculado.length === 0) {
+            throw new Error('No hay partidos en enfrentamientos_directos.txt para calcular el ranking');
         }
 
-        // Validar que se hayan cargado jugadores
-        if (jugadores.length === 0) {
-            throw new Error('El archivo ranking.txt está vacío o no tiene jugadores válidos');
-        }
-
-        // Ordenar por ranking descendente
-        jugadores.sort((a, b) => b.ranking - a.ranking);
+        const jugadores = rankingCalculado.map(r => ({
+            nombre: r.nombre,
+            ranking: r.ranking,
+            winRate: 0,
+            promedioGoles: 0
+        }));
 
         // Los primeros 8 son jugadoresBase, el resto son nuevosJugadores
         jugadoresBase = jugadores.slice(0, 8);
         nuevosJugadores = jugadores.slice(8);
         jugadoresDisponibles = [...jugadores];
 
-        console.log('✅ Jugadores cargados desde ranking.txt:', jugadoresDisponibles);
+        console.log('✅ Ranking FIFA calculado desde enfrentamientos_directos.txt:', jugadoresDisponibles);
         return true;
     } catch (error) {
-        console.error('❌ Error al cargar jugadores desde ranking.txt:', error);
-        alert('Error: No se pudo cargar el archivo ranking.txt. Verificá que el archivo exista y tenga el formato correcto.');
+        console.error('❌ Error al calcular el ranking FIFA:', error);
+        alert('Error: No se pudo calcular el ranking FIFA desde enfrentamientos_directos.txt. Verificá que el archivo exista y tenga el formato correcto.');
         return false;
     }
 }
