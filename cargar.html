@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Partido - Torneo Air Hockey</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/cargar.css">
+</head>
+<body>
+    <div class="container">
+        <h1><img src="img/favicon.png" alt="logo" style="width: 1em; height: 1em; vertical-align: middle; margin-right: 5px;">Cargar Partido</h1>
+        <p class="subtitle">Cargá el resultado de un partido (amistoso o de torneo) directo desde el celular</p>
+
+        <form id="form-cargar" class="form-cargar">
+            <div class="form-row">
+                <label for="torneo">Torneo</label>
+                <select id="torneo"></select>
+                <input type="text" id="torneo-nuevo" class="form-row-inline" placeholder="Nombre del nuevo torneo">
+            </div>
+
+            <div class="form-row">
+                <label for="fase">Fase</label>
+                <select id="fase"></select>
+                <input type="text" id="fase-nuevo" class="form-row-inline" placeholder="Nombre de la fase">
+            </div>
+
+            <div class="form-row">
+                <label for="fecha">Fecha</label>
+                <input type="date" id="fecha">
+            </div>
+
+            <div class="form-row">
+                <label for="jugador1">Jugador 1</label>
+                <select id="jugador1"></select>
+                <input type="text" id="jugador1-nuevo" class="form-row-inline" placeholder="Nombre del nuevo jugador">
+            </div>
+
+            <div class="form-row">
+                <label for="jugador2">Jugador 2</label>
+                <select id="jugador2"></select>
+                <input type="text" id="jugador2-nuevo" class="form-row-inline" placeholder="Nombre del nuevo jugador">
+            </div>
+
+            <div class="marcador-row">
+                <div class="form-row">
+                    <label for="goles1">Goles Jugador 1</label>
+                    <input type="number" id="goles1" min="0" inputmode="numeric">
+                </div>
+                <div class="marcador-guion">-</div>
+                <div class="form-row">
+                    <label for="goles2">Goles Jugador 2</label>
+                    <input type="number" id="goles2" min="0" inputmode="numeric">
+                </div>
+            </div>
+
+            <div id="form-feedback"></div>
+
+            <button type="submit" id="btn-cargar">Cargar Partido</button>
+        </form>
+
+        <div class="seccion-check">
+            <h2>🏆 Verificar Clasificación</h2>
+            <p class="subtitle">Cuando se completan todos los partidos de una fase, calculá quiénes pasan</p>
+
+            <div class="check-grid">
+                <div class="form-row full">
+                    <label for="check-torneo">Torneo</label>
+                    <select id="check-torneo"></select>
+                </div>
+                <div class="form-row full">
+                    <label for="check-fase">Fase</label>
+                    <select id="check-fase"></select>
+                </div>
+                <div class="form-row">
+                    <label for="check-n">Jugadores en esta fase</label>
+                    <input type="number" id="check-n" min="2" placeholder="ej: 4">
+                </div>
+                <div class="form-row">
+                    <label for="check-clasifican">Cuántos clasifican</label>
+                    <input type="number" id="check-clasifican" min="1" placeholder="ej: 2">
+                </div>
+            </div>
+
+            <button type="button" id="btn-calcular">Calcular</button>
+
+            <div id="check-feedback"></div>
+            <div id="check-resultado"></div>
+        </div>
+    </div>
+
+    <script src="js/menu.js"></script>
+    <script src="js/rankingCalculator.js"></script>
+    <script src="js/cargar.js"></script>
+</body>
+</html>
