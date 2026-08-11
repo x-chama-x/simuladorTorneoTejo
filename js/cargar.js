@@ -5,23 +5,36 @@
 // (amistoso o de torneo) y commitearlo directo a
 // enfrentamientos_directos.txt vía api/cargar-partido.js.
 //
-// Además incluye un panel de "Verificación de Clasificación":
-// cuando se completan todos los partidos de una fase de Liga /
-// Grupos / Repechaje, calcula la tabla y te dice quiénes pasan.
+// Reglas automáticas:
+// - Torneos finalizados (con partido de fase "Final" cargado):
+//   no se puede cargar nada más.
+// - Torneos en curso cuya fase de Liga/Grupos ya está completa
+//   (round-robin completo, detectado solo con los partidos
+//   cargados): el select de Fase se limita a fases de playoff.
+//
+// Además incluye un panel de "Verificación de Clasificación"
+// (solo para torneos en curso, no amistosos): indicando cuántos
+// jugadores tiene una fase y cuántos clasifican, calcula la tabla
+// apenas se completan todos los partidos de esa fase.
 // =====================================================
 
-const FASES_SUGERIDAS = [
-    'Fase de Liga',
-    'Fase de Grupos (A)',
-    'Fase de Grupos (B)',
-    'Fase de Grupos (C)',
+const FASES_GRUPO_REGEX = /^Fase de (Liga|Grupos)/i;
+
+const FASES_PLAYOFF = [
     'Repechaje 2dos Puestos',
     'Repechaje 3ros Puestos',
     'Partido Eliminatorio',
     'Semifinal',
     'Tercer Puesto',
-    'Final',
-    'Amistoso'
+    'Final'
+];
+
+const FASES_GRUPO_Y_PLAYOFF = [
+    'Fase de Liga',
+    'Fase de Grupos (A)',
+    'Fase de Grupos (B)',
+    'Fase de Grupos (C)',
+    ...FASES_PLAYOFF
 ];
 
 const NUEVO_VALUE = '__nuevo__';
@@ -52,12 +65,11 @@ async function inicializar() {
 
     poblarSelectJugador('jugador1');
     poblarSelectJugador('jugador2');
-    poblarSelectTorneo('torneo');
-    poblarSelectTorneo('check-torneo');
-    poblarSelectFase('fase');
+    poblarSelectTorneo();
+    poblarSelectTorneoCheck();
 
-    // Si hay un torneo en curso (sin Final cargada todavía), lo dejamos preseleccionado
-    // en los dos selects: es lo más probable que se necesite cargar (ej. semis/final pendientes).
+    // Si hay un torneo en curso (sin Final cargada todavía), lo dejamos preseleccionado:
+    // es lo más probable que se necesite seguir cargando (ej. semis/final pendientes).
     const torneoEnCurso = torneoEnCursoMasReciente();
     if (torneoEnCurso) {
         const torneoSel = document.getElementById('torneo');
@@ -66,10 +78,14 @@ async function inicializar() {
         if (checkTorneoSel) checkTorneoSel.value = torneoEnCurso;
     }
 
+    actualizarEstadoFormulario();
     actualizarFasesDisponibles();
 
     const fechaInput = document.getElementById('fecha');
     if (fechaInput) fechaInput.valueAsDate = new Date();
+
+    document.getElementById('goles1').value = '0';
+    document.getElementById('goles2').value = '0';
 }
 
 // Convierte "D/M/YYYY" en un número comparable (para ordenar por fecha).
@@ -89,13 +105,18 @@ function torneosEnCurso() {
     return torneos.filter(t => !finalizados.has(t));
 }
 
+function torneosEnCursoOrdenados() {
+    return torneosEnCurso().sort((a, b) => ultimaFecha(b) - ultimaFecha(a));
+}
+
+function ultimaFecha(torneo) {
+    return Math.max(...matches.filter(m => m.torneo === torneo).map(m => fechaClave(m.fecha)), 0);
+}
+
 // El torneo en curso con el partido más reciente (el que probablemente siga faltando cargar).
 function torneoEnCursoMasReciente() {
-    const enCurso = torneosEnCurso();
-    if (enCurso.length === 0) return null;
-    return enCurso
-        .map(t => ({ t, ultima: Math.max(...matches.filter(m => m.torneo === t).map(m => fechaClave(m.fecha))) }))
-        .sort((a, b) => b.ultima - a.ultima)[0].t;
+    const enCurso = torneosEnCursoOrdenados();
+    return enCurso.length > 0 ? enCurso[0] : null;
 }
 
 function parsearMatches(texto) {
@@ -105,6 +126,46 @@ function parsearMatches(texto) {
         .map(l => l.split(',').map(p => p.trim()))
         .filter(p => p.length >= 7)
         .map(p => ({ j1: p[0], j2: p[1], resJ1: p[2], marcador: p[3], torneo: p[4], fecha: p[5], fase: p[6] }));
+}
+
+// ---------- Detección de estado del torneo ----------
+
+function esTorneoFinalizado(torneo) {
+    return matches.some(m => m.torneo === torneo && m.fase === 'Final');
+}
+
+// Fases de tipo Liga/Grupos que ya tienen al menos un partido cargado para ese torneo.
+function fasesDeGrupoUsadas(torneo) {
+    return [...new Set(matches.filter(m => m.torneo === torneo && FASES_GRUPO_REGEX.test(m.fase)).map(m => m.fase))];
+}
+
+// Una fase está "completa" si, con los jugadores que aparecieron en sus partidos,
+// ya se jugó el todos-contra-todos (mismo criterio que el panel de clasificación,
+// pero acá se infiere solo, sin pedir la cantidad de jugadores a mano).
+function faseCompleta(torneo, fase) {
+    const partidos = matches.filter(m => m.torneo === torneo && m.fase === fase);
+    const jugadoresFase = new Set();
+    partidos.forEach(m => { jugadoresFase.add(m.j1); jugadoresFase.add(m.j2); });
+    const n = jugadoresFase.size;
+    if (n < 2) return false;
+    const esperados = (n * (n - 1)) / 2;
+    return partidos.length >= esperados;
+}
+
+// La fase de grupos/liga de un torneo se considera terminada cuando hay al menos
+// una fase de ese tipo cargada y todas las que se usaron están completas.
+function faseDeGruposCompleta(torneo) {
+    const fasesGrupo = fasesDeGrupoUsadas(torneo);
+    if (fasesGrupo.length === 0) return false;
+    return fasesGrupo.every(f => faseCompleta(torneo, f));
+}
+
+// Estados posibles: 'nuevo' | 'amistoso' | 'finalizado' | 'en-curso-grupos' | 'en-curso-playoffs'
+function estadoTorneo(torneo) {
+    if (!torneo || torneo === NUEVO_VALUE) return 'nuevo';
+    if (torneo === 'Amistoso') return 'amistoso';
+    if (esTorneoFinalizado(torneo)) return 'finalizado';
+    return faseDeGruposCompleta(torneo) ? 'en-curso-playoffs' : 'en-curso-grupos';
 }
 
 // ---------- Poblar selects ----------
@@ -118,25 +179,23 @@ function poblarSelectJugador(selectId) {
         `<option value="${NUEVO_VALUE}">+ Nuevo jugador…</option>`;
 }
 
-function poblarSelectTorneo(selectId) {
-    const sel = document.getElementById(selectId);
+function poblarSelectTorneo() {
+    const sel = document.getElementById('torneo');
     if (!sel) return;
 
     const enCursoSet = new Set(torneosEnCurso());
     const todos = [...new Set(matches.map(m => m.torneo))].filter(t => t !== 'Amistoso');
-    const enCurso = todos.filter(t => enCursoSet.has(t))
-        .sort((a, b) => Math.max(...matches.filter(m => m.torneo === b).map(m => fechaClave(m.fecha))) -
-                        Math.max(...matches.filter(m => m.torneo === a).map(m => fechaClave(m.fecha))));
+    const enCurso = todos.filter(t => enCursoSet.has(t)).sort((a, b) => ultimaFecha(b) - ultimaFecha(a));
     const finalizados = todos.filter(t => !enCursoSet.has(t)).sort();
 
     let html = '<option value="Amistoso">Amistoso</option>';
     if (enCurso.length > 0) {
-        html += '<optgroup label="🔴 En curso (faltan playoffs)">' +
+        html += '<optgroup label="🔴 En curso">' +
             enCurso.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('') +
             '</optgroup>';
     }
     if (finalizados.length > 0) {
-        html += '<optgroup label="✅ Finalizados">' +
+        html += '<optgroup label="✅ Finalizados (no se puede cargar)">' +
             finalizados.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('') +
             '</optgroup>';
     }
@@ -144,11 +203,68 @@ function poblarSelectTorneo(selectId) {
     sel.innerHTML = html;
 }
 
-function poblarSelectFase(selectId) {
-    const sel = document.getElementById(selectId);
+// Select de "Verificar Clasificación": solo torneos en curso (nunca Amistoso ni finalizados).
+function poblarSelectTorneoCheck() {
+    const sel = document.getElementById('check-torneo');
+    const panel = document.getElementById('check-panel-body');
+    const vacio = document.getElementById('check-empty');
     if (!sel) return;
-    sel.innerHTML = FASES_SUGERIDAS.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('') +
-        `<option value="${NUEVO_VALUE}">+ Otra fase…</option>`;
+
+    const enCurso = torneosEnCursoOrdenados();
+
+    if (enCurso.length === 0) {
+        sel.innerHTML = '';
+        if (panel) panel.style.display = 'none';
+        if (vacio) vacio.style.display = 'block';
+        return;
+    }
+
+    if (panel) panel.style.display = '';
+    if (vacio) vacio.style.display = 'none';
+    sel.innerHTML = enCurso.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+}
+
+// Reconstruye el select de Fase (form principal) y habilita/deshabilita el
+// formulario entero según el estado del torneo elegido.
+function actualizarEstadoFormulario() {
+    const torneoSel = document.getElementById('torneo');
+    const torneo = torneoSel.value;
+    const estado = estadoTorneo(torneo);
+
+    const faseSel = document.getElementById('fase');
+    const faseNuevoInput = document.getElementById('fase-nuevo');
+    const statusCont = document.getElementById('torneo-status');
+    const camposFormulario = ['jugador1', 'jugador2', 'goles1', 'goles2', 'fecha', 'fase'];
+    const btnCargar = document.getElementById('btn-cargar');
+
+    // Reset: todo habilitado salvo que el estado diga lo contrario
+    camposFormulario.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = false; });
+    document.querySelectorAll('.stepper-btn').forEach(b => b.disabled = false);
+    if (btnCargar) btnCargar.disabled = false;
+    faseNuevoInput.style.display = 'none';
+
+    let faseOptions = [];
+    let bannerHtml = '';
+
+    if (estado === 'finalizado') {
+        bannerHtml = `<div class="check-banner check-banner-success">✅ Este torneo ya finalizó. No se pueden cargar más partidos (elegí otro torneo, o "Amistoso").</div>`;
+        camposFormulario.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+        document.querySelectorAll('.stepper-btn').forEach(b => b.disabled = true);
+        if (btnCargar) btnCargar.disabled = true;
+    } else if (estado === 'amistoso') {
+        faseOptions = ['Amistoso'];
+    } else if (estado === 'en-curso-playoffs') {
+        faseOptions = FASES_PLAYOFF;
+        bannerHtml = `<div class="check-banner check-banner-info">🏁 La fase de liga/grupos de este torneo ya está completa. Ahora se cargan partidos de playoffs.</div>`;
+    } else {
+        // 'en-curso-grupos' o 'nuevo'
+        faseOptions = FASES_GRUPO_Y_PLAYOFF;
+    }
+
+    faseSel.innerHTML = faseOptions.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('') +
+        (estado !== 'finalizado' && estado !== 'amistoso' ? `<option value="${NUEVO_VALUE}">+ Otra fase…</option>` : '');
+
+    statusCont.innerHTML = bannerHtml;
 }
 
 // Actualiza el dropdown de fases del panel "Verificar Clasificación"
@@ -156,7 +272,7 @@ function poblarSelectFase(selectId) {
 function actualizarFasesDisponibles() {
     const torneoSel = document.getElementById('check-torneo');
     const faseSel = document.getElementById('check-fase');
-    if (!torneoSel || !faseSel) return;
+    if (!torneoSel || !faseSel || !torneoSel.value) return;
 
     const torneo = torneoSel.value;
     const fases = [...new Set(matches.filter(m => m.torneo === torneo).map(m => m.fase))].sort();
@@ -174,10 +290,23 @@ function actualizarFasesDisponibles() {
 function configurarEventos() {
     document.getElementById('jugador1')?.addEventListener('change', e => toggleNuevo(e.target, 'jugador1-nuevo'));
     document.getElementById('jugador2')?.addEventListener('change', e => toggleNuevo(e.target, 'jugador2-nuevo'));
-    document.getElementById('torneo')?.addEventListener('change', e => toggleNuevo(e.target, 'torneo-nuevo'));
+    document.getElementById('torneo')?.addEventListener('change', e => {
+        toggleNuevo(e.target, 'torneo-nuevo');
+        actualizarEstadoFormulario();
+    });
     document.getElementById('fase')?.addEventListener('change', e => toggleNuevo(e.target, 'fase-nuevo'));
 
     document.getElementById('form-cargar')?.addEventListener('submit', onSubmitPartido);
+
+    document.querySelectorAll('.stepper-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = document.getElementById(btn.dataset.target);
+            if (!target) return;
+            const delta = parseInt(btn.dataset.delta, 10);
+            const nuevoValor = Math.max(0, (parseInt(target.value, 10) || 0) + delta);
+            target.value = nuevoValor;
+        });
+    });
 
     document.getElementById('check-torneo')?.addEventListener('change', actualizarFasesDisponibles);
     document.getElementById('check-fase')?.addEventListener('change', cargarConfigGuardada);
@@ -240,28 +369,35 @@ async function onSubmitPartido(e) {
 
         mostrarBanner('form-feedback', `✅ Cargado: ${jugador1} ${marcador} ${jugador2} — ${torneo} (${fase})`, 'success');
 
-        // Reset parcial: mantiene torneo/fase/fecha para cargar varios partidos seguidos
+        // Reset parcial: mantiene torneo/fecha para cargar varios partidos seguidos
         poblarSelectJugador('jugador1');
         poblarSelectJugador('jugador2');
         document.getElementById('jugador1').value = '';
         document.getElementById('jugador2').value = '';
-        document.getElementById('goles1').value = '';
-        document.getElementById('goles2').value = '';
-        poblarSelectTorneo('torneo');
-        document.getElementById('torneo').value = [...document.getElementById('torneo').options].some(o => o.value === torneo) ? torneo : 'Amistoso';
-        poblarSelectTorneo('check-torneo');
-        document.getElementById('check-torneo').value = torneo;
-        actualizarFasesDisponibles();
-        document.getElementById('check-fase').value = fase;
+        document.getElementById('goles1').value = '0';
+        document.getElementById('goles2').value = '0';
 
-        // Si ya hay una config guardada (o se acaba de calcular) para este torneo+fase, re-chequea solo
+        poblarSelectTorneo();
+        document.getElementById('torneo').value = [...document.getElementById('torneo').options].some(o => o.value === torneo) ? torneo : 'Amistoso';
+        actualizarEstadoFormulario();
+
+        poblarSelectTorneoCheck();
+        if ([...document.getElementById('check-torneo').options].some(o => o.value === torneo)) {
+            document.getElementById('check-torneo').value = torneo;
+            actualizarFasesDisponibles();
+            if ([...document.getElementById('check-fase').options].some(o => o.value === fase)) {
+                document.getElementById('check-fase').value = fase;
+            }
+        }
+
+        // Si ya hay una config guardada para este torneo+fase, re-chequea solo
         intentarAutoVerificacion(torneo, fase);
     } catch (err) {
         console.error(err);
         mostrarBanner('form-feedback', `❌ No se pudo cargar: ${err.message}`, 'error');
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Cargar Partido';
+        btn.textContent = '✅ Cargar Partido';
     }
 }
 
