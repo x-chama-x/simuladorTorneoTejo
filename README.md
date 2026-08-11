@@ -171,12 +171,11 @@ torneoTejoResistencia/
 │   ├── poll.js                   # API serverless para encuestas (Redis)
 │   └── cargar-partido.js         # API serverless: commit de partidos a GitHub
 ├── css/
-│   ├── styles.css                # Estilos principales
+│   ├── styles.css                # Estilos principales (incluye Cargar Partido)
 │   ├── montecarlo.css            # Estilos Monte Carlo
 │   ├── partido.css               # Estilos Partido 1vs1
 │   ├── torneo.css                # Estilos Creador de Torneo
-│   ├── playoffs.css              # Estilos Playoffs
-│   └── cargar.css                # Estilos Cargar Partido
+│   └── playoffs.css              # Estilos Playoffs
 ├── js/
 │   ├── index.js                  # Logica de la pagina de inicio
 │   ├── menu.js                   # Menu de navegacion
