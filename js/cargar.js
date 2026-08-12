@@ -6,11 +6,14 @@
 // enfrentamientos_directos.txt vía api/cargar-partido.js.
 //
 // Reglas automáticas:
-// - Torneos finalizados (con partido de fase "Final" cargado):
-//   no se puede cargar nada más.
+// - El select de Torneo solo muestra los que están en curso (los
+//   finalizados ni siquiera aparecen ahí, para no confundir).
 // - Torneos en curso cuya fase de Liga/Grupos ya está completa
 //   (round-robin completo, detectado solo con los partidos
 //   cargados): el select de Fase se limita a fases de playoff.
+// - Si se crea un torneo nuevo, el nombre tiene que seguir el
+//   formato "Primer/Segundo/Tercer/... torneo de hockey de mesa"
+//   (se sugiere solo el próximo nombre correcto).
 //
 // Además incluye un panel de "Verificación de Clasificación"
 // (solo para torneos en curso, no amistosos): indicando cuántos
@@ -19,6 +22,11 @@
 // =====================================================
 
 const FASES_GRUPO_REGEX = /^Fase de (Liga|Grupos)/i;
+
+const ORDINALES = [
+    'Primer', 'Segundo', 'Tercer', 'Cuarto', 'Quinto', 'Sexto',
+    'Séptimo', 'Octavo', 'Noveno', 'Décimo', 'Undécimo', 'Duodécimo'
+];
 
 const FASES_PLAYOFF = [
     'Repechaje 2dos Puestos',
@@ -119,6 +127,25 @@ function torneoEnCursoMasReciente() {
     return enCurso.length > 0 ? enCurso[0] : null;
 }
 
+// ---------- Formato de nombre para torneos nuevos ----------
+
+// Todos los torneos "oficiales" alguna vez cargados (en curso o ya finalizados), sin Amistoso.
+function torneosOficiales() {
+    return [...new Set(matches.map(m => m.torneo))].filter(t => t !== 'Amistoso');
+}
+
+// Según cuántos torneos oficiales existen, calcula el nombre correcto del próximo
+// (Primer, Segundo, Tercer... torneo de hockey de mesa).
+function nombreSugeridoProximoTorneo() {
+    const cantidad = torneosOficiales().length;
+    const ordinal = ORDINALES[cantidad] || `${cantidad + 1}°`;
+    return `${ordinal} torneo de hockey de mesa`;
+}
+
+function validarNombreNuevoTorneo(nombre) {
+    return nombre.trim().toLowerCase() === nombreSugeridoProximoTorneo().toLowerCase();
+}
+
 function parsearMatches(texto) {
     return texto.split('\n')
         .map(l => l.trim())
@@ -129,10 +156,6 @@ function parsearMatches(texto) {
 }
 
 // ---------- Detección de estado del torneo ----------
-
-function esTorneoFinalizado(torneo) {
-    return matches.some(m => m.torneo === torneo && m.fase === 'Final');
-}
 
 // Fases de tipo Liga/Grupos que ya tienen al menos un partido cargado para ese torneo.
 function fasesDeGrupoUsadas(torneo) {
@@ -160,11 +183,12 @@ function faseDeGruposCompleta(torneo) {
     return fasesGrupo.every(f => faseCompleta(torneo, f));
 }
 
-// Estados posibles: 'nuevo' | 'amistoso' | 'finalizado' | 'en-curso-grupos' | 'en-curso-playoffs'
+// Estados posibles: 'nuevo' | 'amistoso' | 'en-curso-grupos' | 'en-curso-playoffs'
+// (Los torneos finalizados ni siquiera son seleccionables desde el select de Torneo,
+// así que ese estado ya no hace falta acá.)
 function estadoTorneo(torneo) {
     if (!torneo || torneo === NUEVO_VALUE) return 'nuevo';
     if (torneo === 'Amistoso') return 'amistoso';
-    if (esTorneoFinalizado(torneo)) return 'finalizado';
     return faseDeGruposCompleta(torneo) ? 'en-curso-playoffs' : 'en-curso-grupos';
 }
 
@@ -179,27 +203,16 @@ function poblarSelectJugador(selectId) {
         `<option value="${NUEVO_VALUE}">+ Nuevo jugador…</option>`;
 }
 
+// Solo muestra torneos en curso (los finalizados no aparecen: no hay nada más para cargarles).
 function poblarSelectTorneo() {
     const sel = document.getElementById('torneo');
     if (!sel) return;
 
-    const enCursoSet = new Set(torneosEnCurso());
-    const todos = [...new Set(matches.map(m => m.torneo))].filter(t => t !== 'Amistoso');
-    const enCurso = todos.filter(t => enCursoSet.has(t)).sort((a, b) => ultimaFecha(b) - ultimaFecha(a));
-    const finalizados = todos.filter(t => !enCursoSet.has(t)).sort();
+    const enCurso = torneosEnCursoOrdenados();
 
-    let html = '<option value="Amistoso">Amistoso</option>';
-    if (enCurso.length > 0) {
-        html += '<optgroup label="🔴 En curso">' +
-            enCurso.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('') +
-            '</optgroup>';
-    }
-    if (finalizados.length > 0) {
-        html += '<optgroup label="✅ Finalizados (no se puede cargar)">' +
-            finalizados.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('') +
-            '</optgroup>';
-    }
-    html += `<option value="${NUEVO_VALUE}">+ Nuevo torneo…</option>`;
+    let html = '<option value="Amistoso">Amistoso</option>' +
+        enCurso.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('') +
+        `<option value="${NUEVO_VALUE}">+ Nuevo torneo…</option>`;
     sel.innerHTML = html;
 }
 
@@ -246,12 +259,7 @@ function actualizarEstadoFormulario() {
     let faseOptions = [];
     let bannerHtml = '';
 
-    if (estado === 'finalizado') {
-        bannerHtml = `<div class="check-banner check-banner-success">✅ Este torneo ya finalizó. No se pueden cargar más partidos (elegí otro torneo, o "Amistoso").</div>`;
-        camposFormulario.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
-        document.querySelectorAll('.stepper-btn').forEach(b => b.disabled = true);
-        if (btnCargar) btnCargar.disabled = true;
-    } else if (estado === 'amistoso') {
+    if (estado === 'amistoso') {
         faseOptions = ['Amistoso'];
     } else if (estado === 'en-curso-playoffs') {
         faseOptions = FASES_PLAYOFF;
@@ -262,7 +270,7 @@ function actualizarEstadoFormulario() {
     }
 
     faseSel.innerHTML = faseOptions.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('') +
-        (estado !== 'finalizado' && estado !== 'amistoso' ? `<option value="${NUEVO_VALUE}">+ Otra fase…</option>` : '');
+        (estado !== 'amistoso' ? `<option value="${NUEVO_VALUE}">+ Otra fase…</option>` : '');
 
     statusCont.innerHTML = bannerHtml;
 }
@@ -292,6 +300,11 @@ function configurarEventos() {
     document.getElementById('jugador2')?.addEventListener('change', e => toggleNuevo(e.target, 'jugador2-nuevo'));
     document.getElementById('torneo')?.addEventListener('change', e => {
         toggleNuevo(e.target, 'torneo-nuevo');
+        if (e.target.value === NUEVO_VALUE) {
+            const input = document.getElementById('torneo-nuevo');
+            // Se sugiere directamente el nombre que corresponde por formato (Primer, Segundo, Tercer...).
+            input.value = nombreSugeridoProximoTorneo();
+        }
         actualizarEstadoFormulario();
     });
     document.getElementById('fase')?.addEventListener('change', e => toggleNuevo(e.target, 'fase-nuevo'));
@@ -326,6 +339,9 @@ function toggleNuevo(selectEl, inputId) {
 async function onSubmitPartido(e) {
     e.preventDefault();
 
+    const torneoSel = document.getElementById('torneo');
+    const torneoEsNuevo = torneoSel.value === NUEVO_VALUE;
+
     const jugador1 = valorFinal('jugador1', 'jugador1-nuevo');
     const jugador2 = valorFinal('jugador2', 'jugador2-nuevo');
     const torneo = valorFinal('torneo', 'torneo-nuevo');
@@ -337,6 +353,9 @@ async function onSubmitPartido(e) {
     if (!jugador1 || !jugador2) return mostrarBanner('form-feedback', 'Elegí (o escribí) los dos jugadores.', 'error');
     if (jugador1.toLowerCase() === jugador2.toLowerCase()) return mostrarBanner('form-feedback', 'Los dos jugadores no pueden ser el mismo.', 'error');
     if (!torneo) return mostrarBanner('form-feedback', 'Elegí (o escribí) el torneo.', 'error');
+    if (torneoEsNuevo && !validarNombreNuevoTorneo(torneo)) {
+        return mostrarBanner('form-feedback', `El nombre de un torneo nuevo tiene que seguir el formato "${nombreSugeridoProximoTorneo()}".`, 'error');
+    }
     if (!fase) return mostrarBanner('form-feedback', 'Elegí (o escribí) la fase.', 'error');
     if (!fechaInput.value) return mostrarBanner('form-feedback', 'Elegí la fecha.', 'error');
     if (isNaN(g1) || isNaN(g2)) return mostrarBanner('form-feedback', 'Completá el marcador.', 'error');
