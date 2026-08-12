@@ -183,6 +183,78 @@ function faseDeGruposCompleta(torneo) {
     return fasesGrupo.every(f => faseCompleta(torneo, f));
 }
 
+// ---------- Formato del torneo (según cantidad de jugadores) y partidos de playoff que faltan ----------
+
+// Cantidad de jugadores distintos que jugaron la fase de liga/grupos: define el formato del torneo.
+function jugadoresDeFaseGrupo(torneo) {
+    const jugadoresFase = new Set();
+    matches.filter(m => m.torneo === torneo && FASES_GRUPO_REGEX.test(m.fase))
+        .forEach(m => { jugadoresFase.add(m.j1); jugadoresFase.add(m.j2); });
+    return jugadoresFase.size;
+}
+
+// Qué fases de playoff corresponden según el formato, y cuántos partidos tiene cada una.
+// Solo el formato de 9 jugadores (3 grupos de 3) usa repechajes y partido eliminatorio;
+// el resto de los formatos (6, 7, 8, 10...) van directo a semis + tercer puesto + final.
+function fasesPlayoffEsperadas(torneo) {
+    const n = jugadoresDeFaseGrupo(torneo);
+    if (n === 9) {
+        return [
+            { fase: 'Repechaje 2dos Puestos', esperados: 3 },
+            { fase: 'Repechaje 3ros Puestos', esperados: 3 },
+            { fase: 'Partido Eliminatorio', esperados: 1 },
+            { fase: 'Semifinal', esperados: 2 },
+            { fase: 'Tercer Puesto', esperados: 1 },
+            { fase: 'Final', esperados: 1 }
+        ];
+    }
+    return [
+        { fase: 'Semifinal', esperados: 2 },
+        { fase: 'Tercer Puesto', esperados: 1 },
+        { fase: 'Final', esperados: 1 }
+    ];
+}
+
+// Para un torneo con la fase de liga/grupos completa, qué partidos de playoff siguen faltando.
+function partidosPlayoffFaltantes(torneo) {
+    return fasesPlayoffEsperadas(torneo)
+        .map(({ fase, esperados }) => {
+            const cargados = matches.filter(m => m.torneo === torneo && m.fase === fase).length;
+            return { fase, esperados, cargados, faltan: Math.max(0, esperados - cargados) };
+        })
+        .filter(f => f.faltan > 0);
+}
+
+// Jugadores que ya clasificaron a playoffs, para mostrarlos como referencia en el aviso.
+// (Para el formato de 9 jugadores solo se muestran los 1° de cada grupo, que son los únicos
+// que clasifican directo apenas termina la fase de grupos; 2dos y 3eros dependen del repechaje.)
+function clasificadosPlayoff(torneo) {
+    const fasesGrupo = fasesDeGrupoUsadas(torneo).sort();
+    const n = jugadoresDeFaseGrupo(torneo);
+
+    if (fasesGrupo.length === 1) {
+        // Liga única: clasifican los primeros 4.
+        const tabla = calcularTabla(matches.filter(m => m.torneo === torneo && m.fase === fasesGrupo[0]));
+        return tabla.slice(0, 4).map(s => s.nombre);
+    }
+
+    if (n === 9) {
+        // 3 grupos de 3: solo el 1° de cada grupo clasifica directo.
+        return fasesGrupo.map(f => {
+            const tabla = calcularTabla(matches.filter(m => m.torneo === torneo && m.fase === f));
+            return tabla[0]?.nombre;
+        }).filter(Boolean);
+    }
+
+    // 2 grupos (8 o 10 jugadores): clasifican los primeros 2 de cada grupo.
+    const clasificados = [];
+    fasesGrupo.forEach(f => {
+        const tabla = calcularTabla(matches.filter(m => m.torneo === torneo && m.fase === f));
+        clasificados.push(...tabla.slice(0, 2).map(s => s.nombre));
+    });
+    return clasificados;
+}
+
 // Estados posibles: 'nuevo' | 'amistoso' | 'en-curso-grupos' | 'en-curso-playoffs'
 // (Los torneos finalizados ni siquiera son seleccionables desde el select de Torneo,
 // así que ese estado ya no hace falta acá.)
@@ -262,8 +334,15 @@ function actualizarEstadoFormulario() {
     if (estado === 'amistoso') {
         faseOptions = ['Amistoso'];
     } else if (estado === 'en-curso-playoffs') {
-        faseOptions = FASES_PLAYOFF;
-        bannerHtml = `<div class="check-banner check-banner-info">🏁 La fase de liga/grupos de este torneo ya está completa. Ahora se cargan partidos de playoffs.</div>`;
+        const faltantes = partidosPlayoffFaltantes(torneo);
+        faseOptions = faltantes.length > 0 ? faltantes.map(f => f.fase) : FASES_PLAYOFF;
+
+        const n = jugadoresDeFaseGrupo(torneo);
+        const clasificados = clasificadosPlayoff(torneo);
+        const detalleFaltantes = faltantes.map(f => `${f.fase} (${f.faltan})`).join(', ') || '¡ya está todo cargado!';
+        const clasificadosTexto = clasificados.length > 0 ? ` Clasificados: <strong>${clasificados.map(escapeHtml).join(', ')}</strong>.` : '';
+
+        bannerHtml = `<div class="check-banner check-banner-info">🏁 Liga/Grupos completa (${n} jugadores${n === 9 ? ', con repechaje' : ''}).${clasificadosTexto} Falta cargar: <strong>${detalleFaltantes}</strong></div>`;
     } else {
         // 'en-curso-grupos' o 'nuevo'
         faseOptions = FASES_GRUPO_Y_PLAYOFF;
