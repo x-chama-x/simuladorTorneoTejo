@@ -28,7 +28,6 @@ La aplicacion utiliza un sistema de probabilidades basado en una **funcion sigmo
 | Pagina | Descripcion |
 |--------|-------------|
 | `index.html` | **Inicio** - Rankings, estadisticas generales, historial de campeones y encuesta |
-| `cargar.html` | **Cargar Partido** - Formulario mobile-friendly para cargar resultados y verificar clasificacion a playoffs |
 | `torneo.html` | **Creador de Torneo** - Sorteo de grupos con probabilidades en tiempo real |
 | `simulador.html` | **Simulador de Torneo** - Simula torneos completos con resultados detallados |
 | `montecarlo.html` | **Simulador Monte Carlo** - Analisis estadistico con miles de simulaciones |
@@ -81,7 +80,8 @@ La aplicacion utiliza un sistema de probabilidades basado en una **funcion sigmo
 - Visualizacion de cruces con probabilidades de cada partido
 - Calculo de probabilidades del campeon
 
-### Cargar Partido (`cargar.html`)
+### Cargar Partido (`cargar.html`) - pagina privada, no listada en el menu
+- No tiene link en el menu de navegacion ni en el inicio a proposito: se accede escribiendo la URL directo (`.../cargar.html`), para que solo lo use el admin del grupo
 - Formulario pensado para cargar resultados desde el celular (amistosos o partidos de torneo), sin imprimir fixtures ni tocar el `.txt` a mano
 - Al enviar, hace commit directo a `enfrentamientos_directos.txt` en GitHub via `api/cargar-partido.js` (misma logica que el resto del sitio: el `.txt` sigue siendo la unica fuente de datos)
 - Soporta cargar partidos parciales (ej. jugar semifinales otro dia, como paso en el Torneo 3)
