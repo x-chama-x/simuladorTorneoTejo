@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="index.html" title="Inicio">Inicio</a>
         <a href="simulador.html" title="Simulador">Simulador</a>
         <a href="partido.html" title="Simulador de Partido 1vs1">Partido 1vs1</a>
-        <a href="cargar.html" title="Cargar Partido">📝 Cargar Partido</a>
         <a href="torneo.html" title="Creador de Torneo">Creador de Torneo</a>
         <a href="playoffs.html" title="Playoffs">Playoffs</a>
         <a href="torneo1.html" title="Primer Torneo">Primer Torneo</a>
