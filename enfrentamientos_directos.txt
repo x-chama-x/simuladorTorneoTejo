@@ -67,6 +67,9 @@ Chama,Tomy,G,7-6,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
 Rafa,Kovic,P,2-7,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
 Lucas,Tomy,G,7-3,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
 Tomy,Marco,G,7-4,Tercer torneo de hockey de mesa,2/8/2026,Fase de Liga
+Kovic,Chama,G,7-3,Tercer torneo de hockey de mesa,29/8/2026,Semifinal
+Tomy,Marco,G,7-3,Tercer torneo de hockey de mesa,29/8/2026,Semifinal
+Tomy,Kovic,G,7-4,Tercer torneo de hockey de mesa,29/8/2026,Final
 
 # Amistosos
 Chama,Facu,P,5-7,Amistoso,7/5/2025,Amistoso
@@ -88,4 +91,6 @@ Facu,Hector,G,7-2,Amistoso,15/05/2026,Amistoso
 Rafa,Kovic,G,7-5,Amistoso,15/05/2026,Amistoso
 Facu,Chama,G,7-3,Amistoso,15/05/2026,Amistoso
 Rafa,Hector,G,7-5,Amistoso,15/05/2026,Amistoso
+Tomy,Facu,G,7-6,Amistoso,29/8/2026,Amistoso
+Chama,Facu,G,7-4,Amistoso,29/8/2026,Amistoso
 
