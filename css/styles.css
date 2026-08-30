@@ -980,11 +980,17 @@ select:hover {
         display: contents;
     }
 
-    /* Orden mobile: resultados 1°, ranking 2°, campeones 3°, stats 4°, formatos último */
+    /* Separar el ranking FIFA del resto (invictos + historico) para poder intercalar campeones */
+    #ranking-col {
+        display: contents;
+    }
+
+    /* Orden mobile: resultados 1°, ranking fifa 2°, campeones 3°, invictos+historico 4°, stats 5°, formatos ultimo */
     #resultados-fechas-panel { order: 0; }
-    #ranking-col { order: 1; }
+    #ranking-fifa-block { order: 1; }
     .campeones-block { order: 2; }
-    #stats-col { order: 3; }
+    #ranking-secondary-block { order: 3; }
+    #stats-col { order: 4; }
 
     /* Sin scroll horizontal en la tabla de resultados */
     #resultados-fechas .table-responsive {
