@@ -222,6 +222,127 @@ function mostrarHistorial(nombreJ1, nombreJ2) {
     }
 }
 
+// ---- Vista individual: partidos de un solo jugador filtrados por evento (torneo/amistoso) ----
+
+// Devuelve la lista de eventos disponibles (torneos + "Amistoso"), sin duplicados
+function obtenerEventosDisponibles() {
+    const eventos = [...new Set(partidosDetallados.map(p => p.torneo))];
+    // Los amistosos van al final, los torneos oficiales mantienen su orden cronológico
+    eventos.sort((a, b) => {
+        if (a === 'Amistoso' && b !== 'Amistoso') return 1;
+        if (b === 'Amistoso' && a !== 'Amistoso') return -1;
+        return 0;
+    });
+    return eventos;
+}
+
+// Partidos de un jugador dentro de un evento puntual
+function obtenerPartidosIndividuales(nombreJugador, evento) {
+    return partidosDetallados.filter(p =>
+        p.torneo === evento && (p.jugador1 === nombreJugador || p.jugador2 === nombreJugador)
+    );
+}
+
+// Estadísticas rápidas (PJ, G, P, WR) de un jugador sobre una lista de partidos ya filtrada
+function calcularStatsIndividuales(nombreJugador, partidos) {
+    let g = 0, p = 0, gf = 0, gc = 0;
+    partidos.forEach(partido => {
+        const esJugador1 = partido.jugador1 === nombreJugador;
+        gf += esJugador1 ? partido.goles1 : partido.goles2;
+        gc += esJugador1 ? partido.goles2 : partido.goles1;
+        if (partido.ganador === nombreJugador) g++; else p++;
+    });
+    const pj = partidos.length;
+    const wr = pj > 0 ? ((g / pj) * 100).toFixed(1) : '0.0';
+    return { pj, g, p, gf, gc, wr };
+}
+
+// Pinta el listado de partidos de un jugador dentro del evento seleccionado
+function mostrarPartidosIndividuales(nombreJugador, evento) {
+    const content = document.getElementById('individualContent');
+    if (!content) return;
+
+    // Más recientes primero (el archivo está en orden cronológico ascendente)
+    const partidos = obtenerPartidosIndividuales(nombreJugador, evento).slice().reverse();
+
+    if (partidos.length === 0) {
+        content.innerHTML = `<div class="no-historial">${nombreJugador} no tiene partidos registrados en "${evento}"</div>`;
+        return;
+    }
+
+    const stats = calcularStatsIndividuales(nombreJugador, partidos);
+
+    content.innerHTML = `
+        <div class="stats-grid-4">
+            <div class="stat-item"><div class="stat-label">PJ</div><div class="stat-value">${stats.pj}</div></div>
+            <div class="stat-item"><div class="stat-label">Ganados</div><div class="stat-value">${stats.g}</div></div>
+            <div class="stat-item"><div class="stat-label">Perdidos</div><div class="stat-value">${stats.p}</div></div>
+            <div class="stat-item"><div class="stat-label">WR</div><div class="stat-value">${stats.wr}%</div></div>
+        </div>
+        <div class="partidos-previos">
+            <h4>📋 Partidos en ${evento}</h4>
+            <div class="partidos-lista">
+                ${partidos.map(p => {
+                    const esJugador1 = p.jugador1 === nombreJugador;
+                    const oponente = esJugador1 ? p.jugador2 : p.jugador1;
+                    const gano = p.ganador === nombreJugador;
+                    const marcadorDisplay = esJugador1 ? p.marcador : `${p.goles2}-${p.goles1}`;
+
+                    return `
+                        <div class="partido-item ${gano ? 'win-j1' : 'win-j2'}">
+                            <div class="partido-resultado">
+                                <span class="jugador-nombre ${gano ? 'ganador' : ''}">${nombreJugador}</span>
+                                <span class="marcador">${marcadorDisplay}</span>
+                                <span class="jugador-nombre ${!gano ? 'ganador' : ''}">${oponente}</span>
+                            </div>
+                            <div class="partido-info">
+                                <span class="fase">${p.fase}</span>
+                                <span class="fecha">${p.fecha}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// Pinta los botones de evento (torneos/amistosos) y muestra el primero seleccionado
+function mostrarSelectorEventos(nombreJugador) {
+    const container = document.getElementById('individualContainer');
+    const selectorDiv = document.getElementById('eventoSelector');
+    const nameSpan = document.getElementById('individualPlayerName');
+    if (!container || !selectorDiv) return;
+
+    const eventos = obtenerEventosDisponibles();
+
+    if (eventos.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    if (nameSpan) nameSpan.textContent = nombreJugador;
+
+    selectorDiv.innerHTML = eventos.map(ev =>
+        `<button type="button" class="evento-btn" data-evento="${ev}">${ev}</button>`
+    ).join('');
+
+    const botones = Array.from(selectorDiv.querySelectorAll('.evento-btn'));
+    botones.forEach(btn => {
+        btn.addEventListener('click', () => {
+            botones.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            mostrarPartidosIndividuales(nombreJugador, btn.getAttribute('data-evento'));
+        });
+    });
+
+    // Por defecto mostramos el primer evento de la lista
+    botones[0].classList.add('active');
+    mostrarPartidosIndividuales(nombreJugador, botones[0].getAttribute('data-evento'));
+
+    container.style.display = 'block';
+}
+
 // Función para poblar los selectores con jugadores
 function poblarSelectores() {
     inicializarSelectorJugadores(2, () => {
@@ -334,17 +455,25 @@ function actualizarBotones() {
     const seleccionados = getJugadoresSeleccionados();
     const habilitado = seleccionados.length === 2;
     const btnSimular = document.getElementById('simularPartidoBtn');
+    const individualContainer = document.getElementById('individualContainer');
 
     if (btnSimular) btnSimular.disabled = !habilitado;
 
-    // Mostrar probabilidad e historial si ambos jugadores están seleccionados
     if (habilitado) {
+        // Dos jugadores seleccionados: enfrentamiento directo
         const [jugador1, jugador2] = seleccionados;
         mostrarProbabilidad(jugador1, jugador2);
         mostrarHistorial(jugador1, jugador2);
+        if (individualContainer) individualContainer.style.display = 'none';
+    } else if (seleccionados.length === 1) {
+        // Un solo jugador seleccionado: vista de partidos individuales por evento
+        document.getElementById('probabilidadContainer').style.display = 'none';
+        document.getElementById('historialDirecto').style.display = 'none';
+        mostrarSelectorEventos(seleccionados[0]);
     } else {
         document.getElementById('probabilidadContainer').style.display = 'none';
         document.getElementById('historialDirecto').style.display = 'none';
+        if (individualContainer) individualContainer.style.display = 'none';
     }
 }
 
