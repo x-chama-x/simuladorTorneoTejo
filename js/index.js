@@ -332,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const resJ1 = parts[2].trim();
 
                     const champion = resJ1 === 'G' ? j1 : j2;
+                    const subcampeon = resJ1 === 'G' ? j2 : j1;
 
                     // Extraer mes/año
                     const dateParts = fechaStr.split('/');
@@ -346,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // Asegurar que guardamos el campeón para el torneo
-                    campeones[torneo] = { champion, mesAnio, fecha: fechaStr };
+                    campeones[torneo] = { champion, subcampeon, mesAnio, fecha: fechaStr };
                 }
             }
         }
@@ -359,12 +360,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.innerHTML = `
                     <td>${camp.mesAnio}</td>
                     <td><strong>${camp.champion}</strong></td>
+                    <td>${camp.subcampeon}</td>
                 `;
                 tbodyChampions.appendChild(tr);
             });
             if (Object.keys(campeones).length === 0) {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="2" style="text-align:center; color:#8b949e;">Aún no hay campeones</td>`;
+                tr.innerHTML = `<td colspan="3" style="text-align:center; color:#8b949e;">Aún no hay campeones</td>`;
                 tbodyChampions.appendChild(tr);
             }
         }
