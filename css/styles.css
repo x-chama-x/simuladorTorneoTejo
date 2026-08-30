@@ -960,15 +960,9 @@ select:hover {
         margin-top: 0 !important;
     }
 
-    /* Make Campeones and Poll independent flex items on mobile */
+    /* Make Campeones an independent flex item on mobile */
     .campeones-wrapper {
         display: contents;
-    }
-
-    /* Move Poll to the top */
-    #encuesta-panel {
-        order: -1;
-        margin-top: 0 !important;
     }
 
     #saber-mas-panel {
@@ -981,7 +975,7 @@ select:hover {
         display: contents;
     }
 
-    /* Orden mobile: encuesta 1°, resultados 2°, ranking 3°, stats 4°, campeones 5°, formatos último */
+    /* Orden mobile: resultados 1°, ranking 2°, stats 3°, campeones 4°, formatos último */
     #resultados-fechas-panel { order: 0; }
     #ranking-col { order: 1; }
     #stats-col { order: 2; }

@@ -1,8 +1,5 @@
 {
   "name": "torneo-tejo-resistencia",
   "version": "1.0.0",
-  "description": "Torneo de Tejo Web",
-  "dependencies": {
-    "redis": "^5.12.1"
-  }
+  "description": "Torneo de Tejo Web"
 }
