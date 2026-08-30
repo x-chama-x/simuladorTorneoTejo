@@ -964,6 +964,11 @@ select:hover {
     .campeones-wrapper {
         display: contents;
     }
+    /* En desktop el h2 lleva margin-top para separarse del panel de Resultados;
+       en mobile el gap del flex ya da esa separación */
+    .campeones-block > h2 {
+        margin-top: 0 !important;
+    }
 
     #saber-mas-panel {
         order: 99;
@@ -975,11 +980,11 @@ select:hover {
         display: contents;
     }
 
-    /* Orden mobile: resultados 1°, ranking 2°, stats 3°, campeones 4°, formatos último */
+    /* Orden mobile: resultados 1°, ranking 2°, campeones 3°, stats 4°, formatos último */
     #resultados-fechas-panel { order: 0; }
     #ranking-col { order: 1; }
-    #stats-col { order: 2; }
-    .campeones-block { order: 3; }
+    .campeones-block { order: 2; }
+    #stats-col { order: 3; }
 
     /* Sin scroll horizontal en la tabla de resultados */
     #resultados-fechas .table-responsive {
