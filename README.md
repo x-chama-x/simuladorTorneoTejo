@@ -17,7 +17,6 @@ Este proyecto es una aplicacion web que permite organizar, simular y analizar to
 - **Simulador 1vs1**: Enfrentamientos directos con historial y probabilidades
 - **Playoffs**: Configuracion de brackets con sorteo o armado manual
 - **Historial de Torneos**: Registro completo de torneos pasados con estadisticas
-- **Sistema de Encuestas**: Votacion para predecir el proximo campeon (con backend Redis)
 
 La aplicacion utiliza un sistema de probabilidades basado en una **funcion sigmoide** que combina el ranking FIFA (40%) y el win rate historico (60%) para calcular las chances de victoria en cada partido.
 
@@ -27,7 +26,7 @@ La aplicacion utiliza un sistema de probabilidades basado en una **funcion sigmo
 
 | Pagina | Descripcion |
 |--------|-------------|
-| `index.html` | **Inicio** - Rankings, estadisticas generales, historial de campeones y encuesta |
+| `index.html` | **Inicio** - Rankings, estadisticas generales e historial de campeones |
 | `torneo.html` | **Creador de Torneo** - Sorteo de grupos con probabilidades en tiempo real |
 | `simulador.html` | **Simulador de Torneo** - Simula torneos completos con resultados detallados |
 | `montecarlo.html` | **Simulador Monte Carlo** - Analisis estadistico con miles de simulaciones |
@@ -46,7 +45,6 @@ La aplicacion utiliza un sistema de probabilidades basado en una **funcion sigmo
 - **Ranking Historico**: Puntos acumulados en mundiales (goles)
 - **Estadisticas Generales**: PJ, G, P, WR, GF, GC, DIF, PG de todos los partidos
 - **Historial de Campeones**: Lista de ganadores de cada torneo
-- **Encuesta**: Sistema de votacion para predecir el proximo campeon
 
 ### Creador de Torneo (`torneo.html`)
 - Sorteo de grupos aleatorio
@@ -155,7 +153,7 @@ probabilidad = 1 / (1 + e^(-diferencia / 30))
 
 ```
 torneoTejoResistencia/
-├── index.html                    # Pagina de inicio (rankings, stats, encuesta)
+├── index.html                    # Pagina de inicio (rankings, stats, campeones)
 ├── torneo.html                   # Creador de torneo (sorteo de grupos)
 ├── simulador.html                # Simulador de torneo individual
 ├── montecarlo.html               # Simulador Monte Carlo
@@ -168,7 +166,6 @@ torneoTejoResistencia/
 ├── formatos.md                   # Documentacion de formatos
 ├── README.md                     # Este archivo
 ├── api/
-│   ├── poll.js                   # API serverless para encuestas (Redis)
 │   └── cargar-partido.js         # API serverless: commit de partidos a GitHub
 ├── css/
 │   ├── styles.css                # Estilos principales (incluye Cargar Partido)
@@ -209,7 +206,6 @@ Chama,Rafa,G,7-2,Primer torneo de hockey de mesa,3/5/2025,Final
 
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
 - **Backend**: API serverless con Node.js (Vercel Functions)
-- **Base de datos**: Redis (para sistema de encuestas)
 - **Hosting**: GitHub Pages / Vercel
 
 ---
