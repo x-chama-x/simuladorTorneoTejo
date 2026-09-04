@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copa de Campeones - Air Hockey</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/torneo.css">
+    <link rel="stylesheet" href="css/playoffs.css">
+</head>
+<body>
+    <div class="container">
+        <h1><img src="img/favicon.png" alt="logo" style="width: 1em; height: 1em; vertical-align: middle; margin-right: 5px;"> Copa de Campeones</h1>
+        <p class="page-subtitle">Solo los 4 primeros campeones de los torneos · Semifinales y Final a partido de ida y vuelta</p>
+
+        <div class="panel playoffs-section">
+            <h2>👑 Playoffs</h2>
+            <div class="playoff-bracket" id="playoff-bracket">
+                <!-- Poblado por JS -->
+            </div>
+        </div>
+    </div>
+    <!-- Scripts -->
+    <script src="js/menu.js"></script>
+    <script src="js/historial_torneos.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            cargarCopaCampeones("Copa de Campeones");
+        });
+    </script>
+</body>
+</html>

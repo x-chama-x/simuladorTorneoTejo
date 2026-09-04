@@ -71,6 +71,19 @@ Kovic,Chama,G,7-3,Tercer torneo de hockey de mesa,29/8/2026,Semifinal
 Tomy,Marco,G,7-3,Tercer torneo de hockey de mesa,29/8/2026,Semifinal
 Tomy,Kovic,G,7-4,Tercer torneo de hockey de mesa,29/8/2026,Final
 
+# ============================================
+# Copa de Campeones — SOLO 4 JUGADORES (los primeros 4 campeones distintos
+# de los torneos regulares, por orden en que se coronaron)
+# Formato: Semifinal 1, Semifinal 2 y Final — cada cruce a Ida y Vuelta
+# (2 fechas distintas). Si el global termina empatado se juega un partido
+# extra de GOL DE ORO.
+# Fases a usar: "Semifinal 1 - Ida", "Semifinal 1 - Vuelta",
+#               "Semifinal 2 - Ida", "Semifinal 2 - Vuelta",
+#               "Final - Ida", "Final - Vuelta"
+#               (y solo si hace falta desempatar: "<Serie> - Desempate")
+# Clasificados hasta ahora: Chama, Tomy (2/4) — faltan 2 campeones más
+# ============================================
+
 # Amistosos
 Chama,Facu,P,5-7,Amistoso,7/5/2025,Amistoso
 Chama,Mateo,G,7-3,Amistoso,7/5/2025,Amistoso
