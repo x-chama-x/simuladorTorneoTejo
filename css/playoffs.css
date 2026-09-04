@@ -646,3 +646,174 @@
         font-size: 0.8em;
     }
 }
+
+/* ================================================
+   CLASIFICADOS (Copa de Campeones)
+   ================================================ */
+.clasificados-progreso {
+    text-align: center;
+    color: #8b949e;
+    font-size: 0.9em;
+    margin: -8px 0 18px 0;
+}
+
+.clasificados-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.clasificado-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.clasificado-card.clasificado-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-style: dashed;
+    color: #6e7681;
+    min-height: 140px;
+}
+
+.clasificado-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.clasificado-slot {
+    background: #21262d;
+    color: #8b949e;
+    font-size: 0.75em;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 8px;
+}
+
+.clasificado-nombre {
+    font-size: 1.2em;
+    font-weight: 800;
+    color: #c9d1d9;
+    flex: 1;
+}
+
+.clasificado-nombre-vacio {
+    font-size: 1.05em;
+    font-weight: 700;
+    color: #6e7681;
+    font-style: italic;
+}
+
+.clasificado-vacio-texto {
+    font-size: 0.82em;
+    color: #6e7681;
+    margin-top: 8px;
+}
+
+.clasificado-ranking-badge {
+    background: #21262d;
+    color: #d29922;
+    font-size: 0.75em;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.clasificado-titulos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.titulo-chip {
+    background: linear-gradient(135deg, #2d2311, #21262d);
+    border: 1px solid #4a3a12;
+    color: #e3b341;
+    font-size: 0.75em;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 8px;
+}
+
+.titulo-chip em {
+    font-style: normal;
+    font-weight: 400;
+    color: #a1863f;
+}
+
+.clasificado-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    padding: 12px 0;
+    border-top: 1px solid #30363d;
+    border-bottom: 1px solid #30363d;
+    margin-bottom: 12px;
+}
+
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.stat-value {
+    font-size: 1.05em;
+    font-weight: 800;
+    color: #eff0f3;
+}
+
+.stat-label {
+    font-size: 0.68em;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.clasificado-racha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.clasificado-racha .leg-label {
+    margin-bottom: 0;
+}
+
+.h2h-titulo {
+    text-align: center;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 480px) {
+    .clasificado-stats {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 3px;
+    }
+
+    .stat-value {
+        font-size: 0.9em;
+    }
+
+    .stat-label {
+        font-size: 0.6em;
+    }
+
+    .clasificado-nombre {
+        font-size: 1.05em;
+    }
+}

@@ -14,6 +14,17 @@
         <h1><img src="img/favicon.png" alt="logo" style="width: 1em; height: 1em; vertical-align: middle; margin-right: 5px;"> Copa de Campeones</h1>
         <p class="page-subtitle">Solo los 4 primeros campeones de los torneos · Semifinales y Final a partido de ida y vuelta</p>
 
+        <div class="panel clasificados-section" style="margin-bottom: 2rem;">
+            <h2>🎟️ Clasificados</h2>
+            <p class="clasificados-progreso" id="clasificados-progreso">Cargando...</p>
+            <div class="clasificados-grid" id="clasificados-grid">
+                <!-- Poblado por JS -->
+            </div>
+            <div id="h2h-clasificados-container" style="margin-top: 1.5rem;">
+                <!-- Poblado por JS -->
+            </div>
+        </div>
+
         <div class="panel playoffs-section">
             <h2>👑 Playoffs</h2>
             <div class="playoff-bracket" id="playoff-bracket">
@@ -23,9 +34,11 @@
     </div>
     <!-- Scripts -->
     <script src="js/menu.js"></script>
-    <script src="js/historial_torneos.js"></script>
+    <script src="js/rankingCalculator.js"></script>
+    <script src="js/copa_campeones.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            cargarClasificadosCopa();
             cargarCopaCampeones("Copa de Campeones");
         });
     </script>
