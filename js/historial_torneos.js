@@ -408,3 +408,132 @@ function renderTournamentStats(allMatches, nombreTorneo) {
         </div>
     `;
 }
+
+// ================================================
+// COPA DE CAMPEONES — Cruces a Ida y Vuelta
+// (Semifinal 1, Semifinal 2 y Final, cada uno jugado en 2 fechas distintas.
+//  Si el global termina empatado, se define con un partido extra de
+//  Gol de Oro: fase "<Serie> - Desempate")
+// ================================================
+
+function cargarCopaCampeones(nombreTorneo) {
+    fetch("enfrentamientos_directos.txt")
+        .then(res => res.text())
+        .then(data => {
+            const matches = data.split("\n")
+                .map(l => l.trim())
+                .filter(l => l && !l.startsWith("#"))
+                .map(l => {
+                    const p = l.split(",");
+                    return { j1: p[0], j2: p[1], res: p[2], marcador: p[3], torneo: p[4], fecha: p[5], fase: p[6] };
+                })
+                .filter(m => m.torneo === nombreTorneo);
+            renderPlayoffsIdaVuelta(matches);
+        });
+}
+
+function crearFilaIdaVuelta(m, etiqueta) {
+    if (!m) {
+        return `
+            <div class="leg-row">
+                <span class="leg-label">${etiqueta}</span>
+                <div class="leg-empty">Por definirse</div>
+            </div>`;
+    }
+    const g = m.marcador.split("-").map(Number);
+    const w1 = g[0] > g[1];
+    const w2 = g[1] > g[0];
+    return `
+        <div class="leg-row">
+            <span class="leg-label">${etiqueta}${m.fecha ? ` <em>(${m.fecha})</em>` : ""}</span>
+            <div class="leg-score">
+                <span class="leg-player ${w1 ? "leg-winner" : ""}">${m.j1}</span>
+                <span class="leg-marcador">${g[0]} - ${g[1]}</span>
+                <span class="leg-player ${w2 ? "leg-winner" : ""}">${m.j2}</span>
+            </div>
+        </div>`;
+}
+
+function createSeriesCard(legs, tituloSerie, esFinal) {
+    const { ida, vuelta, desempate } = legs;
+
+    let footerHtml = "";
+
+    if (desempate) {
+        const g = desempate.marcador.split("-").map(Number);
+        const ganador = g[0] > g[1] ? desempate.j1 : desempate.j2;
+        footerHtml = `
+            <div class="agg-empate">⚡ Definido por Gol de Oro</div>
+            <div class="winner-badge">${esFinal ? "👑 CAMPEÓN: " : "🏆 Avanza a la Final: "}${ganador}</div>`;
+    } else if (ida && vuelta) {
+        const goles = {};
+        [ida, vuelta].forEach(m => {
+            const g = m.marcador.split("-").map(Number);
+            goles[m.j1] = (goles[m.j1] || 0) + g[0];
+            goles[m.j2] = (goles[m.j2] || 0) + g[1];
+        });
+        const jugadores = Object.keys(goles);
+        if (jugadores.length === 2) {
+            const [pA, pB] = jugadores;
+            const gA = goles[pA], gB = goles[pB];
+            if (gA === gB) {
+                footerHtml = `
+                    <div class="agg-row">Global: ${pA} ${gA} - ${gB} ${pB}</div>
+                    <div class="agg-empate">🟡 Empate en el global — se define por Desempate (Gol de Oro)</div>`;
+            } else {
+                const ganador = gA > gB ? pA : pB;
+                footerHtml = `
+                    <div class="agg-row">Global: ${pA} ${gA} - ${gB} ${pB}</div>
+                    <div class="winner-badge">${esFinal ? "👑 CAMPEÓN: " : "🏆 Avanza a la Final: "}${ganador}</div>`;
+            }
+        }
+    } else if (ida && !vuelta) {
+        footerHtml = `<div class="agg-row agg-parcial">Vuelta pendiente</div>`;
+    }
+
+    return `
+        <div class="match-card serie-card">
+            <div class="match-number">${tituloSerie}</div>
+            ${crearFilaIdaVuelta(ida, "Ida")}
+            ${crearFilaIdaVuelta(vuelta, "Vuelta")}
+            ${desempate ? crearFilaIdaVuelta(desempate, "Desempate (Gol de Oro)") : ""}
+            ${footerHtml}
+        </div>
+    `;
+}
+
+function renderPlayoffsIdaVuelta(matches) {
+    const bracket = document.getElementById("playoff-bracket");
+    if (!bracket) return;
+
+    function obtenerCruce(faseBase) {
+        return {
+            ida: matches.find(m => m.fase === `${faseBase} - Ida`) || null,
+            vuelta: matches.find(m => m.fase === `${faseBase} - Vuelta`) || null,
+            desempate: matches.find(m => m.fase === `${faseBase} - Desempate`) || null
+        };
+    }
+
+    const sf1 = obtenerCruce("Semifinal 1");
+    const sf2 = obtenerCruce("Semifinal 2");
+    const final = obtenerCruce("Final");
+
+    bracket.innerHTML = `
+        <div class="bracket-fixture">
+            <div class="bracket-col-semis">
+                <h3 class="round-title">⚔️ Semifinales</h3>
+                <div id="sf1-wrap">${createSeriesCard(sf1, "Semifinal 1", false)}</div>
+                <div id="sf2-wrap">${createSeriesCard(sf2, "Semifinal 2", false)}</div>
+            </div>
+            <div class="bracket-connector-col" id="bracket-connector-col">
+                <svg id="bracket-svg" style="width:100%; height:100%; display:block; overflow:visible;"></svg>
+            </div>
+            <div class="bracket-col-final">
+                <h3 class="round-title">👑 Final</h3>
+                <div id="final-wrap">${createSeriesCard(final, "Final", true)}</div>
+            </div>
+        </div>
+    `;
+    requestAnimationFrame(() => drawBracketLines());
+    window.addEventListener('resize', drawBracketLines);
+}

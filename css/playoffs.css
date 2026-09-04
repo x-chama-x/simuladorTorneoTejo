@@ -532,3 +532,117 @@
         width: 100%;
     }
 }
+
+/* ================================================
+   CRUCES IDA Y VUELTA (Copa de Campeones)
+   ================================================ */
+.serie-card {
+    text-align: left;
+}
+
+.serie-card .leg-row {
+    padding: 8px 0;
+    border-top: 1px solid #30363d;
+}
+
+.serie-card .match-number + .leg-row {
+    border-top: none;
+    padding-top: 4px;
+}
+
+.leg-label {
+    display: block;
+    font-size: 0.75em;
+    color: #8b949e;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+}
+
+.leg-label em {
+    font-style: normal;
+    font-weight: 400;
+    text-transform: none;
+    color: #6e7681;
+}
+
+.leg-score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.leg-player {
+    flex: 1;
+    font-weight: 600;
+    color: #c9d1d9;
+    font-size: 0.95em;
+}
+
+.leg-score .leg-player:last-child {
+    text-align: right;
+}
+
+.leg-player.leg-winner {
+    color: #3fb950;
+}
+
+.leg-marcador {
+    font-weight: 800;
+    color: #eff0f3;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    padding: 0 6px;
+}
+
+.leg-empty {
+    color: #6e7681;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.agg-row {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #30363d;
+    text-align: center;
+    font-weight: 700;
+    color: #eff0f3;
+    font-size: 0.95em;
+}
+
+.agg-row.agg-parcial {
+    color: #8b949e;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.agg-empate {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #30363d;
+    text-align: center;
+    color: #d29922;
+    font-size: 0.85em;
+}
+
+@media (max-width: 768px) {
+    .leg-label {
+        font-size: 0.68em;
+    }
+
+    .leg-player {
+        font-size: 0.85em;
+    }
+
+    .leg-marcador {
+        font-size: 0.9em;
+    }
+
+    .agg-row,
+    .agg-empate {
+        font-size: 0.8em;
+    }
+}

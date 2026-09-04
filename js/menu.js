@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="torneo1.html" title="Primer Torneo">Primer Torneo</a>
         <a href="torneo2.html" title="Segundo Torneo">Segundo Torneo</a>
         <a href="torneo3.html" title="Tercer Torneo">Tercer Torneo</a>
+        <a href="copadecampeones.html" title="Copa de Campeones">👑 Copa de Campeones</a>
         <a href="airhockeygame.html" title="Air Hockey">🎮 Air Hockey</a>
         <a href="sabermas.html" title="Saber Más">📖 Saber Más</a>
         <div class="sidebar-footer">
