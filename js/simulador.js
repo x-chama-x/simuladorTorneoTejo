@@ -614,7 +614,7 @@ function renderPlayoffsHTML(playoffs, numJugadores, repechajePreMatch) {
 }
 
 // Genera el HTML de la tabla de estadísticas del torneo
-function renderEstadisticasHTML(estadisticasJugadores, numJugadores) {
+function renderEstadisticasHTML(estadisticasJugadores, numJugadores, soloFaseFinal = false) {
     let htmlStats = '<h2>📊 ESTADÍSTICAS DEL TORNEO</h2><br>';
     htmlStats += '<div class="table-responsive"><table class="ranking-table">';
     const groupLabel = (numJugadores === 7 || numJugadores === 6) ? "G(FL)" : "G(FG)";
@@ -622,8 +622,8 @@ function renderEstadisticasHTML(estadisticasJugadores, numJugadores) {
         <thead>
             <tr>
                 <th>Jugador</th>
-                <th>${groupLabel}</th>
-                <th>G(PO)</th>
+                ${soloFaseFinal ? '' : `<th>${groupLabel}</th>`}
+                <th>${soloFaseFinal ? 'Goles' : 'G(PO)'}</th>
                 <th>TG</th>
                 <th>GC</th>
                 <th>DIF</th>
@@ -657,7 +657,7 @@ function renderEstadisticasHTML(estadisticasJugadores, numJugadores) {
         htmlStats += `
             <tr>
                 <td><strong>${stat.nombre}</strong></td>
-                <td>${stat.golesLiga}</td>
+                ${soloFaseFinal ? '' : `<td>${stat.golesLiga}</td>`}
                 <td>${stat.golesFaseFinal}</td>
                 <td><strong>${stat.totalGoles}</strong></td>
                 <td>${stat.gc}</td>
@@ -801,6 +801,143 @@ function createMatchCardSimulador(ganador, j1, j2, g1, g2, title) {
     `;
 }
 
+// ================================================
+// COPA DE CAMPEONES (formato de 4 jugadores en el simulador): Semifinal 1,
+// Semifinal 2 y Final, cada cruce a Ida y Vuelta. Si el global termina
+// empatado se define con un partido extra de Gol de Oro. No hay fase de
+// grupos ni tercer puesto (con solo 4 jugadores no hay repechaje posible).
+// ================================================
+
+// Simula un cruce a ida y vuelta entre dos jugadores y, si hace falta,
+// un partido extra de Gol de Oro (se representa siempre como 1-0).
+function simularSerieCopa(pA, pB, estadisticasJugadores, etapaBicampeon) {
+    if (typeof establecerEtapaBicampeon === 'function') {
+        establecerEtapaBicampeon(etapaBicampeon);
+    }
+
+    const rIda = simularPartido(pA, pB);
+    const rVuelta = simularPartido(pB, pA);
+
+    const legs = [
+        { j1: pA.nombre, j2: pB.nombre, g1: rIda.goles1, g2: rIda.goles2, etiqueta: "Ida" },
+        { j1: pB.nombre, j2: pA.nombre, g1: rVuelta.goles1, g2: rVuelta.goles2, etiqueta: "Vuelta" }
+    ];
+
+    const goles = { [pA.nombre]: 0, [pB.nombre]: 0 };
+    legs.forEach(l => { goles[l.j1] += l.g1; goles[l.j2] += l.g2; });
+
+    let ganador;
+    if (goles[pA.nombre] === goles[pB.nombre]) {
+        const rDesempate = simularPartido(pA, pB);
+        ganador = rDesempate.ganador;
+        legs.push({
+            j1: pA.nombre, j2: pB.nombre,
+            g1: ganador === pA.nombre ? 1 : 0,
+            g2: ganador === pB.nombre ? 1 : 0,
+            etiqueta: "Desempate (Gol de Oro)"
+        });
+    } else {
+        ganador = goles[pA.nombre] > goles[pB.nombre] ? pA.nombre : pB.nombre;
+    }
+
+    // Acumular estadísticas de cada partido jugado en esta serie
+    legs.forEach(l => {
+        const stJ1 = estadisticasJugadores[l.j1];
+        const stJ2 = estadisticasJugadores[l.j2];
+        if (stJ1) {
+            stJ1.golesFaseFinal += l.g1;
+            stJ1.gc += l.g2;
+            stJ1.partidosJugados++;
+            if (l.g1 > l.g2) stJ1.pg++; else stJ1.pp++;
+        }
+        if (stJ2) {
+            stJ2.golesFaseFinal += l.g2;
+            stJ2.gc += l.g1;
+            stJ2.partidosJugados++;
+            if (l.g2 > l.g1) stJ2.pg++; else stJ2.pp++;
+        }
+    });
+
+    return { pA: pA.nombre, pB: pB.nombre, legs, goles, ganador };
+}
+
+// Convierte el resultado de simularSerieCopa() al formato { ida, vuelta,
+// desempate } que espera createSeriesCard() (definida en js/copa_campeones.js),
+// para que el bracket simulado se vea igual que en copadecampeones.html.
+function serieCopaToLegsFormat(serie) {
+    function leg(etiqueta) {
+        const l = serie.legs.find(x => x.etiqueta === etiqueta);
+        if (!l) return null;
+        return { j1: l.j1, j2: l.j2, marcador: `${l.g1}-${l.g2}`, fecha: null, fase: etiqueta };
+    }
+    return {
+        ida: leg("Ida"),
+        vuelta: leg("Vuelta"),
+        desempate: leg("Desempate (Gol de Oro)")
+    };
+}
+
+// Simula la Copa de Campeones completa para los 4 jugadores elegidos.
+// Como los 4 participantes son (en la ficción del simulador) igualmente
+// "campeones", se desactiva temporalmente el bonus de campeón defensor de
+// js/campeon.js: no tendría sentido premiar/castigar solo a uno de los
+// cuatro por ser el último campeón real.
+function simularCopaCampeonesFormato(jugadoresCopa, estadisticasJugadores) {
+    const campeonPrevio = window.CAMPEON ? window.CAMPEON.activo : null;
+    if (window.CAMPEON) window.CAMPEON.activo = false;
+
+    try {
+        const shuffled = [...jugadoresCopa].sort(() => Math.random() - 0.5);
+        const [p1, p2, p3, p4] = shuffled;
+
+        const sf1 = simularSerieCopa(p1, p2, estadisticasJugadores, 'semifinal');
+        const sf2 = simularSerieCopa(p3, p4, estadisticasJugadores, 'semifinal');
+
+        const finalista1 = jugadoresCopa.find(j => j.nombre === sf1.ganador);
+        const finalista2 = jugadoresCopa.find(j => j.nombre === sf2.ganador);
+        const final = simularSerieCopa(finalista1, finalista2, estadisticasJugadores, 'final');
+
+        if (typeof establecerEtapaBicampeon === 'function') {
+            establecerEtapaBicampeon('ninguna');
+        }
+
+        return {
+            sf1, sf2, final,
+            ganador: final.ganador,
+            semifinalistas: [sf1.ganador, sf2.ganador],
+            clasificados: jugadoresCopa.map(j => j.nombre)
+        };
+    } finally {
+        if (window.CAMPEON) window.CAMPEON.activo = campeonPrevio;
+    }
+}
+
+// Genera el HTML del bracket de la Copa de Campeones simulada (reutiliza
+// createSeriesCard() de js/copa_campeones.js).
+function renderPlayoffsCopaHTML(resultadoCopa) {
+    return `
+        <div class="panel playoffs-section" style="margin-bottom: 2rem;">
+            <h2>👑 Playoffs — Copa de Campeones (simulado)</h2><br>
+            <div class="playoff-bracket">
+                <div class="bracket-fixture">
+                    <div class="bracket-col-semis">
+                        <h3 class="round-title">⚔️ Semifinales</h3>
+                        <div id="sf1-wrap">${createSeriesCard(serieCopaToLegsFormat(resultadoCopa.sf1), "Semifinal 1", false)}</div>
+                        <div id="sf2-wrap">${createSeriesCard(serieCopaToLegsFormat(resultadoCopa.sf2), "Semifinal 2", false)}</div>
+                    </div>
+                    <div class="bracket-connector-col" id="bracket-connector-col">
+                        <svg id="bracket-svg" style="width:100%; height:100%; display:block; overflow:visible;"></svg>
+                    </div>
+                    <div class="bracket-col-final">
+                        <h3 class="round-title">👑 Final</h3>
+                        <div id="final-wrap">${createSeriesCard(serieCopaToLegsFormat(resultadoCopa.final), "Final", true)}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function simularTorneo(mantenerGrupos = false) {
     const numJugadores = parseInt(document.getElementById('numPlayers').value);
     let jugadores = [...jugadoresBase];
@@ -850,6 +987,30 @@ function simularTorneo(mantenerGrupos = false) {
             pp: 0
         };
     });
+
+    // Copa de Campeones: sin fase de grupos, se resuelve directo en semifinales.
+    if (numJugadores === 4) {
+        const resultadoCopa = simularCopaCampeonesFormato(jugadores, estadisticasJugadores);
+        const htmlPlayoffsCopa = renderPlayoffsCopaHTML(resultadoCopa);
+        const htmlStatsCopa = renderEstadisticasHTML(estadisticasJugadores, numJugadores, true);
+
+        requestAnimationFrame(() => drawBracketLines());
+        if (!window._copaResizeListenerAdded) {
+            window.addEventListener('resize', drawBracketLines);
+            window._copaResizeListenerAdded = true;
+        }
+
+        const reSimulateButtonsCopa = `<div style="display:flex; justify-content:center; gap:15px; margin-bottom: 25px; margin-top: 10px;">
+            <button onclick="ejecutarSimulacion(false)" class="re-simular-btn">🔄 Volver a simular Copa</button>
+        </div>`;
+
+        document.getElementById('resultado').innerHTML = reSimulateButtonsCopa + htmlPlayoffsCopa + htmlStatsCopa;
+
+        setTimeout(() => {
+            drawBracketLines();
+        }, 50);
+        return;
+    }
 
     let htmlFase = '';
     let clasificados = [];
@@ -1689,6 +1850,26 @@ function ejecutarSimulacionSilenciosa() {
         };
     });
 
+    // Copa de Campeones: sin fase de grupos, se resuelve directo en semifinales
+    // (misma lógica que en simularTorneo(), pero sin renderizar nada acá).
+    if (numJugadores === 4) {
+        const resultadoCopa = simularCopaCampeonesFormato(jugadores, estadisticasJugadores);
+        return {
+            numJugadores: 4,
+            grupos: [],
+            repechajes: [],
+            repechajePreMatch: null,
+            clasificados: resultadoCopa.clasificados,
+            playoffs: null,
+            playoffsCopa: resultadoCopa,
+            esCopa: true,
+            semifinalistas: resultadoCopa.semifinalistas,
+            ganador: resultadoCopa.ganador,
+            estadisticas: estadisticasJugadores,
+            gruposBicampeon: null
+        };
+    }
+
     const torneoData = {
         numJugadores: numJugadores,
         grupos: [],              // [{ titulo, partidos, ranking, clasifCount }]
@@ -1905,13 +2086,16 @@ function mostrarTorneoMasPromedio(torneoData, frecuencia, totalSimulaciones = 10
         htmlFase += renderGrupoUIX(seccion.partidos, seccion.ranking, seccion.clasifCount);
     });
 
-    // Playoffs: mismo bracket que la simulación única
-    const htmlPlayoffs = torneoData.playoffs
-        ? renderPlayoffsHTML(torneoData.playoffs, numJugadores, torneoData.repechajePreMatch)
-        : '';
+    // Playoffs: mismo bracket que la simulación única (la Copa de Campeones
+    // usa su propio bracket a ida y vuelta, ver renderPlayoffsCopaHTML)
+    const htmlPlayoffs = torneoData.esCopa
+        ? renderPlayoffsCopaHTML(torneoData.playoffsCopa)
+        : (torneoData.playoffs
+            ? renderPlayoffsHTML(torneoData.playoffs, numJugadores, torneoData.repechajePreMatch)
+            : '');
 
     // Tabla de estadísticas
-    const htmlStats = renderEstadisticasHTML(torneoData.estadisticas, numJugadores);
+    const htmlStats = renderEstadisticasHTML(torneoData.estadisticas, numJugadores, !!torneoData.esCopa);
 
     // Botones de acción
     const reSimulateButtons = `<div style="display:flex; justify-content:center; gap:15px; margin-bottom: 25px; margin-top: 10px;">
@@ -1924,13 +2108,19 @@ function mostrarTorneoMasPromedio(torneoData, frecuencia, totalSimulaciones = 10
         htmlBanner + reSimulateButtons + htmlPlayoffs + htmlFase + htmlStats;
 
     // Dibujar los conectores SVG del bracket una vez inyectado el HTML
-    requestAnimationFrame(() => drawSimBracketLines());
-    if (!window._simResizeListenerAdded) {
+    const dibujarLineas = torneoData.esCopa ? drawBracketLines : drawSimBracketLines;
+    requestAnimationFrame(() => dibujarLineas());
+    if (torneoData.esCopa) {
+        if (!window._copaResizeListenerAdded) {
+            window.addEventListener('resize', drawBracketLines);
+            window._copaResizeListenerAdded = true;
+        }
+    } else if (!window._simResizeListenerAdded) {
         window.addEventListener('resize', drawSimBracketLines);
         window._simResizeListenerAdded = true;
     }
     setTimeout(() => {
-        drawSimBracketLines();
+        dibujarLineas();
     }, 50);
 }
 

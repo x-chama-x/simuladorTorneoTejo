@@ -6,6 +6,7 @@
     <title>Simulador Torneo Air Hockey</title>
     <link rel="icon" type="image/png" href="img/favicon.png">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/copa_ida_vuelta.css">
 </head>
 <body>
     <div class="container">
@@ -14,6 +15,7 @@
         <div class="controls">
             <label for="numPlayers" style="align-self:center; font-weight:600; color:#e0e0e0; margin-right:6px;">Formato:</label>
             <select id="numPlayers" aria-label="Formato de torneo">
+                <option value="4">👑 Copa de Campeones (4 Jugadores)</option>
                 <option value="6">6 Jugadores</option>
                 <option value="7" selected>7 Jugadores</option>
                 <option value="8">8 Jugadores</option>
@@ -46,6 +48,7 @@
     <script src="js/rankingCalculator.js"></script>
     <script src="js/playerSelection.js"></script>
     <script src="js/campeon.js"></script>
+    <script src="js/copa_campeones.js"></script>
     <script src="js/simulador.js"></script>
 </body>
 </html>

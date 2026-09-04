@@ -650,6 +650,10 @@
 /* ================================================
    CLASIFICADOS (Copa de Campeones)
    ================================================ */
+.clasificados-section {
+    border: none;
+}
+
 .clasificados-progreso {
     text-align: center;
     color: #8b949e;
