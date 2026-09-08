@@ -819,7 +819,7 @@ select:hover {
     gap: 15px;
     z-index: 1000;
     transition: transform 0.3s ease;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .sidebar h2 {
@@ -827,6 +827,18 @@ select:hover {
     text-align: center;
     margin-bottom: 20px;
     font-size: 1.5em;
+    flex-shrink: 0;
+}
+
+/* Lista de links: ocupa el espacio disponible y scrollea sola si no entran todos,
+   dejando siempre visible el pie (logo + link a GitHub) */
+.sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .sidebar a {
@@ -860,9 +872,9 @@ select:hover {
 .sidebar a.active { outline: 2px solid rgba(255,255,255,0.4); }
 
 .sidebar-footer {
-    margin-top: auto;
+    flex-shrink: 0;
     text-align: center;
-    padding-top: 30px;
+    padding-top: 20px;
 }
 
 .sidebar-footer img {
@@ -921,7 +933,6 @@ select:hover {
     }
 
     .sidebar-footer {
-        margin-top: 20px; /* Elimina el auto para que suba y quede pegado al último elemento del menú en móviles */
         padding-top: 10px;
         padding-bottom: 20px;
     }
