@@ -816,70 +816,51 @@ select:hover {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 4px;
     z-index: 1000;
     transition: transform 0.3s ease;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .sidebar h2 {
     color: #c9d1d9;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     font-size: 1.5em;
-    flex-shrink: 0;
-}
-
-/* Lista de links: ocupa el espacio disponible y scrollea sola si no entran todos,
-   dejando siempre visible el pie (logo + link a GitHub) */
-.sidebar-links {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
 }
 
 .sidebar a {
-    padding: 12px 15px;
+    padding: 6px 10px 6px 13px;
     text-decoration: none;
-    color: white;
-    border-radius: 8px;
-    font-weight: bold;
+    color: #c9d1d9;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: background 0.2s, transform 0.2s;
+    border-left: 3px solid transparent;
+    transition: color 0.2s, transform 0.2s, border-color 0.2s;
 }
 
 .sidebar a:hover {
-    transform: translateX(5px);
+    color: #ffffff;
+    transform: translateX(4px);
 }
 
-.sidebar a[href="simulador.html"] { background: #43a047; }
-.sidebar a[href="index.html"] { background: #ff9800; }
-.sidebar a[href="montecarlo.html"] { background: #667eea; }
-.sidebar a[href="partido.html"] { background: #e91e63; }
-.sidebar a[href="torneo.html"] { background: #11998e; }
-.sidebar a[href="playoffs.html"] { background: #9c27b0; }
-.sidebar a[href="torneo1.html"] { background: #2196f3; }
-.sidebar a[href="torneo2.html"] { background: #ff5722; }
-.sidebar a[href="torneo3.html"] { background: #118e36; }
-.sidebar a[href="copadecampeones.html"] { background: #d4af37; }
-.sidebar a[href="airhockeygame.html"] { background: #00bcd4; }
-.sidebar a[href="sabermas.html"] { background: #a2843d; }
-.sidebar a.active { outline: 2px solid rgba(255,255,255,0.4); }
+.sidebar a.active {
+    color: #58a6ff;
+    font-weight: 700;
+    border-left-color: #58a6ff;
+}
 
 .sidebar-footer {
-    flex-shrink: 0;
+    margin-top: auto;
     text-align: center;
-    padding-top: 20px;
+    padding-top: 16px;
 }
 
 .sidebar-footer img {
-    width: 80px;
-    margin-bottom: 10px;
+    width: 60px;
+    margin-bottom: 6px;
 }
 
 .sidebar-footer .github-link {
@@ -933,6 +914,7 @@ select:hover {
     }
 
     .sidebar-footer {
+        margin-top: 20px; /* Elimina el auto para que suba y quede pegado al último elemento del menú en móviles */
         padding-top: 10px;
         padding-bottom: 20px;
     }
